@@ -38,7 +38,7 @@ interface TimerStore {
   setActiveTask: (taskId: number | null) => void;
   setDurations: (work: number, short: number, long: number) => void;
   adjustDuration: (minutes: number) => void;
-  finishSession: () => Promise<void>;
+  finishSession: (mood?: string, notes?: string) => Promise<void>;
   abandonSession: () => Promise<void>;
   setSelectedCategory: (category: Category | null) => void;
 }
@@ -64,15 +64,23 @@ export const useTimerStore = create<TimerStore>((set, get) => ({
     const state = get();
     state.worker?.terminate();
 
-    const secs = duration ?? durations[state.phase === "work" ? "work" : state.phase === "short_break" ? "short" : "long"];
-    
+    const secs =
+      duration ??
+      durations[
+        state.phase === "work"
+          ? "work"
+          : state.phase === "short_break"
+            ? "short"
+            : "long"
+      ];
+
     const sessionId = await dbStartSession(
       state.activeTaskId,
       state.phase,
       state.selectedCategory?.id,
-      state.selectedCategory?.name
+      state.selectedCategory?.name,
     );
-    
+
     const worker = createTimerWorker();
 
     worker.onmessage = (e: MessageEvent) => {
@@ -240,13 +248,13 @@ export const useTimerStore = create<TimerStore>((set, get) => ({
     set({ secondsRemaining: newDuration, totalSeconds: newDuration });
   },
 
-  finishSession: async () => {
+  finishSession: async (mood?: string, notes?: string) => {
     const { worker, currentSessionId, activeTaskId, phase } = get();
     worker?.terminate();
 
     if (currentSessionId) {
-      await dbFinishSession(currentSessionId);
-      
+      await dbFinishSession(currentSessionId, mood, notes);
+
       if (phase === "work" && activeTaskId) {
         incrementTaskPomos(activeTaskId);
       }

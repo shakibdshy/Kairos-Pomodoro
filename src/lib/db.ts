@@ -70,6 +70,12 @@ export async function initDb(): Promise<void> {
   try {
     await database.execute("ALTER TABLE tasks ADD COLUMN category_id INTEGER");
   } catch (e) { /* ignore if column exists */ }
+  try {
+    await database.execute("ALTER TABLE sessions ADD COLUMN mood TEXT");
+  } catch (e) { /* ignore if column exists */ }
+  try {
+    await database.execute("ALTER TABLE sessions ADD COLUMN notes TEXT");
+  } catch (e) { /* ignore if column exists */ }
 }
 
 export async function getTasks() {
@@ -172,7 +178,7 @@ export async function addSession(
 ) {
   const database = await getDb();
   await database.execute(
-    "INSERT INTO sessions (task_id, phase, duration_sec, completed, ended_at) VALUES ($1, $2, $3, $4, CURRENT_TIMESTAMP)",
+    "INSERT INTO sessions (task_id, phase, duration_sec, completed, ended_at) VALUES ($1, $2, $3, $4, datetime('now', 'localtime'))",
     [taskId, phase, durationSec, completed ? 1 : 0]
   );
 }
@@ -185,21 +191,27 @@ export async function startSession(
 ): Promise<number> {
   const database = await getDb();
   const result = await database.execute(
-    "INSERT INTO sessions (task_id, phase, started_at, duration_sec, completed, category_id, intention) VALUES ($1, $2, CURRENT_TIMESTAMP, 0, 0, $3, $4) RETURNING id",
+    "INSERT INTO sessions (task_id, phase, started_at, duration_sec, completed, category_id, intention) VALUES ($1, $2, datetime('now', 'localtime'), 0, 0, $3, $4) RETURNING id",
     [taskId, phase, categoryId || null, intention || null]
   );
   return result.lastInsertId as number;
 }
 
-export async function finishSession(sessionId: number): Promise<void> {
+export async function finishSession(
+  sessionId: number,
+  mood?: string,
+  notes?: string,
+): Promise<void> {
   const database = await getDb();
   await database.execute(`
     UPDATE sessions 
-    SET ended_at = CURRENT_TIMESTAMP, 
-        duration_sec = CAST((julianday(CURRENT_TIMESTAMP) - julianday(started_at)) * 86400 AS INTEGER),
-        completed = 1
+    SET ended_at = datetime('now', 'localtime'), 
+        duration_sec = CAST((julianday(datetime('now', 'localtime')) - julianday(started_at)) * 86400 AS INTEGER),
+        completed = 1,
+        mood = $2,
+        notes = $3
     WHERE id = $1
-  `, [sessionId]);
+  `, [sessionId, mood || null, notes || null]);
 }
 
 export async function abandonSession(sessionId: number): Promise<void> {
@@ -237,7 +249,7 @@ export async function getTodaySessions(): Promise<{
 }[]> {
   const database = await getDb();
   return database.select(
-    "SELECT * FROM sessions WHERE date(started_at) = date('now') AND completed = 1 ORDER BY started_at DESC"
+    "SELECT * FROM sessions WHERE date(started_at) = date('now', 'localtime') AND completed = 1 ORDER BY started_at DESC"
   );
 }
 
@@ -319,7 +331,7 @@ export async function getCategoryBreakdown(): Promise<CategoryBreakdown[]> {
       COUNT(*) AS session_count
     FROM sessions s
     LEFT JOIN categories c ON s.category_id = c.id
-    WHERE date(s.started_at) = date('now') AND s.completed = 1
+    WHERE date(s.started_at) = date('now', 'localtime') AND s.completed = 1
     GROUP BY s.category_id, s.intention, c.name, c.color
     ORDER BY total_seconds DESC
   `);
@@ -328,7 +340,7 @@ export async function getCategoryBreakdown(): Promise<CategoryBreakdown[]> {
 export async function getTaskTimeToday(taskId: number): Promise<number> {
   const database = await getDb();
   const rows = await database.select<{ total: number }[]>(
-    "SELECT COALESCE(SUM(duration_sec), 0) AS total FROM sessions WHERE task_id = $1 AND date(started_at) = date('now') AND completed = 1",
+    "SELECT COALESCE(SUM(duration_sec), 0) AS total FROM sessions WHERE task_id = $1 AND date(started_at) = date('now', 'localtime') AND completed = 1",
     [taskId]
   );
   return rows[0]?.total ?? 0;
@@ -354,7 +366,7 @@ export async function getWeeklyData(): Promise<DayData[]> {
       COALESCE(SUM(duration_sec), 0) AS total_seconds,
       COUNT(*) AS session_count
     FROM sessions
-    WHERE date(started_at) >= date('now', '-6 days') AND completed = 1
+    WHERE date(started_at) >= date('now', 'localtime', '-6 days') AND completed = 1
     GROUP BY date(started_at)
     ORDER BY date(started_at) ASC
   `);
@@ -394,9 +406,9 @@ export async function getCurrentStreak(): Promise<number> {
   try {
     const rows = await database.select<{ streak: number }[]>(`
       WITH RECURSIVE countdown(d) AS (
-        SELECT date('now')
+        SELECT date('now', 'localtime')
         UNION ALL
-        SELECT date(d, '-1 day') FROM countdown WHERE d > date('now', '-365 days')
+        SELECT date(d, '-1 day') FROM countdown WHERE d > date('now', 'localtime', '-365 days')
       )
       SELECT COUNT(*) as streak FROM countdown c
       WHERE EXISTS (
@@ -404,12 +416,12 @@ export async function getCurrentStreak(): Promise<number> {
         WHERE date(started_at) = c.d AND completed = 1
       )
       AND c.d <= (
-        SELECT COALESCE(MIN(date(started_at)), date('now')) 
+        SELECT COALESCE(MIN(date(started_at)), date('now', 'localtime')) 
         FROM countdown c2 
         WHERE NOT EXISTS (
           SELECT 1 FROM sessions 
           WHERE date(started_at) = c2.d AND completed = 1
-        ) AND c2.d < date('now')
+        ) AND c2.d < date('now', 'localtime')
       )
     `);
     return rows[0]?.streak ?? 0;
@@ -440,7 +452,7 @@ export async function getBestStreak(): Promise<number> {
       WITH RECURSIVE dates(d) AS (
         SELECT MIN(date(started_at)) FROM sessions WHERE completed = 1
         UNION ALL
-        SELECT date(d, '+1 day') FROM dates WHERE d < date('now')
+        SELECT date(d, '+1 day') FROM dates WHERE d < date('now', 'localtime')
       ),
       has_session(d, s) AS (
         SELECT d, CASE WHEN EXISTS (
