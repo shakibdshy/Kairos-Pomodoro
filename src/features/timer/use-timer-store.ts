@@ -26,6 +26,7 @@ interface TimerStore {
   setPhase: (phase: TimerPhase) => void;
   setActiveTask: (taskId: number | null) => void;
   setDurations: (work: number, short: number, long: number) => void;
+  adjustDuration: (minutes: number) => void;
 }
 
 let durations = {
@@ -187,5 +188,18 @@ export const useTimerStore = create<TimerStore>((set, get) => ({
         phase === "work" ? work : phase === "short_break" ? short : long;
       set({ secondsRemaining: dur, totalSeconds: dur });
     }
+  },
+
+  adjustDuration: (minutes: number) => {
+    const { status } = get();
+    if (status !== "idle") return;
+
+    const { phase } = get();
+    const key =
+      phase === "work" ? "work" : phase === "short_break" ? "short" : "long";
+    const currentDuration = durations[key];
+    const newDuration = Math.max(60, currentDuration + minutes * 60);
+    durations[key] = newDuration;
+    set({ secondsRemaining: newDuration, totalSeconds: newDuration });
   },
 }));

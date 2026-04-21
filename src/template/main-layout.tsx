@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import type { Route } from "@/app/router";
 import {
   Timer,
@@ -9,6 +9,9 @@ import {
   Settings,
   Calendar,
   StickyNote,
+  PanelLeftClose,
+  PanelLeftOpen,
+  Play,
 } from "lucide-react";
 import { cn } from "@/lib/cn";
 
@@ -23,6 +26,8 @@ export function MainLayout({
   onNavigate,
   currentRoute,
 }: MainLayoutProps) {
+  const [isCollapsed, setIsCollapsed] = useState(false);
+
   const navItems = [
     { id: "timer", label: "TIMER", icon: Timer },
     { id: "tasks", label: "TASKS", icon: CheckSquare },
@@ -35,19 +40,49 @@ export function MainLayout({
   return (
     <div className="flex h-screen bg-sahara-bg text-sahara-text font-sans overflow-hidden">
       {/* Sidebar */}
-      <aside className="w-64 border-r border-sahara-border/30 flex flex-col py-8 bg-sahara-bg/50 backdrop-blur-sm">
+      <aside
+        className={cn(
+          "border-r border-sahara-border/30 flex flex-col py-8 bg-sahara-bg/50 backdrop-blur-sm transition-all duration-300 ease-in-out relative z-10",
+          isCollapsed ? "w-20" : "w-64",
+        )}
+      >
+        {/* Toggle Button */}
+        <button
+          onClick={() => setIsCollapsed(!isCollapsed)}
+          className="absolute -right-3.5 top-20 w-7 h-7 bg-white border border-sahara-border/30 rounded-full flex items-center justify-center text-sahara-text-muted hover:text-sahara-primary hover:border-sahara-primary/40 hover:shadow-md transition-all shadow-sm z-50 cursor-pointer"
+        >
+          {isCollapsed ? (
+            <PanelLeftOpen className="w-3.5 h-3.5" />
+          ) : (
+            <PanelLeftClose className="w-3.5 h-3.5" />
+          )}
+        </button>
+
         {/* Brand */}
-        <div className="px-8 mb-12">
-          <h1 className="font-serif text-2xl tracking-tight text-sahara-primary">
-            Deep Work
-          </h1>
-          <p className="text-[10px] tracking-[0.2em] font-bold text-sahara-text-muted mt-1 uppercase">
-            Stay Present
-          </p>
+        <div
+          className={cn(
+            "mb-12 transition-all duration-300",
+            isCollapsed ? "px-4 flex justify-center" : "px-8",
+          )}
+        >
+          {isCollapsed ? (
+            <div className="w-10 h-10 rounded-full border-2 border-sahara-primary flex items-center justify-center font-serif text-xl font-bold text-sahara-primary shadow-sm bg-white">
+              K
+            </div>
+          ) : (
+            <>
+              <h1 className="font-serif text-2xl tracking-tight text-sahara-primary">
+                Kairos
+              </h1>
+              <p className="text-[10px] tracking-[0.2em] font-bold text-sahara-text-muted mt-1 uppercase whitespace-nowrap">
+                Stay Present
+              </p>
+            </>
+          )}
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 px-4 space-y-1">
+        <nav className="flex-1 px-3 space-y-1">
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = currentRoute === item.id;
@@ -55,8 +90,10 @@ export function MainLayout({
               <button
                 key={item.id}
                 onClick={() => onNavigate?.(item.id as Route)}
+                title={isCollapsed ? item.label : undefined}
                 className={cn(
-                  "w-full flex items-center gap-4 px-4 py-3 rounded-xl transition-all duration-200 group",
+                  "w-full flex items-center rounded-xl transition-all duration-200 group overflow-hidden",
+                  isCollapsed ? "justify-center p-3" : "gap-4 px-4 py-3",
                   isActive
                     ? "bg-sahara-primary-light text-sahara-primary font-bold shadow-sm shadow-sahara-primary/5"
                     : "text-sahara-text-secondary hover:bg-sahara-card hover:text-sahara-text",
@@ -64,50 +101,87 @@ export function MainLayout({
               >
                 <Icon
                   className={cn(
-                    "w-5 h-5 transition-colors",
+                    "w-5 h-5 shrink-0 transition-colors",
                     isActive
                       ? "text-sahara-primary"
                       : "text-sahara-text-muted group-hover:text-sahara-text-secondary",
                   )}
                 />
-                <span className="text-xs tracking-widest font-bold">
-                  {item.label}
-                </span>
+                {!isCollapsed && (
+                  <span className="text-xs tracking-widest font-bold whitespace-nowrap">
+                    {item.label}
+                  </span>
+                )}
               </button>
             );
           })}
         </nav>
 
         {/* Start Session CTA */}
-        <div className="px-4 mb-8">
+        <div className="px-3 mb-8">
           <button
             onClick={() => onNavigate?.("timer")}
-            className="w-full bg-sahara-primary text-white py-4 rounded-xl font-bold text-xs tracking-[0.15em] hover:bg-sahara-primary/90 transition-colors shadow-lg shadow-sahara-primary/20"
+            title={isCollapsed ? "START SESSION" : undefined}
+            className={cn(
+              "w-full bg-sahara-primary text-white rounded-xl font-bold text-xs tracking-[0.15em] hover:bg-sahara-primary/90 transition-all shadow-lg shadow-sahara-primary/20 flex items-center justify-center",
+              isCollapsed ? "h-12" : "py-4 gap-3",
+            )}
           >
-            START SESSION
+            <Play
+              className={cn("w-4 h-4 fill-current", !isCollapsed && "ml-1")}
+            />
+            {!isCollapsed && <span>START SESSION</span>}
           </button>
         </div>
 
         {/* Bottom Actions */}
-        <div className="px-4 space-y-1 border-t border-sahara-border/20 pt-6">
+        <div className="px-3 space-y-1 border-t border-sahara-border/20 pt-6">
           <button
             onClick={() => onNavigate?.("onboarding")}
-            className="w-full flex items-center gap-4 px-4 py-3 text-sahara-text-muted hover:text-sahara-text-secondary transition-colors"
+            title={isCollapsed ? "HELP" : undefined}
+            className={cn(
+              "w-full flex items-center transition-colors group",
+              isCollapsed
+                ? "justify-center p-3"
+                : "gap-4 px-4 py-3 text-sahara-text-muted hover:text-sahara-text-secondary",
+            )}
           >
-            <HelpCircle className="w-5 h-5" />
-            <span className="text-xs tracking-widest font-bold">HELP</span>
+            <HelpCircle
+              className={cn(
+                "w-5 h-5 shrink-0",
+                isCollapsed
+                  ? "text-sahara-text-muted group-hover:text-sahara-text-secondary"
+                  : "",
+              )}
+            />
+            {!isCollapsed && (
+              <span className="text-xs tracking-widest font-bold">HELP</span>
+            )}
           </button>
           <button
             onClick={() => onNavigate?.("settings")}
+            title={isCollapsed ? "SETTINGS" : undefined}
             className={cn(
-              "w-full flex items-center gap-4 px-4 py-3 rounded-xl transition-all duration-200 group",
+              "w-full flex items-center rounded-xl transition-all duration-200 group",
+              isCollapsed ? "justify-center p-3" : "gap-4 px-4 py-3",
               currentRoute === "settings"
                 ? "bg-sahara-primary-light text-sahara-primary font-bold"
                 : "text-sahara-text-muted hover:text-sahara-text-secondary",
             )}
           >
-            <Settings className="w-5 h-5" />
-            <span className="text-xs tracking-widest font-bold">SETTINGS</span>
+            <Settings
+              className={cn(
+                "w-5 h-5 shrink-0",
+                currentRoute === "settings"
+                  ? "text-sahara-primary"
+                  : "text-sahara-text-muted group-hover:text-sahara-text-secondary",
+              )}
+            />
+            {!isCollapsed && (
+              <span className="text-xs tracking-widest font-bold">
+                SETTINGS
+              </span>
+            )}
           </button>
         </div>
       </aside>

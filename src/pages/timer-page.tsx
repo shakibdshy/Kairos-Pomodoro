@@ -12,7 +12,7 @@ interface TimerPageProps {
 export function TimerPage({ onNavigate, currentRoute }: TimerPageProps) {
   return (
     <MainLayout onNavigate={onNavigate} currentRoute={currentRoute}>
-      <div className="flex flex-col items-center gap-8 px-12 py-12 max-w-4xl mx-auto">
+      <div className="flex flex-col items-center gap-8 px-12 py-6 max-w-4xl mx-auto">
         <TimerControls />
         <div className="w-full border-t border-sahara-border/30 pt-8">
           <Text variant="h3" className="mb-4 font-serif text-2xl">

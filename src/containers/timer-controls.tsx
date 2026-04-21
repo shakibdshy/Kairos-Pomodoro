@@ -1,6 +1,6 @@
 import { useTimerStore } from "@/features/timer/use-timer-store";
 import { TimerDisplay } from "@/base/timer-display";
-import { RotateCcw, Play, Pause, Minus } from "lucide-react";
+import { RotateCcw, Play, Pause, Plus, Minus } from "lucide-react";
 import { cn } from "@/lib/cn";
 import type { TimerPhase } from "@/features/timer/timer-types";
 
@@ -14,6 +14,7 @@ export function TimerControls() {
   const resume = useTimerStore((s) => s.resume);
   const reset = useTimerStore((s) => s.reset);
   const setPhase = useTimerStore((s) => s.setPhase);
+  const adjustDuration = useTimerStore((s) => s.adjustDuration);
 
   const phases: { id: TimerPhase; label: string }[] = [
     { id: "work", label: "Work" },
@@ -47,12 +48,18 @@ export function TimerControls() {
         phase={phase}
       />
 
-      <div className="flex items-center gap-8">
+      <div className="flex items-center gap-6">
         <button
-          onClick={reset}
-          className="p-4 rounded-full border border-sahara-border/30 text-sahara-text-secondary hover:bg-sahara-card transition-colors"
+          onClick={() => adjustDuration(-5)}
+          disabled={status !== "idle"}
+          className={cn(
+            "p-4 rounded-full border transition-all",
+            status === "idle"
+              ? "border-sahara-border/30 text-sahara-text-secondary hover:bg-sahara-card hover:border-sahara-primary/40 hover:text-sahara-primary cursor-pointer"
+              : "border-sahara-border/10 text-sahara-text-muted/50 cursor-not-allowed"
+          )}
         >
-          <RotateCcw className="w-5 h-5" />
+          <Minus className="w-5 h-5" />
         </button>
 
         {status === "running" ? (
@@ -73,8 +80,26 @@ export function TimerControls() {
           </button>
         )}
 
-        <button className="p-4 rounded-full border border-sahara-border/30 text-sahara-text-secondary hover:bg-sahara-card transition-colors">
-          <Minus className="w-5 h-5" />
+        <button
+          onClick={() => adjustDuration(5)}
+          disabled={status !== "idle"}
+          className={cn(
+            "p-4 rounded-full border transition-all",
+            status === "idle"
+              ? "border-sahara-border/30 text-sahara-text-secondary hover:bg-sahara-card hover:border-sahara-primary/40 hover:text-sahara-primary cursor-pointer"
+              : "border-sahara-border/10 text-sahara-text-muted/50 cursor-not-allowed"
+          )}
+        >
+          <Plus className="w-5 h-5" />
+        </button>
+
+        <div className="h-8 w-px bg-sahara-border/20 mx-2" />
+
+        <button
+          onClick={reset}
+          className="p-4 rounded-full border border-sahara-border/30 text-sahara-text-secondary hover:bg-sahara-card transition-colors"
+        >
+          <RotateCcw className="w-5 h-5" />
         </button>
       </div>
     </div>
