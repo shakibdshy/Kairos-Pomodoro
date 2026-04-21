@@ -110,6 +110,61 @@ export async function addSession(
   );
 }
 
+export async function startSession(taskId: number | null, phase: string): Promise<number> {
+  const database = await getDb();
+  const result = await database.execute(
+    "INSERT INTO sessions (task_id, phase, started_at, duration_sec, completed) VALUES ($1, $2, CURRENT_TIMESTAMP, 0, 0) RETURNING id",
+    [taskId, phase]
+  );
+  return result.lastInsertId as number;
+}
+
+export async function finishSession(sessionId: number): Promise<void> {
+  const database = await getDb();
+  await database.execute(`
+    UPDATE sessions 
+    SET ended_at = CURRENT_TIMESTAMP, 
+        duration_sec = CAST((julianday(CURRENT_TIMESTAMP) - julianday(started_at)) * 86400 AS INTEGER),
+        completed = 1
+    WHERE id = $1
+  `, [sessionId]);
+}
+
+export async function abandonSession(sessionId: number): Promise<void> {
+  const database = await getDb();
+  await database.execute("DELETE FROM sessions WHERE id = $1 AND completed = 0", [sessionId]);
+}
+
+export async function getSessions(): Promise<{
+  id: number;
+  task_id: number | null;
+  phase: string;
+  started_at: string;
+  ended_at: string | null;
+  duration_sec: number;
+  completed: number;
+}[]> {
+  const database = await getDb();
+  return database.select(
+    "SELECT * FROM sessions ORDER BY started_at DESC"
+  );
+}
+
+export async function getTodaySessions(): Promise<{
+  id: number;
+  task_id: number | null;
+  phase: string;
+  started_at: string;
+  ended_at: string | null;
+  duration_sec: number;
+  completed: number;
+}[]> {
+  const database = await getDb();
+  return database.select(
+    "SELECT * FROM sessions WHERE date(started_at) = date('now') AND completed = 1 ORDER BY started_at DESC"
+  );
+}
+
 export async function getSetting(key: string): Promise<string | null> {
   const database = await getDb();
   const rows = await database.select<{ value: string }[]>(

@@ -7,7 +7,13 @@ import {
   DEFAULT_LONG_BREAK_SEC,
   POMOS_BEFORE_LONG_BREAK,
 } from "@/lib/constants";
-import { addSession, incrementTaskPomos } from "@/lib/db";
+import {
+  addSession,
+  incrementTaskPomos,
+  startSession as dbStartSession,
+  finishSession as dbFinishSession,
+  abandonSession as dbAbandonSession,
+} from "@/lib/db";
 
 interface TimerStore {
   phase: TimerPhase;
@@ -16,6 +22,7 @@ interface TimerStore {
   totalSeconds: number;
   completedPomos: number;
   activeTaskId: number | null;
+  currentSessionId: number | null;
   worker: Worker | null;
 
   start: (duration?: number) => void;
@@ -27,6 +34,8 @@ interface TimerStore {
   setActiveTask: (taskId: number | null) => void;
   setDurations: (work: number, short: number, long: number) => void;
   adjustDuration: (minutes: number) => void;
+  finishSession: () => Promise<void>;
+  abandonSession: () => Promise<void>;
 }
 
 let durations = {
@@ -42,13 +51,17 @@ export const useTimerStore = create<TimerStore>((set, get) => ({
   totalSeconds: durations.work,
   completedPomos: 0,
   activeTaskId: null,
+  currentSessionId: null,
   worker: null,
 
-  start: (duration?: number) => {
+  start: async (duration?: number) => {
     const state = get();
     state.worker?.terminate();
 
-    const secs = duration ?? durations.work;
+    const secs = duration ?? durations[state.phase === "work" ? "work" : state.phase === "short_break" ? "short" : "long"];
+    
+    const sessionId = await dbStartSession(state.activeTaskId, state.phase);
+    
     const worker = createTimerWorker();
 
     worker.onmessage = (e: MessageEvent) => {
@@ -67,6 +80,7 @@ export const useTimerStore = create<TimerStore>((set, get) => ({
       status: "running",
       secondsRemaining: secs,
       totalSeconds: secs,
+      currentSessionId: sessionId,
       worker,
     });
   },
@@ -201,5 +215,48 @@ export const useTimerStore = create<TimerStore>((set, get) => ({
     const newDuration = Math.max(60, currentDuration + minutes * 60);
     durations[key] = newDuration;
     set({ secondsRemaining: newDuration, totalSeconds: newDuration });
+  },
+
+  finishSession: async () => {
+    const { worker, currentSessionId, activeTaskId, phase } = get();
+    worker?.terminate();
+
+    if (currentSessionId) {
+      await dbFinishSession(currentSessionId);
+      
+      if (phase === "work" && activeTaskId) {
+        incrementTaskPomos(activeTaskId);
+      }
+    }
+
+    set({
+      status: "idle",
+      currentSessionId: null,
+      worker: null,
+      completedPomos: get().completedPomos + (phase === "work" ? 1 : 0),
+    });
+  },
+
+  abandonSession: async () => {
+    const { worker, currentSessionId } = get();
+    worker?.terminate();
+
+    if (currentSessionId) {
+      await dbAbandonSession(currentSessionId);
+    }
+
+    const phase = get().phase;
+    const duration =
+      durations[
+        phase === "work" ? "work" : phase === "short_break" ? "short" : "long"
+      ];
+
+    set({
+      status: "idle",
+      secondsRemaining: duration,
+      totalSeconds: duration,
+      currentSessionId: null,
+      worker: null,
+    });
   },
 }));

@@ -1,6 +1,6 @@
 import { useTimerStore } from "@/features/timer/use-timer-store";
 import { TimerDisplay } from "@/base/timer-display";
-import { RotateCcw, Play, Pause, Plus, Minus } from "lucide-react";
+import { RotateCcw, Play, Pause, Plus, Minus, CheckCircle2, XCircle } from "lucide-react";
 import { cn } from "@/lib/cn";
 import type { TimerPhase } from "@/features/timer/timer-types";
 
@@ -15,6 +15,8 @@ export function TimerControls() {
   const reset = useTimerStore((s) => s.reset);
   const setPhase = useTimerStore((s) => s.setPhase);
   const adjustDuration = useTimerStore((s) => s.adjustDuration);
+  const finishSession = useTimerStore((s) => s.finishSession);
+  const abandonSession = useTimerStore((s) => s.abandonSession);
 
   const phases: { id: TimerPhase; label: string }[] = [
     { id: "work", label: "Work" },
@@ -48,59 +50,94 @@ export function TimerControls() {
         phase={phase}
       />
 
-      <div className="flex items-center gap-6">
-        <button
-          onClick={() => adjustDuration(-5)}
-          disabled={status !== "idle"}
-          className={cn(
-            "p-4 rounded-full border transition-all",
-            status === "idle"
-              ? "border-sahara-border/30 text-sahara-text-secondary hover:bg-sahara-card hover:border-sahara-primary/40 hover:text-sahara-primary cursor-pointer"
-              : "border-sahara-border/10 text-sahara-text-muted/50 cursor-not-allowed"
-          )}
-        >
-          <Minus className="w-5 h-5" />
-        </button>
+      <div className="flex items-center gap-4">
+        {status === "idle" ? (
+          <>
+            <button
+              onClick={() => adjustDuration(-5)}
+              className={cn(
+                "p-3 rounded-full border transition-all",
+                "border-sahara-border/30 text-sahara-text-secondary hover:bg-sahara-card hover:border-sahara-primary/40 hover:text-sahara-primary cursor-pointer"
+              )}
+            >
+              <Minus className="w-4 h-4" />
+            </button>
 
-        {status === "running" ? (
-          <button
-            onClick={pause}
-            className="flex items-center gap-3 bg-sahara-primary text-white px-8 py-4 rounded-full font-bold text-xs tracking-widest hover:bg-sahara-primary/90 transition-colors shadow-lg shadow-sahara-primary/20"
-          >
-            <Pause className="w-4 h-4 fill-current" />
-            PAUSE FOCUS
-          </button>
+            <button
+              onClick={() => start()}
+              className="flex items-center gap-2 bg-sahara-primary text-white px-8 py-3.5 rounded-full font-bold text-xs tracking-widest hover:bg-sahara-primary/90 transition-colors shadow-lg shadow-sahara-primary/20"
+            >
+              <Play className="w-4 h-4 fill-current ml-0.5" />
+              START FOCUS
+            </button>
+
+            <button
+              onClick={() => adjustDuration(5)}
+              className={cn(
+                "p-3 rounded-full border transition-all",
+                "border-sahara-border/30 text-sahara-text-secondary hover:bg-sahara-card hover:border-sahara-primary/40 hover:text-sahara-primary cursor-pointer"
+              )}
+            >
+              <Plus className="w-4 h-4" />
+            </button>
+
+            <div className="h-8 w-px bg-sahara-border/20 mx-1" />
+
+            <button
+              onClick={reset}
+              className="p-3 rounded-full border border-sahara-border/30 text-sahara-text-secondary hover:bg-sahara-card transition-colors"
+            >
+              <RotateCcw className="w-4 h-4" />
+            </button>
+          </>
         ) : (
-          <button
-            onClick={status === "paused" ? resume : () => start()}
-            className="flex items-center gap-3 bg-sahara-primary text-white px-8 py-4 rounded-full font-bold text-xs tracking-widest hover:bg-sahara-primary/90 transition-colors shadow-lg shadow-sahara-primary/20"
-          >
-            <Play className="w-4 h-4 fill-current ml-1" />
-            START FOCUS
-          </button>
+          <>
+            {status === "running" ? (
+              <button
+                onClick={pause}
+                className="flex items-center gap-2 bg-sahara-primary text-white px-6 py-3 rounded-full font-bold text-xs tracking-widest hover:bg-sahara-primary/90 transition-colors shadow-lg shadow-sahara-primary/20"
+              >
+                <Pause className="w-4 h-4 fill-current" />
+                PAUSE
+              </button>
+            ) : (
+              <button
+                onClick={resume}
+                className="flex items-center gap-2 bg-sahara-primary text-white px-6 py-3 rounded-full font-bold text-xs tracking-widest hover:bg-sahara-primary/90 transition-colors shadow-lg shadow-sahara-primary/20"
+              >
+                <Play className="w-4 h-4 fill-current ml-0.5" />
+                RESUME
+              </button>
+            )}
+
+            <div className="h-8 w-px bg-sahara-border/20 mx-1" />
+
+            <button
+              onClick={() => finishSession()}
+              className="flex items-center gap-1.5 px-4 py-3 rounded-full font-bold text-[10px] tracking-wider uppercase border border-green-500/30 text-green-600 bg-green-50 hover:bg-green-100 transition-colors"
+            >
+              <CheckCircle2 className="w-4 h-4" />
+              Finish
+            </button>
+
+            <button
+              onClick={() => abandonSession()}
+              className="flex items-center gap-1.5 px-4 py-3 rounded-full font-bold text-[10px] tracking-wider uppercase border border-red-300/50 text-red-500 bg-red-50/50 hover:bg-red-100/80 transition-colors"
+            >
+              <XCircle className="w-4 h-4" />
+              Abandon
+            </button>
+
+            <div className="h-8 w-px bg-sahara-border/20 mx-1" />
+
+            <button
+              onClick={reset}
+              className="p-3 rounded-full border border-sahara-border/30 text-sahara-text-secondary hover:bg-sahara-card transition-colors"
+            >
+              <RotateCcw className="w-4 h-4" />
+            </button>
+          </>
         )}
-
-        <button
-          onClick={() => adjustDuration(5)}
-          disabled={status !== "idle"}
-          className={cn(
-            "p-4 rounded-full border transition-all",
-            status === "idle"
-              ? "border-sahara-border/30 text-sahara-text-secondary hover:bg-sahara-card hover:border-sahara-primary/40 hover:text-sahara-primary cursor-pointer"
-              : "border-sahara-border/10 text-sahara-text-muted/50 cursor-not-allowed"
-          )}
-        >
-          <Plus className="w-5 h-5" />
-        </button>
-
-        <div className="h-8 w-px bg-sahara-border/20 mx-2" />
-
-        <button
-          onClick={reset}
-          className="p-4 rounded-full border border-sahara-border/30 text-sahara-text-secondary hover:bg-sahara-card transition-colors"
-        >
-          <RotateCcw className="w-5 h-5" />
-        </button>
       </div>
     </div>
   );
