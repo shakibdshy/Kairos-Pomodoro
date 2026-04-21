@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { Text } from "@/ui/text";
+import { Text } from "@/components/ui/text";
 import { useTaskStore } from "@/features/tasks/use-task-store";
 import { useTimerStore } from "@/features/timer/use-timer-store";
 import {
@@ -9,9 +9,9 @@ import {
 } from "@/lib/db";
 import type { Session } from "@/lib/session-utils";
 import type { CategoryBreakdown as CategoryBreakdownType } from "@/lib/db";
-import { FocusSummaryBar } from "@/base/focus-summary-bar";
-import { CategoryBreakdown as CategoryBars } from "@/base/category-breakdown";
-import { ActiveTaskCard } from "@/base/active-task-card";
+import { FocusSummaryBar } from "@/components/base/focus-summary-bar";
+import { CategoryBreakdown as CategoryBars } from "@/components/base/category-breakdown";
+import { ActiveTaskCard } from "@/components/base/active-task-card";
 
 export function TodayFocus() {
   const [sessions, setSessions] = useState<Session[]>([]);

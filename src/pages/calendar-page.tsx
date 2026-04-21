@@ -1,4 +1,4 @@
-import { MainLayout } from "@/template/main-layout";
+import { MainLayout } from "@/components/template/main-layout";
 import { ChevronLeft, ChevronRight, Plus, Clock } from "lucide-react";
 import type { Route } from "@/app/router";
 import { cn } from "@/lib/cn";

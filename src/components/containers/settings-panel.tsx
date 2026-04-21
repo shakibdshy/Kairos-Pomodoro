@@ -1,8 +1,8 @@
 import { useSettingsStore } from "@/features/settings/use-settings-store";
 import { useTimerStore } from "@/features/timer/use-timer-store";
-import { SliderField } from "@/base/slider-field";
-import { Switch } from "@/ui/switch";
-import { Text } from "@/ui/text";
+import { SliderField } from "@/components/base/slider-field";
+import { Switch } from "@/components/ui/switch";
+import { Text } from "@/components/ui/text";
 
 export function SettingsPanel() {
   const settings = useSettingsStore((s) => s.settings);

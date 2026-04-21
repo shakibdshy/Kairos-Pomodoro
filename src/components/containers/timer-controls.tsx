@@ -1,5 +1,5 @@
 import { useTimerStore } from "@/features/timer/use-timer-store";
-import { TimerDisplay } from "@/base/timer-display";
+import { TimerDisplay } from "@/components/base/timer-display";
 import { IntentionSelector } from "@/components/intention-selector";
 import { RotateCcw, Play, Pause, Plus, Minus, CheckCircle2, XCircle } from "lucide-react";
 import { cn } from "@/lib/cn";

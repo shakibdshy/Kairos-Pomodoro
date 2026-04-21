@@ -1,8 +1,8 @@
-import { MainLayout } from "@/template/main-layout";
-import { TimerControls } from "@/containers/timer-controls";
-import { TodayFocus } from "@/containers/today-focus";
-import { TodaySessions } from "@/containers/today-sessions";
-import { Text } from "@/ui/text";
+import { MainLayout } from "@/components/template/main-layout";
+import { TimerControls } from "@/components/containers/timer-controls";
+import { TodayFocus } from "@/components/containers/today-focus";
+import { TodaySessions } from "@/components/containers/today-sessions";
+import { Text } from "@/components/ui/text";
 import type { Route } from "@/app/router";
 
 interface TimerPageProps {

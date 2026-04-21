@@ -1,4 +1,4 @@
-import { MainLayout } from "@/template/main-layout";
+import { MainLayout } from "@/components/template/main-layout";
 import {
   Bell,
   Moon,

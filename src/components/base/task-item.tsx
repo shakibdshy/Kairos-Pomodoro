@@ -1,4 +1,4 @@
-import { Text } from "@/ui/text";
+import { Text } from "@/components/ui/text";
 import type { Task } from "@/features/tasks/task-types";
 
 interface TaskItemProps {

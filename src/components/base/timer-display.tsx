@@ -1,4 +1,4 @@
-import { Text } from "@/ui/text";
+import { Text } from "@/components/ui/text";
 import { formatSeconds } from "@/lib/time";
 import type { TimerPhase } from "@/features/timer/timer-types";
 

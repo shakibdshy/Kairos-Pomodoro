@@ -1,15 +1,15 @@
 import { useState, useEffect, useCallback } from "react";
-import { Text } from "@/ui/text";
+import { Text } from "@/components/ui/text";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { getTodaySessions } from "@/lib/db";
 import {
   type Session,
   formatTotalTime,
 } from "@/lib/session-utils";
-import { SessionCard } from "@/base/session-card";
-import { SessionStatsCards } from "@/base/session-stats-cards";
-import { TopCategoryBadge } from "@/base/top-category-badge";
-import { SessionsEmptyState } from "@/base/sessions-empty-state";
+import { SessionCard } from "@/components/base/session-card";
+import { SessionStatsCards } from "@/components/base/session-stats-cards";
+import { TopCategoryBadge } from "@/components/base/top-category-badge";
+import { SessionsEmptyState } from "@/components/base/sessions-empty-state";
 
 export function TodaySessions() {
   const [sessions, setSessions] = useState<Session[]>([]);

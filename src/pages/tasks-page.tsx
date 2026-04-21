@@ -1,5 +1,5 @@
-import { MainLayout } from "@/template/main-layout";
-import { TasksList } from "@/containers/tasks-list";
+import { MainLayout } from "@/components/template/main-layout";
+import { TasksList } from "@/components/containers/tasks-list";
 import type { Route } from "@/app/router";
 
 interface TasksPageProps {

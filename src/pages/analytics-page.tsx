@@ -1,7 +1,7 @@
-import { MainLayout } from "@/template/main-layout";
+import { MainLayout } from "@/components/template/main-layout";
 import { Download } from "lucide-react";
 import type { Route } from "@/app/router";
-import { AnalyticsDashboard } from "@/containers/analytics";
+import { AnalyticsDashboard } from "@/components/containers/analytics";
 
 interface AnalyticsPageProps {
   onNavigate: (route: Route) => void;

@@ -1,5 +1,5 @@
 import { useTimerStore } from "@/features/timer/use-timer-store";
-import { Text } from "@/ui/text";
+import { Text } from "@/components/ui/text";
 import { formatSeconds, getPhaseColor } from "@/lib/time";
 
 export function MiniTimer() {

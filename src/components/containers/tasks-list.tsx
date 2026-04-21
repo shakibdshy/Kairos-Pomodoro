@@ -1,11 +1,11 @@
 import { useState, useEffect, useCallback } from "react";
 import { Plus, Target } from "lucide-react";
-import { Text } from "@/ui/text";
+import { Text } from "@/components/ui/text";
 import { useTaskStore } from "@/features/tasks/use-task-store";
 import { useTimerStore } from "@/features/timer/use-timer-store";
 import type { Task } from "@/features/tasks/task-types";
-import { TaskCard } from "@/base/task-card";
-import { AddTaskModal } from "@/base/add-task-modal";
+import { TaskCard } from "@/components/base/task-card";
+import { AddTaskModal } from "@/components/base/add-task-modal";
 
 export function TasksList() {
   const [showAddModal, setShowAddModal] = useState(false);

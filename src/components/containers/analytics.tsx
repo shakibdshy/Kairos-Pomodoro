@@ -16,10 +16,10 @@ import {
 } from "@/lib/db";
 import type { DayData, CategoryBreakdown } from "@/lib/db";
 import { formatTotalTime, formatDuration } from "@/lib/session-utils";
-import { StatCard } from "@/base/stat-card";
-import { WeeklyChart } from "@/base/weekly-chart";
-import { BadgeCard, computeBadges } from "@/base/badge-card";
-import { AnalyticsCategoryBreakdown } from "@/base/analytics-category-breakdown";
+import { StatCard } from "@/components/base/stat-card";
+import { WeeklyChart } from "@/components/base/weekly-chart";
+import { BadgeCard, computeBadges } from "@/components/base/badge-card";
+import { AnalyticsCategoryBreakdown } from "@/components/base/analytics-category-breakdown";
 
 const EMPTY_STATS = {
   total_focus_seconds: 0,
