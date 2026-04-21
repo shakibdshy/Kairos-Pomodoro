@@ -69,7 +69,7 @@ export function CalendarGrid({
   const currentDayIndex = weekDays.findIndex(isToday);
 
   return (
-    <div className="bg-white border border-sahara-border/20 rounded-2xl overflow-hidden shadow-sm flex flex-col">
+    <div className="bg-sahara-surface border border-sahara-border/20 rounded-2xl overflow-hidden shadow-sm flex flex-col">
       {/* Day Headers */}
       <div className="grid border-b border-sahara-border/10" style={{ gridTemplateColumns: `56px repeat(${weekDays.length}, 1fr)` }}>
         <div className="p-3 border-r border-sahara-border/10" />
@@ -162,7 +162,7 @@ export function CalendarGrid({
                 {/* Day total badge (bottom-right of column) */}
                 {dayTotalSec > 0 && (
                   <div className="absolute bottom-1 right-1 z-20">
-                    <span className="inline-flex items-center px-1.5 py-0.5 rounded-md text-[8px] font-bold bg-white/90 backdrop-blur-sm border border-sahara-border/15 text-sahara-text-secondary tabular-nums shadow-xs">
+                    <span className="inline-flex items-center px-1.5 py-0.5 rounded-md text-[8px] font-bold bg-sahara-surface/90 backdrop-blur-sm border border-sahara-border/15 text-sahara-text-secondary tabular-nums shadow-xs">
                       {dayTotalSec >= 3600
                         ? `${Math.round(dayTotalSec / 3600)}h`
                         : `${Math.round(dayTotalSec / 60)}m`}

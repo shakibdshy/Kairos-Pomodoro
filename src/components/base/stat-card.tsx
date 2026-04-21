@@ -23,7 +23,7 @@ export function StatCard({
 }: StatCardProps) {
   if (variant === "compact") {
     return (
-      <div className="bg-white border border-sahara-border/20 rounded-3xl p-8 flex flex-col shadow-sm shadow-sahara-primary/5">
+      <div className="bg-sahara-surface border border-sahara-border/20 rounded-3xl p-8 flex flex-col shadow-sm shadow-sahara-primary/5">
         <div className="w-12 h-12 rounded-2xl bg-sahara-primary-light flex items-center justify-center text-sahara-primary mb-8">
           <Icon className="w-6 h-6" />
         </div>
@@ -36,7 +36,7 @@ export function StatCard({
   }
 
   return (
-    <div className="bg-white border border-sahara-border/20 rounded-3xl p-8 flex flex-col justify-between shadow-sm shadow-sahara-primary/5">
+    <div className="bg-sahara-surface border border-sahara-border/20 rounded-3xl p-8 flex flex-col justify-between shadow-sm shadow-sahara-primary/5">
       <div className="flex items-start justify-between">
         <div className="w-12 h-12 rounded-2xl bg-sahara-primary-light flex items-center justify-center text-sahara-primary">
           <Icon className="w-6 h-6" />
@@ -81,7 +81,7 @@ export function MiniStatCard({
   unit,
 }: Omit<StatCardProps, "change" | "subValue" | "subUnit" | "variant">) {
   return (
-    <div className="bg-white rounded-xl border border-sahara-border/15 p-4 flex items-center gap-3">
+    <div className="bg-sahara-surface rounded-xl border border-sahara-border/15 p-4 flex items-center gap-3">
       <div className="w-10 h-10 rounded-lg bg-sahara-primary-light/60 flex items-center justify-center shrink-0">
         <Icon className="w-5 h-5 text-sahara-primary" />
       </div>

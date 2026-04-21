@@ -72,7 +72,7 @@ export function TodayFocus() {
 
       {hasAnyData && (
         <>
-          <div className="bg-white rounded-xl border border-sahara-border/15 p-5">
+          <div className="bg-sahara-surface rounded-xl border border-sahara-border/15 p-5">
             <Text variant="body" className="text-xs font-bold text-sahara-text-muted uppercase tracking-wider mb-3">
               Time by Category
             </Text>

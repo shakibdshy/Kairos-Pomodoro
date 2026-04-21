@@ -20,7 +20,7 @@ export function FocusSummaryBar({
 
   return (
     <div className="grid grid-cols-4 gap-4">
-      <div className="bg-white rounded-xl border border-sahara-border/15 p-4 flex items-center gap-3">
+      <div className="bg-sahara-surface rounded-xl border border-sahara-border/15 p-4 flex items-center gap-3">
         <div className="w-10 h-10 rounded-lg bg-sahara-primary-light/60 flex items-center justify-center shrink-0">
           <Clock className="w-5 h-5 text-sahara-primary" />
         </div>
@@ -34,7 +34,7 @@ export function FocusSummaryBar({
         </div>
       </div>
 
-      <div className="bg-white rounded-xl border border-sahara-border/15 p-4 flex items-center gap-3">
+      <div className="bg-sahara-surface rounded-xl border border-sahara-border/15 p-4 flex items-center gap-3">
         <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center shrink-0">
           <Target className="w-5 h-5 text-blue-500" />
         </div>
@@ -48,7 +48,7 @@ export function FocusSummaryBar({
         </div>
       </div>
 
-      <div className="bg-white rounded-xl border border-sahara-border/15 p-4 flex items-center gap-3">
+      <div className="bg-sahara-surface rounded-xl border border-sahara-border/15 p-4 flex items-center gap-3">
         <div className="w-10 h-10 rounded-lg bg-orange-50 flex items-center justify-center shrink-0">
           <Flame className="w-5 h-5 text-orange-500" />
         </div>
@@ -72,7 +72,7 @@ export function FocusSummaryBar({
         </div>
       </div>
 
-      <div className="bg-white rounded-xl border border-sahara-border/15 p-4 flex items-center gap-3">
+      <div className="bg-sahara-surface rounded-xl border border-sahara-border/15 p-4 flex items-center gap-3">
         <div className="w-10 h-10 rounded-lg bg-green-50 flex items-center justify-center shrink-0">
           <Timer className="w-5 h-5 text-green-500" />
         </div>

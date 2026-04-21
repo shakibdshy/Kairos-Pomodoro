@@ -9,7 +9,7 @@ interface SessionCardProps {
 
 export function SessionCard({ session }: SessionCardProps) {
   return (
-    <div className="group relative flex items-stretch gap-0 bg-white rounded-xl border border-sahara-border/15 overflow-hidden hover:border-sahara-border/30 transition-all">
+    <div className="group relative flex items-stretch gap-0 bg-sahara-surface rounded-xl border border-sahara-border/15 overflow-hidden hover:border-sahara-border/30 transition-all">
       <div
         className={cn(
           "w-1 shrink-0",

@@ -68,7 +68,7 @@ export function SessionStatsCards({ sessions }: SessionStatsCardsProps) {
           <div
             key={stat.label}
             className={cn(
-              "flex flex-col items-center p-4 rounded-xl border border-sahara-border/15 bg-white",
+              "flex flex-col items-center p-4 rounded-xl border border-sahara-border/15 bg-sahara-surface",
             )}
           >
             <div

@@ -89,7 +89,7 @@ export function IntentionSelector({
         className={cn(
           "inline-flex items-center gap-2 px-4 py-2 rounded-full text-left transition-all group",
           selectedCategory
-            ? "bg-white border border-sahara-primary/30 shadow-sm hover:shadow-md"
+            ? "bg-sahara-surface border border-sahara-primary/30 shadow-sm hover:shadow-md"
             : "bg-sahara-card border border-dashed border-sahara-border/40 hover:border-sahara-primary/30",
           disabled && "opacity-50 cursor-not-allowed",
         )}
@@ -121,7 +121,7 @@ export function IntentionSelector({
             className="absolute inset-0 bg-black/20 backdrop-blur-sm"
             onClick={() => setIsOpen(false)}
           />
-          <div className="relative w-full max-w-lg bg-white rounded-3xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+          <div className="relative w-full max-w-lg bg-sahara-surface rounded-3xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
             {/* Header */}
             <div className="flex items-center justify-between px-6 py-5 border-b border-sahara-border/20">
               <h2 className="font-serif text-xl text-sahara-text">

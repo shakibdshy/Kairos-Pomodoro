@@ -11,15 +11,45 @@ import {
 } from "lucide-react";
 import type { Route } from "@/app/router";
 import { cn } from "@/lib/cn";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSettingsStore } from "@/features/settings/use-settings-store";
+import type { ThemeMode } from "@/features/settings/settings-types";
 
 interface SettingsPageProps {
   onNavigate: (route: Route) => void;
   currentRoute: Route;
 }
 
+const THEME_OPTIONS: { id: ThemeMode; label: string; icon: typeof Sun }[] = [
+  { id: "light", label: "Light", icon: Sun },
+  { id: "dark", label: "Dark", icon: Moon },
+  { id: "system", label: "System", icon: Monitor },
+];
+
 export function SettingsPage({ onNavigate, currentRoute }: SettingsPageProps) {
   const [activeTab, setActiveTab] = useState("general");
+
+  const settings = useSettingsStore((s) => s.settings);
+  const loaded = useSettingsStore((s) => s.loaded);
+  const updateSetting = useSettingsStore((s) => s.updateSetting);
+
+  const [workMin, setWorkMin] = useState(25);
+  const [shortBreakMin, setShortBreakMin] = useState(5);
+  const [longBreakMin, setLongBreakMin] = useState(15);
+
+  useEffect(() => {
+    if (loaded) {
+      setWorkMin(Math.round(settings.workDuration / 60));
+      setShortBreakMin(Math.round(settings.shortBreakDuration / 60));
+      setLongBreakMin(Math.round(settings.longBreakDuration / 60));
+    }
+  }, [loaded, settings.workDuration, settings.shortBreakDuration, settings.longBreakDuration]);
+
+  const handleSaveDurations = () => {
+    updateSetting("workDuration", workMin * 60);
+    updateSetting("shortBreakDuration", shortBreakMin * 60);
+    updateSetting("longBreakDuration", longBreakMin * 60);
+  };
 
   const tabs = [
     { id: "general", label: "General", icon: Monitor },
@@ -69,7 +99,7 @@ export function SettingsPage({ onNavigate, currentRoute }: SettingsPageProps) {
           </aside>
 
           {/* Main Settings Area */}
-          <main className="flex-1 bg-white border border-sahara-border/20 rounded-3xl p-10 overflow-y-auto shadow-sm shadow-sahara-primary/5">
+          <main className="flex-1 bg-sahara-surface border border-sahara-border/20 rounded-3xl p-10 overflow-y-auto shadow-sm shadow-sahara-primary/5">
             <div className="max-w-2xl space-y-12">
               {/* Focus Rhythm Section */}
               <section>
@@ -77,7 +107,10 @@ export function SettingsPage({ onNavigate, currentRoute }: SettingsPageProps) {
                   <h3 className="font-serif text-2xl text-sahara-text">
                     Focus Rhythm
                   </h3>
-                  <button className="flex items-center gap-2 text-sahara-primary hover:text-sahara-primary/80 transition-colors">
+                  <button
+                    onClick={handleSaveDurations}
+                    className="flex items-center gap-2 text-sahara-primary hover:text-sahara-primary/80 transition-colors"
+                  >
                     <Save className="w-4 h-4" />
                     <span className="text-[10px] font-bold tracking-widest uppercase">
                       Save Changes
@@ -98,7 +131,12 @@ export function SettingsPage({ onNavigate, currentRoute }: SettingsPageProps) {
                     <div className="flex items-center gap-4">
                       <input
                         type="number"
-                        defaultValue={25}
+                        min={1}
+                        max={120}
+                        value={workMin}
+                        onChange={(e) =>
+                          setWorkMin(Math.max(1, parseInt(e.target.value) || 1))
+                        }
                         className="w-20 bg-sahara-card border border-sahara-border/20 rounded-xl px-4 py-2 text-center text-sm font-bold text-sahara-primary outline-none focus:border-sahara-primary/40 transition-colors"
                       />
                       <span className="text-[10px] font-bold text-sahara-text-muted uppercase tracking-widest">
@@ -119,7 +157,14 @@ export function SettingsPage({ onNavigate, currentRoute }: SettingsPageProps) {
                     <div className="flex items-center gap-4">
                       <input
                         type="number"
-                        defaultValue={5}
+                        min={1}
+                        max={30}
+                        value={shortBreakMin}
+                        onChange={(e) =>
+                          setShortBreakMin(
+                            Math.max(1, parseInt(e.target.value) || 1),
+                          )
+                        }
                         className="w-20 bg-sahara-card border border-sahara-border/20 rounded-xl px-4 py-2 text-center text-sm font-bold text-sahara-primary outline-none focus:border-sahara-primary/40 transition-colors"
                       />
                       <span className="text-[10px] font-bold text-sahara-text-muted uppercase tracking-widest">
@@ -140,7 +185,14 @@ export function SettingsPage({ onNavigate, currentRoute }: SettingsPageProps) {
                     <div className="flex items-center gap-4">
                       <input
                         type="number"
-                        defaultValue={15}
+                        min={1}
+                        max={60}
+                        value={longBreakMin}
+                        onChange={(e) =>
+                          setLongBreakMin(
+                            Math.max(1, parseInt(e.target.value) || 1),
+                          )
+                        }
                         className="w-20 bg-sahara-card border border-sahara-border/20 rounded-xl px-4 py-2 text-center text-sm font-bold text-sahara-primary outline-none focus:border-sahara-primary/40 transition-colors"
                       />
                       <span className="text-[10px] font-bold text-sahara-text-muted uppercase tracking-widest">
@@ -157,18 +209,15 @@ export function SettingsPage({ onNavigate, currentRoute }: SettingsPageProps) {
                   Appearance
                 </h3>
                 <div className="grid grid-cols-3 gap-4">
-                  {[
-                    { id: "light", label: "Light", icon: Sun },
-                    { id: "dark", label: "Dark", icon: Moon },
-                    { id: "system", label: "System", icon: Monitor },
-                  ].map((theme) => (
+                  {THEME_OPTIONS.map((theme) => (
                     <button
                       key={theme.id}
+                      onClick={() => updateSetting("theme", theme.id)}
                       className={cn(
                         "flex flex-col items-center gap-3 p-6 rounded-2xl border transition-all hover:shadow-md",
-                        theme.id === "light"
+                        settings.theme === theme.id
                           ? "bg-sahara-primary-light border-sahara-primary/30 text-sahara-primary shadow-sm"
-                          : "bg-white border-sahara-border/20 text-sahara-text-muted hover:border-sahara-primary/30",
+                          : "bg-sahara-surface border-sahara-border/20 text-sahara-text-muted hover:border-sahara-primary/30",
                       )}
                     >
                       <theme.icon className="w-6 h-6" />
@@ -187,24 +236,29 @@ export function SettingsPage({ onNavigate, currentRoute }: SettingsPageProps) {
                 </h3>
                 <div className="space-y-6">
                   {[
-                    "End of session chime",
-                    "Break start alert",
-                    "Halfway point notification",
-                  ].map((label, i) => (
-                    <div key={i} className="flex items-center justify-between">
+                    { label: "End of session chime", key: "soundEnabled" as const },
+                    { label: "Respect Do Not Disturb", key: "respectDnd" as const },
+                    { label: "Auto-start breaks", key: "autoStartBreaks" as const },
+                  ].map(({ label, key }) => (
+                    <div key={key} className="flex items-center justify-between">
                       <span className="font-bold text-sahara-text-secondary text-sm">
                         {label}
                       </span>
                       <button
+                        onClick={() => updateSetting(key, !settings[key])}
                         className={cn(
-                          "w-12 h-6 rounded-full p-1 transition-colors duration-200",
-                          i < 2 ? "bg-sahara-primary" : "bg-sahara-border/30",
+                          "w-12 h-6 rounded-full p-1 transition-colors duration-200 cursor-pointer",
+                          settings[key]
+                            ? "bg-sahara-primary"
+                            : "bg-sahara-border/30",
                         )}
                       >
                         <div
                           className={cn(
-                            "w-4 h-4 rounded-full bg-white shadow-sm transition-transform duration-200",
-                            i < 2 ? "translate-x-6" : "translate-x-0",
+                            "w-4 h-4 rounded-full bg-sahara-surface shadow-sm transition-transform duration-200",
+                            settings[key]
+                              ? "translate-x-6"
+                              : "translate-x-0",
                           )}
                         />
                       </button>

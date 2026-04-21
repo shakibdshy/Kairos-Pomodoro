@@ -18,6 +18,7 @@ const DEFAULTS: Settings = {
   hotkey: HOTKEY_DEFAULT,
   soundEnabled: true,
   respectDnd: true,
+  theme: "system",
 };
 
 async function loadSetting<K extends keyof Settings>(

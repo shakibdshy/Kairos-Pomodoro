@@ -11,7 +11,7 @@ export function TaskList() {
   return (
     <div className="w-full">
       {activeTask ? (
-        <div className="group bg-white border border-sahara-border/20 rounded-2xl p-6 flex items-center gap-6 cursor-pointer hover:border-sahara-primary/30 transition-all shadow-sm shadow-sahara-primary/5">
+        <div className="group bg-sahara-surface border border-sahara-border/20 rounded-2xl p-6 flex items-center gap-6 cursor-pointer hover:border-sahara-primary/30 transition-all shadow-sm shadow-sahara-primary/5">
           <div className="w-12 h-12 rounded-xl bg-sahara-primary-light flex items-center justify-center text-sahara-primary shrink-0 group-hover:scale-105 transition-transform">
             <Target className="w-6 h-6" />
           </div>
@@ -42,7 +42,7 @@ export function TaskList() {
         </div>
       ) : (
         <div className="bg-sahara-card/50 border border-dashed border-sahara-border/50 rounded-2xl p-8 flex flex-col items-center justify-center text-center gap-4 cursor-pointer hover:bg-sahara-card transition-colors">
-          <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center text-sahara-text-muted shadow-sm">
+          <div className="w-12 h-12 rounded-full bg-sahara-surface flex items-center justify-center text-sahara-text-muted shadow-sm">
             <Target className="w-5 h-5" />
           </div>
           <div>

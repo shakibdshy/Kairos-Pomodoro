@@ -1,3 +1,5 @@
+export type ThemeMode = "light" | "dark" | "system";
+
 export interface Settings {
   workDuration: number;
   shortBreakDuration: number;
@@ -7,4 +9,5 @@ export interface Settings {
   hotkey: string;
   soundEnabled: boolean;
   respectDnd: boolean;
+  theme: ThemeMode;
 }

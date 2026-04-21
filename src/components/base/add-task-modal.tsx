@@ -83,7 +83,7 @@ export function AddTaskModal({
         className="absolute inset-0 bg-sahara-text/30 backdrop-blur-sm"
         onClick={onClose}
       />
-      <div className="relative bg-white rounded-2xl border border-sahara-border/20 shadow-xl w-full max-w-md mx-4 p-8 animate-in fade-in zoom-in-95 duration-200">
+      <div className="relative bg-sahara-surface rounded-2xl border border-sahara-border/20 shadow-xl w-full max-w-md mx-4 p-8 animate-in fade-in zoom-in-95 duration-200">
         <button
           onClick={onClose}
           className="absolute top-4 right-4 w-8 h-8 rounded-lg flex items-center justify-center text-sahara-text-muted hover:text-sahara-text hover:bg-sahara-bg transition-colors"

@@ -46,7 +46,7 @@ export function CalendarWeekNav({
 
   return (
     <div className="flex items-center gap-4">
-      <div className="flex items-center gap-1.5 bg-white border border-sahara-border/20 rounded-xl px-1 py-1">
+      <div className="flex items-center gap-1.5 bg-sahara-surface border border-sahara-border/20 rounded-xl px-1 py-1">
         <button
           onClick={onPrev}
           className="p-2 rounded-lg text-sahara-text-muted hover:text-sahara-primary hover:bg-sahara-bg/50 transition-colors"

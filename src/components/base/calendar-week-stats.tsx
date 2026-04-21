@@ -54,7 +54,7 @@ export function CalendarWeekStats({ summary }: CalendarWeekStatsProps) {
         return (
           <div
             key={stat.label}
-            className="bg-white border border-sahara-border/15 rounded-xl p-3"
+            className="bg-sahara-surface border border-sahara-border/15 rounded-xl p-3"
           >
             <div
               className={cn(

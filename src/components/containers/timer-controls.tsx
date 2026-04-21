@@ -81,7 +81,7 @@ export function TimerControls() {
             className={cn(
               "px-6 py-2 rounded-full text-xs font-bold tracking-wider transition-all",
               phase === p.id
-                ? "bg-white text-sahara-primary shadow-sm"
+                ? "bg-sahara-surface text-sahara-primary shadow-sm"
                 : "text-sahara-text-muted hover:text-sahara-text-secondary",
             )}
           >
@@ -115,7 +115,7 @@ export function TimerControls() {
             <Minus className="w-3.5 h-3.5" />
           </button>
 
-          <div className="inline-flex items-center gap-2.5 px-4 py-2 rounded-full border border-sahara-border/30 bg-white shadow-sm">
+          <div className="inline-flex items-center gap-2.5 px-4 py-2 rounded-full border border-sahara-border/30 bg-sahara-surface shadow-sm">
             <span className="text-sm font-semibold text-sahara-text tabular-nums tracking-wide">
               {formatTimeBadge(startTime)}
             </span>

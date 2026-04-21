@@ -56,7 +56,7 @@ export function OnboardingPage({ onNavigate }: OnboardingPageProps) {
 
   return (
     <div className="h-screen bg-sahara-bg flex items-center justify-center p-8 overflow-hidden">
-      <div className="max-w-4xl w-full grid grid-cols-2 bg-white rounded-[40px] shadow-2xl shadow-sahara-primary/10 overflow-hidden border border-sahara-border/20 min-h-150">
+      <div className="max-w-4xl w-full grid grid-cols-2 bg-sahara-surface rounded-[40px] shadow-2xl shadow-sahara-primary/10 overflow-hidden border border-sahara-border/20 min-h-150">
         {/* Left Side: Illustration/Brand */}
         <div className="bg-sahara-primary p-16 flex flex-col justify-between text-white relative">
           <div className="absolute inset-0 opacity-10 pointer-events-none">
@@ -86,7 +86,7 @@ export function OnboardingPage({ onNavigate }: OnboardingPageProps) {
                 key={i}
                 className={cn(
                   "h-1 rounded-full transition-all duration-300",
-                  i === step ? "w-8 bg-white" : "w-2 bg-white/30",
+                  i === step ? "w-8 bg-sahara-surface" : "w-2 bg-sahara-surface/30",
                 )}
               />
             ))}

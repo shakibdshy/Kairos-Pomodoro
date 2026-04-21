@@ -49,7 +49,7 @@ export function MainLayout({
         {/* Toggle Button */}
         <button
           onClick={() => setIsCollapsed(!isCollapsed)}
-          className="absolute -right-3.5 top-20 w-7 h-7 bg-white border border-sahara-border/30 rounded-full flex items-center justify-center text-sahara-text-muted hover:text-sahara-primary hover:border-sahara-primary/40 hover:shadow-md transition-all shadow-sm z-50 cursor-pointer"
+          className="absolute -right-3.5 top-20 w-7 h-7 bg-sahara-surface border border-sahara-border/30 rounded-full flex items-center justify-center text-sahara-text-muted hover:text-sahara-primary hover:border-sahara-primary/40 hover:shadow-md transition-all shadow-sm z-50 cursor-pointer"
         >
           {isCollapsed ? (
             <PanelLeftOpen className="w-3.5 h-3.5" />
@@ -66,7 +66,7 @@ export function MainLayout({
           )}
         >
           {isCollapsed ? (
-            <div className="w-10 h-10 rounded-full border-2 border-sahara-primary flex items-center justify-center font-serif text-xl font-bold text-sahara-primary shadow-sm bg-white">
+            <div className="w-10 h-10 rounded-full border-2 border-sahara-primary flex items-center justify-center font-serif text-xl font-bold text-sahara-primary shadow-sm bg-sahara-surface">
               K
             </div>
           ) : (

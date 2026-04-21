@@ -11,7 +11,7 @@ export function MiniTimer() {
 
   return (
     <div
-      className="flex items-center gap-2 bg-white/90 dark:bg-neutral-900/90 backdrop-blur-md rounded-lg px-3 py-1.5 shadow-lg border border-neutral-200 dark:border-neutral-700 select-none"
+      className="flex items-center gap-2 bg-sahara-surface/90 dark:bg-neutral-900/90 backdrop-blur-md rounded-lg px-3 py-1.5 shadow-lg border border-neutral-200 dark:border-neutral-700 select-none"
       data-tauri-drag-region
     >
       <Text

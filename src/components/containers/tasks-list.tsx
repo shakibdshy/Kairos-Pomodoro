@@ -115,14 +115,14 @@ export function TasksList() {
       {loading && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-pulse">
           {[1, 2].map((i) => (
-            <div key={i} className="bg-white border rounded-2xl p-6 h-48" />
+            <div key={i} className="bg-sahara-surface border rounded-2xl p-6 h-48" />
           ))}
         </div>
       )}
 
       {!loading && tasks.length === 0 && (
         <div className="py-20 flex flex-col items-center justify-center text-center bg-sahara-card/30 rounded-3xl border border-dashed border-sahara-border/50">
-          <div className="w-16 h-16 rounded-full bg-white flex items-center justify-center text-sahara-text-muted shadow-sm mb-4">
+          <div className="w-16 h-16 rounded-full bg-sahara-surface flex items-center justify-center text-sahara-text-muted shadow-sm mb-4">
             <Target className="w-6 h-6" />
           </div>
           <Text variant="h3" className="text-xl">

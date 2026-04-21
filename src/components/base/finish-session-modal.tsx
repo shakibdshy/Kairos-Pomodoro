@@ -62,7 +62,7 @@ export function FinishSessionModal({
         className="absolute inset-0 bg-sahara-text/25 backdrop-blur-sm"
         onClick={onClose}
       />
-      <div className="relative bg-white rounded-3xl border border-sahara-border/20 shadow-2xl w-full max-w-lg mx-4 animate-in fade-in zoom-in-95 duration-200 overflow-hidden">
+      <div className="relative bg-sahara-surface rounded-3xl border border-sahara-border/20 shadow-2xl w-full max-w-lg mx-4 animate-in fade-in zoom-in-95 duration-200 overflow-hidden">
         <button
           onClick={onClose}
           className="absolute top-4 right-4 w-8 h-8 rounded-lg flex items-center justify-center text-sahara-text-muted hover:text-sahara-text hover:bg-sahara-bg transition-colors z-10"
@@ -91,7 +91,7 @@ export function FinishSessionModal({
                   "flex flex-col items-center gap-2 px-5 py-4 rounded-2xl transition-all border",
                   mood === opt.id
                     ? "bg-sahara-bg border-sahara-border shadow-sm scale-105"
-                    : "bg-white border-transparent hover:bg-sahara-card/50",
+                    : "bg-sahara-surface border-transparent hover:bg-sahara-card/50",
                 )}
               >
                 <span className="text-3xl">{opt.emoji}</span>
@@ -124,7 +124,7 @@ export function FinishSessionModal({
                 Category
               </span>
               {category ? (
-                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-sahara-border/20 bg-white">
+                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-sahara-border/20 bg-sahara-surface">
                   <span
                     className="w-2 h-2 rounded-full"
                     style={{ backgroundColor: category.color }}

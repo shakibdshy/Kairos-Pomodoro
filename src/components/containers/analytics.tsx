@@ -82,10 +82,10 @@ export function AnalyticsDashboard() {
       <div className="space-y-8 animate-pulse">
         <div className="grid grid-cols-2 gap-8">
           {[1, 2].map((i) => (
-            <div key={i} className="bg-white border rounded-3xl p-8 h-48" />
+            <div key={i} className="bg-sahara-surface border rounded-3xl p-8 h-48" />
           ))}
         </div>
-        <div className="bg-white border rounded-3xl p-8 h-96" />
+        <div className="bg-sahara-surface border rounded-3xl p-8 h-96" />
       </div>
     );
   }
@@ -152,14 +152,14 @@ export function AnalyticsDashboard() {
           variant="compact"
         />
 
-        <div className="bg-white border border-sahara-border/20 rounded-3xl p-8 shadow-sm shadow-sahara-primary/5 space-y-6">
+        <div className="bg-sahara-surface border border-sahara-border/20 rounded-3xl p-8 shadow-sm shadow-sahara-primary/5 space-y-6">
           <h3 className="font-serif text-2xl text-sahara-text">Achievements</h3>
           {badges.map((badge) => (
             <BadgeCard key={badge.id} badge={badge} />
           ))}
         </div>
 
-        <div className="bg-white border border-sahara-border/20 rounded-3xl p-8 shadow-sm shadow-sahara-primary/5 space-y-4">
+        <div className="bg-sahara-surface border border-sahara-border/20 rounded-3xl p-8 shadow-sm shadow-sahara-primary/5 space-y-4">
           <h3 className="font-serif text-xl text-sahara-text mb-4">
             Quick Stats
           </h3>

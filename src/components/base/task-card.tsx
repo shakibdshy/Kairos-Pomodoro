@@ -39,7 +39,7 @@ export function TaskCard({
     <div
       onClick={() => !menuOpen && onToggleActive()}
       className={cn(
-        "group relative bg-white border rounded-2xl p-6 transition-all cursor-pointer hover:shadow-md border-l-4",
+        "group relative bg-sahara-surface border rounded-2xl p-6 transition-all cursor-pointer hover:shadow-md border-l-4",
         isComplete
           ? "border-sahara-border/15 opacity-70"
           : isActive
@@ -85,7 +85,7 @@ export function TaskCard({
                   setMenuOpen(false);
                 }}
               />
-              <div className="absolute right-0 top-8 z-20 bg-white border border-sahara-border/20 rounded-xl shadow-lg py-1 w-36 animate-in fade-in slide-in-from-top-2 duration-150">
+              <div className="absolute right-0 top-8 z-20 bg-sahara-surface border border-sahara-border/20 rounded-xl shadow-lg py-1 w-36 animate-in fade-in slide-in-from-top-2 duration-150">
                 {onEdit && (
                   <button
                     onClick={(e) => {

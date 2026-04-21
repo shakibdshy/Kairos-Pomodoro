@@ -12,7 +12,7 @@ export function AnalyticsCategoryBreakdown({
 }: AnalyticsCategoryBreakdownProps) {
   if (breakdowns.length === 0) {
     return (
-      <div className="bg-white border border-sahara-border/20 rounded-3xl p-8 shadow-sm shadow-sahara-primary/5">
+      <div className="bg-sahara-surface border border-sahara-border/20 rounded-3xl p-8 shadow-sm shadow-sahara-primary/5">
         <h3 className="font-serif text-2xl text-sahara-text mb-6">{title}</h3>
         <div className="flex flex-col items-center justify-center py-8 text-center">
           <p className="text-sm text-sahara-text-muted">
@@ -26,7 +26,7 @@ export function AnalyticsCategoryBreakdown({
   const totalSeconds = breakdowns.reduce((sum, b) => sum + b.total_seconds, 0);
 
   return (
-    <div className="bg-white border border-sahara-border/20 rounded-3xl p-8 shadow-sm shadow-sahara-primary/5">
+    <div className="bg-sahara-surface border border-sahara-border/20 rounded-3xl p-8 shadow-sm shadow-sahara-primary/5">
       <h3 className="font-serif text-2xl text-sahara-text mb-6">{title}</h3>
 
       <div className="space-y-4">

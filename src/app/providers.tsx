@@ -5,6 +5,7 @@ import { useTaskStore } from "@/features/tasks/use-task-store";
 import { useTimerStore } from "@/features/timer/use-timer-store";
 import { useTray } from "@/features/system/use-tray";
 import { useHotkeys } from "@/features/system/use-hotkeys";
+import { ThemeProvider } from "@/components/providers/theme-provider";
 
 interface ProvidersProps {
   children: ReactNode;
@@ -33,5 +34,9 @@ export function Providers({ children }: ProvidersProps) {
   useTray();
   useHotkeys();
 
-  return <>{children}</>;
+  return (
+    <ThemeProvider>
+      {children}
+    </ThemeProvider>
+  );
 }

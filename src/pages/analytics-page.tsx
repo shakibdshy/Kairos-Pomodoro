@@ -25,7 +25,7 @@ export function AnalyticsPage({
             </p>
           </div>
           <div className="flex gap-4">
-            <button className="flex items-center gap-2 bg-white border border-sahara-border/30 text-sahara-text-secondary px-6 py-3 rounded-xl font-bold text-xs tracking-widest hover:bg-sahara-card transition-colors">
+            <button className="flex items-center gap-2 bg-sahara-surface border border-sahara-border/30 text-sahara-text-secondary px-6 py-3 rounded-xl font-bold text-xs tracking-widest hover:bg-sahara-card transition-colors">
               <Download className="w-4 h-4" />
               EXPORT CSV
             </button>

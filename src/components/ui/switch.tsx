@@ -25,7 +25,7 @@ export function Switch({
       } ${className}`}
     >
       <span
-        className={`pointer-events-none block h-4 w-4 rounded-full bg-white shadow-lg ring-0 transition-transform ${
+        className={`pointer-events-none block h-4 w-4 rounded-full bg-sahara-surface shadow-lg ring-0 transition-transform ${
           checked ? "translate-x-4" : "translate-x-0"
         }`}
       />
