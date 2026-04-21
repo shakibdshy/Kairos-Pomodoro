@@ -1,9 +1,6 @@
 import { CheckCircle2 } from "lucide-react";
 import type { Session } from "@/lib/session-utils";
-import {
-  formatTime,
-  formatDuration,
-} from "@/lib/session-utils";
+import { formatTime, formatDuration } from "@/lib/session-utils";
 import { cn } from "@/lib/cn";
 
 interface SessionCardProps {
@@ -16,7 +13,7 @@ export function SessionCard({ session }: SessionCardProps) {
       <div
         className={cn(
           "w-1 shrink-0",
-          session.phase === "work" ? "bg-green-400" : "bg-blue-300"
+          session.phase === "work" ? "bg-green-400" : "bg-blue-300",
         )}
       />
 
@@ -25,9 +22,7 @@ export function SessionCard({ session }: SessionCardProps) {
           <CheckCircle2
             className={cn(
               "w-4 h-4 shrink-0",
-              session.phase === "work"
-                ? "text-green-500"
-                : "text-blue-400"
+              session.phase === "work" ? "text-green-500" : "text-blue-400",
             )}
           />
           <div className="min-w-0">
@@ -36,7 +31,7 @@ export function SessionCard({ session }: SessionCardProps) {
                 {session.phase.replace("_", " ")}
               </p>
               {session.intention && (
-                <span className="shrink-0 px-2 py-0.5 rounded-full bg-sahara-card text-[10px] font-bold text-sahara-text-muted truncate max-w-[120px]">
+                <span className="shrink-0 px-2 py-0.5 rounded-full bg-sahara-card text-[10px] font-bold text-sahara-text-muted truncate max-w-30">
                   {session.intention}
                 </span>
               )}

@@ -281,3 +281,166 @@ export async function getTaskTimeToday(taskId: number): Promise<number> {
   );
   return rows[0]?.total ?? 0;
 }
+
+export interface DayData {
+  date: string;
+  day_name: string;
+  total_seconds: number;
+  session_count: number;
+}
+
+export async function getWeeklyData(): Promise<DayData[]> {
+  const database = await getDb();
+  return database.select<DayData[]>(`
+    SELECT 
+      date(started_at) AS date,
+      CASE CAST(strftime('%w', started_at) AS INTEGER)
+        WHEN 0 THEN 'Sun' WHEN 1 THEN 'Mon' WHEN 2 THEN 'Tue'
+        WHEN 3 THEN 'Wed' WHEN 4 THEN 'Thu' WHEN 5 THEN 'Fri'
+        ELSE 'Sat'
+      END AS day_name,
+      COALESCE(SUM(duration_sec), 0) AS total_seconds,
+      COUNT(*) AS session_count
+    FROM sessions
+    WHERE date(started_at) >= date('now', '-6 days') AND completed = 1
+    GROUP BY date(started_at)
+    ORDER BY date(started_at) ASC
+  `);
+}
+
+export async function getAllTimeStats(): Promise<{
+  total_focus_seconds: number;
+  total_sessions: number;
+  avg_session_seconds: number;
+  longest_session_seconds: number;
+  total_break_seconds: number;
+  avg_break_seconds: number;
+}> {
+  const database = await getDb();
+  const rows = await database.select<{
+    total_focus_seconds: number;
+    total_sessions: number;
+    avg_session_seconds: number;
+    longest_session_seconds: number;
+    total_break_seconds: number;
+    avg_break_seconds: number;
+  }[]>(`
+    SELECT 
+      COALESCE(SUM(CASE WHEN phase = 'work' THEN duration_sec ELSE 0 END), 0) AS total_focus_seconds,
+      COALESCE(SUM(CASE WHEN completed = 1 THEN 1 ELSE 0 END), 0) AS total_sessions,
+      COALESCE(AVG(CASE WHEN phase = 'work' AND completed = 1 THEN duration_sec END), 0) AS avg_session_seconds,
+      COALESCE(MAX(CASE WHEN phase = 'work' AND completed = 1 THEN duration_sec END), 0) AS longest_session_seconds,
+      COALESCE(SUM(CASE WHEN phase != 'work' AND completed = 1 THEN duration_sec ELSE 0 END), 0) AS total_break_seconds,
+      COALESCE(AVG(CASE WHEN phase != 'work' AND completed = 1 THEN duration_sec END), 0) AS avg_break_seconds
+    FROM sessions
+  `);
+  return rows[0] ?? { total_focus_seconds: 0, total_sessions: 0, avg_session_seconds: 0, longest_session_seconds: 0, total_break_seconds: 0, avg_break_seconds: 0 };
+}
+
+export async function getCurrentStreak(): Promise<number> {
+  const database = await getDb();
+  try {
+    const rows = await database.select<{ streak: number }[]>(`
+      WITH RECURSIVE countdown(d) AS (
+        SELECT date('now')
+        UNION ALL
+        SELECT date(d, '-1 day') FROM countdown WHERE d > date('now', '-365 days')
+      )
+      SELECT COUNT(*) as streak FROM countdown c
+      WHERE EXISTS (
+        SELECT 1 FROM sessions 
+        WHERE date(started_at) = c.d AND completed = 1
+      )
+      AND c.d <= (
+        SELECT COALESCE(MIN(date(started_at)), date('now')) 
+        FROM countdown c2 
+        WHERE NOT EXISTS (
+          SELECT 1 FROM sessions 
+          WHERE date(started_at) = c2.d AND completed = 1
+        ) AND c2.d < date('now')
+      )
+    `);
+    return rows[0]?.streak ?? 0;
+  } catch {
+    const rows = await database.select<{ days: string }[]>(
+      "SELECT DISTINCT date(started_at) as days FROM sessions WHERE completed = 1 ORDER BY days DESC"
+    );
+    if (rows.length === 0) return 0;
+    const today = new Date().toISOString().split("T")[0];
+    let streak = 0;
+    for (const row of rows) {
+      const diffMs = new Date(today).getTime() - new Date(row.days).getTime();
+      const diffDays = Math.round(diffMs / (1000 * 60 * 60 * 24));
+      if (diffDays === streak) {
+        streak++;
+      } else {
+        break;
+      }
+    }
+    return streak;
+  }
+}
+
+export async function getBestStreak(): Promise<number> {
+  const database = await getDb();
+  try {
+    const rows = await database.select<{ best_streak: number }[]>(`
+      WITH RECURSIVE dates(d) AS (
+        SELECT MIN(date(started_at)) FROM sessions WHERE completed = 1
+        UNION ALL
+        SELECT date(d, '+1 day') FROM dates WHERE d < date('now')
+      ),
+      has_session(d, s) AS (
+        SELECT d, CASE WHEN EXISTS (
+          SELECT 1 FROM sessions WHERE date(started_at) = d AND completed = 1 LIMIT 1
+        ) THEN 1 ELSE 0 END FROM dates
+      ),
+      groups(d, s, g) AS (
+        SELECT d, s, CASE WHEN s = 1 THEN 0 ELSE 1 END FROM has_session
+        UNION ALL
+        SELECT hs.d, hs.s, g.g + CASE WHEN hs.s = 1 THEN 0 ELSE 1 END 
+        FROM has_session hs JOIN groups g ON hs.d = date(g.d, '+1 day')
+      )
+      SELECT MAX(g) as best_streak FROM groups WHERE s = 1
+    `);
+    return rows[0]?.best_streak ?? 0;
+  } catch {
+    const rows = await database.select<{ days: string }[]>(
+      "SELECT DISTINCT date(started_at) as days FROM sessions WHERE completed = 1 ORDER BY days ASC"
+    );
+    if (rows.length === 0) return 0;
+    let bestStreak = 1;
+    let currentStreak = 1;
+    for (let i = 1; i < rows.length; i++) {
+      const prev = new Date(rows[i - 1].days);
+      const curr = new Date(rows[i].days);
+      const diffMs = curr.getTime() - prev.getTime();
+      const diffDays = Math.round(diffMs / (1000 * 60 * 60 * 24));
+      if (diffDays === 1) {
+        currentStreak++;
+        bestStreak = Math.max(bestStreak, currentStreak);
+      } else {
+        currentStreak = 1;
+      }
+    }
+    return bestStreak;
+  }
+}
+
+export async function getAllCategoryBreakdown(): Promise<CategoryBreakdown[]> {
+  const database = await getDb();
+  return database.select<CategoryBreakdown[]>(`
+    SELECT 
+      s.category_id,
+      s.intention,
+      c.name AS category_name,
+      c.color AS category_color,
+      COALESCE(SUM(s.duration_sec), 0) AS total_seconds,
+      COUNT(*) AS session_count
+    FROM sessions s
+    LEFT JOIN categories c ON s.category_id = c.id
+    WHERE s.completed = 1
+    GROUP BY s.category_id, s.intention, c.name, c.color
+    ORDER BY total_seconds DESC
+  `);
+}

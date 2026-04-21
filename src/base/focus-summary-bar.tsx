@@ -7,9 +7,15 @@ interface FocusSummaryBarProps {
   topCategory: { name: string; color: string; count: number } | null;
 }
 
-export function FocusSummaryBar({ sessions, topCategory }: FocusSummaryBarProps) {
+export function FocusSummaryBar({
+  sessions,
+  topCategory,
+}: FocusSummaryBarProps) {
   const workSessions = sessions.filter((s) => s.phase === "work");
-  const totalFocusSec = workSessions.reduce((sum, s) => sum + s.duration_sec, 0);
+  const totalFocusSec = workSessions.reduce(
+    (sum, s) => sum + s.duration_sec,
+    0,
+  );
   const sessionCount = workSessions.length;
 
   return (
@@ -19,7 +25,9 @@ export function FocusSummaryBar({ sessions, topCategory }: FocusSummaryBarProps)
           <Clock className="w-5 h-5 text-sahara-primary" />
         </div>
         <div>
-          <p className="text-xs font-bold text-sahara-text-muted uppercase tracking-wider">Focus Time</p>
+          <p className="text-xs font-bold text-sahara-text-muted uppercase tracking-wider">
+            Focus Time
+          </p>
           <p className="text-lg font-bold text-sahara-text tabular-nums">
             {formatTotalTime(totalFocusSec)}
           </p>
@@ -31,8 +39,12 @@ export function FocusSummaryBar({ sessions, topCategory }: FocusSummaryBarProps)
           <Target className="w-5 h-5 text-blue-500" />
         </div>
         <div>
-          <p className="text-xs font-bold text-sahara-text-muted uppercase tracking-wider">Sessions</p>
-          <p className="text-lg font-bold text-sahara-text tabular-nums">{sessionCount}</p>
+          <p className="text-xs font-bold text-sahara-text-muted uppercase tracking-wider">
+            Sessions
+          </p>
+          <p className="text-lg font-bold text-sahara-text tabular-nums">
+            {sessionCount}
+          </p>
         </div>
       </div>
 
@@ -41,14 +53,16 @@ export function FocusSummaryBar({ sessions, topCategory }: FocusSummaryBarProps)
           <Flame className="w-5 h-5 text-orange-500" />
         </div>
         <div>
-          <p className="text-xs font-bold text-sahara-text-muted uppercase tracking-wider">Top Category</p>
+          <p className="text-xs font-bold text-sahara-text-muted uppercase tracking-wider">
+            Top Category
+          </p>
           {topCategory ? (
             <div className="flex items-center gap-1.5 mt-0.5">
               <span
                 className="w-2 h-2 rounded-full shrink-0"
                 style={{ backgroundColor: topCategory.color }}
               />
-              <span className="text-sm font-bold text-sahara-text truncate max-w-[100px]">
+              <span className="text-sm font-bold text-sahara-text truncate max-w-25">
                 {topCategory.name}
               </span>
             </div>
@@ -63,7 +77,9 @@ export function FocusSummaryBar({ sessions, topCategory }: FocusSummaryBarProps)
           <Timer className="w-5 h-5 text-green-500" />
         </div>
         <div>
-          <p className="text-xs font-bold text-sahara-text-muted uppercase tracking-wider">Avg Length</p>
+          <p className="text-xs font-bold text-sahara-text-muted uppercase tracking-wider">
+            Avg Length
+          </p>
           <p className="text-lg font-bold text-sahara-text tabular-nums">
             {sessionCount > 0
               ? formatTotalTime(Math.round(totalFocusSec / sessionCount))

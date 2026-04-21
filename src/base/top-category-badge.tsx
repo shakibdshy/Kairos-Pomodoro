@@ -14,19 +14,21 @@ export function TopCategoryBadge({ sessions }: TopCategoryBadgeProps) {
       }
       return acc;
     },
-    {} as Record<string, number>
+    {} as Record<string, number>,
   );
 
   const topCategory = Object.entries(categoryCounts).sort(
-    (a, b) => b[1] - a[1]
+    (a, b) => b[1] - a[1],
   )[0];
 
   if (!topCategory) return null;
 
   return (
-    <div className={cn(
-      "flex items-center gap-2 mb-4 px-4 py-2.5 rounded-xl bg-gradient-to-r from-sahara-primary/5 to-transparent border border-sahara-primary/10"
-    )}>
+    <div
+      className={cn(
+        "flex items-center gap-2 mb-4 px-4 py-2.5 rounded-xl bg-linear-to-r from-sahara-primary/5 to-transparent border border-sahara-primary/10",
+      )}
+    >
       <Flame className="w-4 h-4 text-sahara-primary" />
       <span className="text-xs font-bold text-sahara-text-secondary">
         Most focused on:

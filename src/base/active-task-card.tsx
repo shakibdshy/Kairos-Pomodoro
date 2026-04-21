@@ -16,7 +16,9 @@ export function ActiveTaskCard({ task, taskTimeToday }: ActiveTaskCardProps) {
           <Target className="w-5 h-5" />
         </div>
         <div>
-          <p className="text-sm font-bold text-sahara-text-secondary">No active task</p>
+          <p className="text-sm font-bold text-sahara-text-secondary">
+            No active task
+          </p>
           <p className="text-xs text-sahara-text-muted mt-0.5">
             Select a task from the Tasks page to track progress
           </p>
@@ -25,9 +27,13 @@ export function ActiveTaskCard({ task, taskTimeToday }: ActiveTaskCardProps) {
     );
   }
 
-  const progressPct = task.estimated_pomos > 0
-    ? Math.min(100, Math.round((task.completed_pomos / task.estimated_pomos) * 100))
-    : 0;
+  const progressPct =
+    task.estimated_pomos > 0
+      ? Math.min(
+          100,
+          Math.round((task.completed_pomos / task.estimated_pomos) * 100),
+        )
+      : 0;
 
   return (
     <div className="group bg-white border border-sahara-border/20 rounded-2xl p-5 flex items-center gap-5 cursor-pointer hover:border-sahara-primary/30 transition-all shadow-sm shadow-sahara-primary/5">
@@ -52,20 +58,26 @@ export function ActiveTaskCard({ task, taskTimeToday }: ActiveTaskCardProps) {
         </div>
 
         <div className="mt-2.5 flex items-center gap-3">
-          <div className="flex-1 h-1.5 bg-sahara-bg/50 rounded-full overflow-hidden max-w-[160px]">
+          <div className="flex-1 h-1.5 bg-sahara-bg/50 rounded-full overflow-hidden max-w-40">
             <div
               className={cn(
                 "h-full rounded-full transition-all duration-300",
-                progressPct >= 100 ? "bg-green-400" : "bg-sahara-primary"
+                progressPct >= 100 ? "bg-green-400" : "bg-sahara-primary",
               )}
               style={{ width: `${progressPct}%` }}
             />
           </div>
           <span className="text-xs font-bold tabular-nums">
-            <span className={cn(progressPct >= 100 ? "text-green-500" : "text-sahara-primary")}>
+            <span
+              className={cn(
+                progressPct >= 100 ? "text-green-500" : "text-sahara-primary",
+              )}
+            >
               {task.completed_pomos}
             </span>
-            <span className="text-sahara-text-muted">/{task.estimated_pomos}</span>
+            <span className="text-sahara-text-muted">
+              /{task.estimated_pomos}
+            </span>
             <span className="text-[10px] text-sahara-text-muted font-bold tracking-widest uppercase ml-1">
               pomos
             </span>
