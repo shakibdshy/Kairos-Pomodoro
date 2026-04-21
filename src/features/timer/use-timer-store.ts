@@ -13,6 +13,8 @@ import {
   startSession as dbStartSession,
   finishSession as dbFinishSession,
   abandonSession as dbAbandonSession,
+  getTasks,
+  getCategory,
 } from "@/lib/db";
 import type { Category } from "@/lib/db";
 
@@ -199,8 +201,20 @@ export const useTimerStore = create<TimerStore>((set, get) => ({
     });
   },
 
-  setActiveTask: (taskId: number | null) => {
+  setActiveTask: async (taskId: number | null) => {
     set({ activeTaskId: taskId });
+    if (taskId) {
+      try {
+        const tasks = await getTasks();
+        const task = tasks.find((t) => t.id === taskId);
+        if (task?.category_id) {
+          const category = await getCategory(task.category_id);
+          if (category) set({ selectedCategory: category });
+        }
+      } catch {
+        // silently fail — user can still pick intention manually
+      }
+    }
   },
 
   setDurations: (work: number, short: number, long: number) => {

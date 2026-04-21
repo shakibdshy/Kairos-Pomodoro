@@ -67,6 +67,9 @@ export async function initDb(): Promise<void> {
   try {
     await database.execute("ALTER TABLE sessions ADD COLUMN intention TEXT");
   } catch (e) { /* ignore if column exists */ }
+  try {
+    await database.execute("ALTER TABLE tasks ADD COLUMN category_id INTEGER");
+  } catch (e) { /* ignore if column exists */ }
 }
 
 export async function getTasks() {
@@ -78,6 +81,7 @@ export async function getTasks() {
     priority?: "low" | "medium" | "high";
     estimated_pomos: number;
     completed_pomos: number;
+    category_id: number | null;
     created_at: string;
     archived: number;
   }[]>("SELECT * FROM tasks WHERE archived = 0 ORDER BY created_at DESC");
@@ -87,12 +91,13 @@ export async function addTask(
   name: string,
   estimatedPomos: number,
   project?: string,
-  priority?: string
+  priority?: string,
+  categoryId?: number | null,
 ) {
   const database = await getDb();
   await database.execute(
-    "INSERT INTO tasks (name, estimated_pomos, project, priority) VALUES ($1, $2, $3, $4)",
-    [name, estimatedPomos, project || null, priority || null]
+    "INSERT INTO tasks (name, estimated_pomos, project, priority, category_id) VALUES ($1, $2, $3, $4, $5)",
+    [name, estimatedPomos, project || null, priority || null, categoryId ?? null],
   );
 }
 
@@ -102,6 +107,53 @@ export async function toggleTaskArchived(id: number, archived: boolean) {
     "UPDATE tasks SET archived = $1 WHERE id = $2",
     [archived ? 1 : 0, id]
   );
+}
+
+export async function updateTask(
+  id: number,
+  name?: string,
+  estimatedPomos?: number,
+  project?: string | null,
+  priority?: string | null,
+  categoryId?: number | null,
+) {
+  const database = await getDb();
+  const fields: string[] = [];
+  const values: (string | number | null)[] = [];
+  let paramIndex = 1;
+
+  if (name !== undefined) {
+    fields.push(`name = $${paramIndex++}`);
+    values.push(name);
+  }
+  if (estimatedPomos !== undefined) {
+    fields.push(`estimated_pomos = $${paramIndex++}`);
+    values.push(estimatedPomos);
+  }
+  if (project !== undefined) {
+    fields.push(`project = $${paramIndex++}`);
+    values.push(project ?? null);
+  }
+  if (priority !== undefined) {
+    fields.push(`priority = $${paramIndex++}`);
+    values.push(priority ?? null);
+  }
+  if (categoryId !== undefined) {
+    fields.push(`category_id = $${paramIndex++}`);
+    values.push(categoryId ?? null);
+  }
+
+  if (fields.length === 0) return;
+  values.push(id);
+  await database.execute(
+    `UPDATE tasks SET ${fields.join(", ")} WHERE id = $${paramIndex}`,
+    values,
+  );
+}
+
+export async function deleteTask(id: number): Promise<void> {
+  const database = await getDb();
+  await database.execute("DELETE FROM tasks WHERE id = $1", [id]);
 }
 
 export async function incrementTaskPomos(id: number) {
