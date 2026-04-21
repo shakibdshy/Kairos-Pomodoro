@@ -17,6 +17,7 @@ import {
   getCategory,
 } from "@/lib/db";
 import type { Category } from "@/lib/db";
+import { sendNotification } from "@/lib/notifications";
 
 interface TimerStore {
   phase: TimerPhase;
@@ -131,6 +132,14 @@ export const useTimerStore = create<TimerStore>((set, get) => ({
 
     if (phase === "work" && completed && activeTaskId) {
       incrementTaskPomos(activeTaskId);
+    }
+
+    if (completed) {
+      const notifType =
+        phase === "work"
+          ? ("session-complete" as const)
+          : ("break-over" as const);
+      sendNotification(notifType, `Your ${phase.replace("_", " ")} has ended.`);
     }
 
     state.worker?.terminate();
@@ -254,6 +263,11 @@ export const useTimerStore = create<TimerStore>((set, get) => ({
 
     if (currentSessionId) {
       await dbFinishSession(currentSessionId, mood, notes);
+
+      sendNotification(
+        "session-complete",
+        "Great work! Your focus session has been recorded.",
+      );
 
       if (phase === "work" && activeTaskId) {
         incrementTaskPomos(activeTaskId);

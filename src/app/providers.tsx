@@ -6,6 +6,7 @@ import { useTimerStore } from "@/features/timer/use-timer-store";
 import { useTray } from "@/features/system/use-tray";
 import { useHotkeys } from "@/features/system/use-hotkeys";
 import { ThemeProvider } from "@/components/providers/theme-provider";
+import { useNotificationStore } from "@/features/settings/use-notification-store";
 
 interface ProvidersProps {
   children: ReactNode;
@@ -17,19 +18,33 @@ export function Providers({ children }: ProvidersProps) {
   const loaded = useSettingsStore((s) => s.loaded);
   const loadTasks = useTaskStore((s) => s.loadTasks);
   const setDurations = useTimerStore((s) => s.setDurations);
+  const checkNotificationPermission = useNotificationStore(
+    (s) => s.checkPermission,
+  );
 
   useEffect(() => {
     initDb().then(() => {
       loadSettings();
       loadTasks();
+      checkNotificationPermission();
     });
-  }, [loadSettings, loadTasks]);
+  }, [loadSettings, loadTasks, checkNotificationPermission]);
 
   useEffect(() => {
     if (loaded) {
-      setDurations(settings.workDuration, settings.shortBreakDuration, settings.longBreakDuration);
+      setDurations(
+        settings.workDuration,
+        settings.shortBreakDuration,
+        settings.longBreakDuration,
+      );
     }
-  }, [loaded, settings.workDuration, settings.shortBreakDuration, settings.longBreakDuration, setDurations]);
+  }, [
+    loaded,
+    settings.workDuration,
+    settings.shortBreakDuration,
+    settings.longBreakDuration,
+    setDurations,
+  ]);
 
   useTray();
   useHotkeys();
