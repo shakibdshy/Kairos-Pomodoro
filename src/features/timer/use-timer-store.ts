@@ -1,0 +1,191 @@
+import { create } from "zustand";
+import type { TimerPhase, TimerStatus } from "@/features/timer/timer-types";
+import { createTimerWorker } from "@/features/timer/use-timer-worker";
+import {
+  DEFAULT_WORK_SEC,
+  DEFAULT_SHORT_BREAK_SEC,
+  DEFAULT_LONG_BREAK_SEC,
+  POMOS_BEFORE_LONG_BREAK,
+} from "@/lib/constants";
+import { addSession, incrementTaskPomos } from "@/lib/db";
+
+interface TimerStore {
+  phase: TimerPhase;
+  status: TimerStatus;
+  secondsRemaining: number;
+  totalSeconds: number;
+  completedPomos: number;
+  activeTaskId: number | null;
+  worker: Worker | null;
+
+  start: (duration?: number) => void;
+  pause: () => void;
+  resume: () => void;
+  skip: () => void;
+  reset: () => void;
+  setPhase: (phase: TimerPhase) => void;
+  setActiveTask: (taskId: number | null) => void;
+  setDurations: (work: number, short: number, long: number) => void;
+}
+
+let durations = {
+  work: DEFAULT_WORK_SEC,
+  short: DEFAULT_SHORT_BREAK_SEC,
+  long: DEFAULT_LONG_BREAK_SEC,
+};
+
+export const useTimerStore = create<TimerStore>((set, get) => ({
+  phase: "work",
+  status: "idle",
+  secondsRemaining: durations.work,
+  totalSeconds: durations.work,
+  completedPomos: 0,
+  activeTaskId: null,
+  worker: null,
+
+  start: (duration?: number) => {
+    const state = get();
+    state.worker?.terminate();
+
+    const secs = duration ?? durations.work;
+    const worker = createTimerWorker();
+
+    worker.onmessage = (e: MessageEvent) => {
+      const { type, remaining } = e.data;
+      if (type === "tick") {
+        set({ secondsRemaining: remaining });
+      }
+      if (type === "done") {
+        get().skip();
+      }
+    };
+
+    worker.postMessage({ command: "start", seconds: secs });
+
+    set({
+      status: "running",
+      secondsRemaining: secs,
+      totalSeconds: secs,
+      worker,
+    });
+  },
+
+  pause: () => {
+    const { worker } = get();
+    worker?.postMessage({ command: "pause" });
+    set({ status: "paused" });
+  },
+
+  resume: () => {
+    const { worker } = get();
+    worker?.postMessage({ command: "resume" });
+    set({ status: "running" });
+  },
+
+  skip: () => {
+    const state = get();
+    const {
+      phase,
+      secondsRemaining,
+      totalSeconds,
+      activeTaskId,
+      completedPomos,
+    } = state;
+
+    const completed = secondsRemaining <= 0;
+    addSession(activeTaskId, phase, totalSeconds - secondsRemaining, completed);
+
+    if (phase === "work" && completed && activeTaskId) {
+      incrementTaskPomos(activeTaskId);
+    }
+
+    state.worker?.terminate();
+
+    const newPomos =
+      phase === "work" && completed ? completedPomos + 1 : completedPomos;
+    let nextPhase: TimerPhase;
+    let nextDuration: number;
+
+    if (phase === "work") {
+      if (completed && newPomos % POMOS_BEFORE_LONG_BREAK === 0) {
+        nextPhase = "long_break";
+        nextDuration = durations.long;
+      } else if (completed) {
+        nextPhase = "short_break";
+        nextDuration = durations.short;
+      } else {
+        nextPhase = "short_break";
+        nextDuration = durations.short;
+      }
+    } else {
+      nextPhase = "work";
+      nextDuration = durations.work;
+    }
+
+    const newWorker = createTimerWorker();
+    newWorker.onmessage = (e: MessageEvent) => {
+      const { type, remaining } = e.data;
+      if (type === "tick") {
+        set({ secondsRemaining: remaining });
+      }
+      if (type === "done") {
+        get().skip();
+      }
+    };
+
+    newWorker.postMessage({ command: "start", seconds: nextDuration });
+
+    set({
+      phase: nextPhase,
+      status: "running",
+      secondsRemaining: nextDuration,
+      totalSeconds: nextDuration,
+      completedPomos: newPomos,
+      worker: newWorker,
+    });
+  },
+
+  reset: () => {
+    get().worker?.terminate();
+    const phase = get().phase;
+    const duration =
+      durations[
+        phase === "work" ? "work" : phase === "short_break" ? "short" : "long"
+      ];
+    set({
+      status: "idle",
+      secondsRemaining: duration,
+      totalSeconds: duration,
+      worker: null,
+    });
+  },
+
+  setPhase: (phase: TimerPhase) => {
+    get().worker?.terminate();
+    const duration =
+      durations[
+        phase === "work" ? "work" : phase === "short_break" ? "short" : "long"
+      ];
+    set({
+      phase,
+      status: "idle",
+      secondsRemaining: duration,
+      totalSeconds: duration,
+      worker: null,
+    });
+  },
+
+  setActiveTask: (taskId: number | null) => {
+    set({ activeTaskId: taskId });
+  },
+
+  setDurations: (work: number, short: number, long: number) => {
+    durations = { work, short, long };
+    const { phase, status } = get();
+    if (status === "idle") {
+      const dur =
+        phase === "work" ? work : phase === "short_break" ? short : long;
+      set({ secondsRemaining: dur, totalSeconds: dur });
+    }
+  },
+}));
