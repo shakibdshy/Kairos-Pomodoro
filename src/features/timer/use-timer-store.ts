@@ -14,6 +14,7 @@ import {
   finishSession as dbFinishSession,
   abandonSession as dbAbandonSession,
 } from "@/lib/db";
+import type { Category } from "@/lib/db";
 
 interface TimerStore {
   phase: TimerPhase;
@@ -23,6 +24,7 @@ interface TimerStore {
   completedPomos: number;
   activeTaskId: number | null;
   currentSessionId: number | null;
+  selectedCategory: Category | null;
   worker: Worker | null;
 
   start: (duration?: number) => void;
@@ -36,6 +38,7 @@ interface TimerStore {
   adjustDuration: (minutes: number) => void;
   finishSession: () => Promise<void>;
   abandonSession: () => Promise<void>;
+  setSelectedCategory: (category: Category | null) => void;
 }
 
 let durations = {
@@ -52,6 +55,7 @@ export const useTimerStore = create<TimerStore>((set, get) => ({
   completedPomos: 0,
   activeTaskId: null,
   currentSessionId: null,
+  selectedCategory: null,
   worker: null,
 
   start: async (duration?: number) => {
@@ -60,7 +64,12 @@ export const useTimerStore = create<TimerStore>((set, get) => ({
 
     const secs = duration ?? durations[state.phase === "work" ? "work" : state.phase === "short_break" ? "short" : "long"];
     
-    const sessionId = await dbStartSession(state.activeTaskId, state.phase);
+    const sessionId = await dbStartSession(
+      state.activeTaskId,
+      state.phase,
+      state.selectedCategory?.id,
+      state.selectedCategory?.name
+    );
     
     const worker = createTimerWorker();
 
@@ -258,5 +267,9 @@ export const useTimerStore = create<TimerStore>((set, get) => ({
       currentSessionId: null,
       worker: null,
     });
+  },
+
+  setSelectedCategory: (category: Category | null) => {
+    set({ selectedCategory: category });
   },
 }));

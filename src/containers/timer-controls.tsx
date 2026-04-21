@@ -1,5 +1,6 @@
 import { useTimerStore } from "@/features/timer/use-timer-store";
 import { TimerDisplay } from "@/base/timer-display";
+import { IntentionSelector } from "@/components/intention-selector";
 import { RotateCcw, Play, Pause, Plus, Minus, CheckCircle2, XCircle } from "lucide-react";
 import { cn } from "@/lib/cn";
 import type { TimerPhase } from "@/features/timer/timer-types";
@@ -17,6 +18,8 @@ export function TimerControls() {
   const adjustDuration = useTimerStore((s) => s.adjustDuration);
   const finishSession = useTimerStore((s) => s.finishSession);
   const abandonSession = useTimerStore((s) => s.abandonSession);
+  const selectedCategory = useTimerStore((s) => s.selectedCategory);
+  const setSelectedCategory = useTimerStore((s) => s.setSelectedCategory);
 
   const phases: { id: TimerPhase; label: string }[] = [
     { id: "work", label: "Work" },
@@ -25,7 +28,7 @@ export function TimerControls() {
   ];
 
   return (
-    <div className="flex flex-col items-center gap-12">
+    <div className="flex flex-col items-center gap-8">
       {/* Phase Selector */}
       <div className="flex bg-sahara-card p-1 rounded-full border border-sahara-border/20">
         {phases.map((p) => (
@@ -43,6 +46,12 @@ export function TimerControls() {
           </button>
         ))}
       </div>
+
+      <IntentionSelector
+        selectedCategory={selectedCategory}
+        onSelect={setSelectedCategory}
+        disabled={status !== "idle"}
+      />
 
       <TimerDisplay
         secondsRemaining={secondsRemaining}

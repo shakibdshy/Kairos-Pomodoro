@@ -45,12 +45,27 @@ export async function initDb(): Promise<void> {
     )
   `);
 
+  await database.execute(`
+    CREATE TABLE IF NOT EXISTS categories (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT NOT NULL UNIQUE,
+      color TEXT NOT NULL DEFAULT '#C17767',
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+
   // Simple migrations for new columns
   try {
     await database.execute("ALTER TABLE tasks ADD COLUMN project TEXT");
   } catch (e) { /* ignore if column exists */ }
   try {
     await database.execute("ALTER TABLE tasks ADD COLUMN priority TEXT");
+  } catch (e) { /* ignore if column exists */ }
+  try {
+    await database.execute("ALTER TABLE sessions ADD COLUMN category_id INTEGER");
+  } catch (e) { /* ignore if column exists */ }
+  try {
+    await database.execute("ALTER TABLE sessions ADD COLUMN intention TEXT");
   } catch (e) { /* ignore if column exists */ }
 }
 
@@ -110,11 +125,16 @@ export async function addSession(
   );
 }
 
-export async function startSession(taskId: number | null, phase: string): Promise<number> {
+export async function startSession(
+  taskId: number | null,
+  phase: string,
+  categoryId?: number | null,
+  intention?: string | null
+): Promise<number> {
   const database = await getDb();
   const result = await database.execute(
-    "INSERT INTO sessions (task_id, phase, started_at, duration_sec, completed) VALUES ($1, $2, CURRENT_TIMESTAMP, 0, 0) RETURNING id",
-    [taskId, phase]
+    "INSERT INTO sessions (task_id, phase, started_at, duration_sec, completed, category_id, intention) VALUES ($1, $2, CURRENT_TIMESTAMP, 0, 0, $3, $4) RETURNING id",
+    [taskId, phase, categoryId || null, intention || null]
   );
   return result.lastInsertId as number;
 }
@@ -180,4 +200,44 @@ export async function setSetting(key: string, value: string) {
     "INSERT INTO settings (key, value) VALUES ($1, $2) ON CONFLICT(key) DO UPDATE SET value = $2",
     [key, value]
   );
+}
+
+export interface Category {
+  id: number;
+  name: string;
+  color: string;
+  created_at: string;
+}
+
+export async function getCategories(): Promise<Category[]> {
+  const database = await getDb();
+  return database.select("SELECT * FROM categories ORDER BY name ASC");
+}
+
+export async function getCategory(id: number): Promise<Category | null> {
+  const database = await getDb();
+  const rows = await database.select<Category[]>("SELECT * FROM categories WHERE id = $1", [id]);
+  return rows.length > 0 ? rows[0] : null;
+}
+
+export async function addCategory(name: string, color?: string): Promise<number> {
+  const database = await getDb();
+  const result = await database.execute(
+    "INSERT INTO categories (name, color) VALUES ($1, $2)",
+    [name, color || "#C17767"]
+  );
+  return result.lastInsertId as number;
+}
+
+export async function updateCategory(id: number, name: string, color: string): Promise<void> {
+  const database = await getDb();
+  await database.execute(
+    "UPDATE categories SET name = $1, color = $2 WHERE id = $3",
+    [name, color, id]
+  );
+}
+
+export async function deleteCategory(id: number): Promise<void> {
+  const database = await getDb();
+  await database.execute("DELETE FROM categories WHERE id = $1", [id]);
 }
