@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { isTauri } from "@/lib/tauri";
 
 export type NotificationStatus = "unknown" | "granted" | "denied" | "unavailable";
 
@@ -19,8 +20,9 @@ export const useNotificationStore = create<NotificationStore>((set) => ({
   checkPermission: async () => {
     set({ checking: true, error: null });
     try {
-      if (typeof window === "undefined" || !(window as any).__TAURI__) {
-        set({ status: "denied", checking: false });
+      const tauri = await isTauri();
+      if (!tauri) {
+        set({ status: "unavailable", checking: false });
         return;
       }
 
@@ -44,7 +46,8 @@ export const useNotificationStore = create<NotificationStore>((set) => ({
   requestPermission: async () => {
     set({ checking: true, error: null });
     try {
-      if (typeof window === "undefined" || !(window as any).__TAURI__) {
+      const tauri = await isTauri();
+      if (!tauri) {
         set({
           status: "unavailable",
           checking: false,
@@ -59,31 +62,29 @@ export const useNotificationStore = create<NotificationStore>((set) => ({
       let granted = await isPermissionGranted();
 
       if (!granted) {
-        // On macOS, requestPermission() doesn't show a system dialog.
-        // We must actually TRY sending a notification to trigger the OS dialog.
         console.log(
           "[Notification] Permission not granted, attempting to send to trigger OS dialog...",
         );
 
         try {
-          // This call triggers the macOS system permission dialog
           await sendNotification({
             title: "Kairos",
-            body: "Notifications enabled! You'll receive alerts when your timer ends.",
+            body:
+              "Notifications enabled! You'll receive alerts when your timer ends.",
           });
 
-          // If we got here without error, the user approved
           granted = true;
           console.log("[Notification] Test notification sent successfully!");
         } catch (sendErr) {
-          // Sending failed - might be permission denied
           console.error("[Notification] Send failed:", sendErr);
 
-          // Try requestPermission as fallback (some platforms use this)
           try {
             const result = await requestPermission();
             granted = result === "granted";
-            console.log("[Notification] requestPermission result:", result);
+            console.log(
+              "[Notification] requestPermission result:",
+              result,
+            );
           } catch {
             granted = false;
           }

@@ -1,5 +1,6 @@
 import { useSettingsStore } from "@/features/settings/use-settings-store";
 import { useNotificationStore } from "@/features/settings/use-notification-store";
+import { isTauri, invoke } from "@/lib/tauri";
 
 type NotificationType = "session-complete" | "break-over" | "focus-start";
 
@@ -35,7 +36,9 @@ async function playChime(): Promise<void> {
       gain.connect(ctx.destination);
 
       osc.start(now + durations.slice(0, i).reduce((a, b) => a + b, 0));
-      osc.stop(now + durations.slice(0, i + 1).reduce((a, b) => a + b, 0));
+      osc.stop(
+        now + durations.slice(0, i + 1).reduce((a, b) => a + b, 0),
+      );
     });
 
     setTimeout(() => ctx.close(), 1000);
@@ -50,19 +53,17 @@ export async function sendNotification(
 ): Promise<void> {
   const settings = getSettings();
 
-  if (settings.respectDnd && typeof window !== "undefined") {
+  if (settings.respectDnd) {
     try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const dndEnabled = await (window as any).__TAURI__?.core?.invoke(
-        "is_dnd_enabled",
-      );
+      const dndEnabled = await invoke("is_dnd_enabled");
       if (dndEnabled) return;
     } catch {
       // DnD check failed, continue with notification
     }
   }
 
-  if (typeof window !== "undefined" && (window as any).__TAURI__) {
+  const tauri = await isTauri();
+  if (tauri) {
     try {
       const { sendNotification, isPermissionGranted, requestPermission } =
         await import("@tauri-apps/plugin-notification");

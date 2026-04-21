@@ -8,15 +8,6 @@ interface CalendarSessionBlockProps {
   startHour: number;
 }
 
-function formatTime(dateStr: string): string {
-  const d = new Date(dateStr);
-  let hours = d.getHours();
-  const mins = d.getMinutes();
-  const ampm = hours >= 12 ? "PM" : "AM";
-  hours = hours % 12 || 12;
-  return `${hours}:${mins.toString().padStart(2, "0")} ${ampm}`;
-}
-
 function formatDuration(sec: number): string {
   if (sec < 60) return `${sec}s`;
   const min = Math.round(sec / 60);
