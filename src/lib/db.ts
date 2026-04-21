@@ -496,3 +496,106 @@ export async function getAllCategoryBreakdown(): Promise<CategoryBreakdown[]> {
     ORDER BY total_seconds DESC
   `);
 }
+
+export interface WeekSession {
+  id: number;
+  task_id: number | null;
+  task_name: string | null;
+  phase: string;
+  started_at: string;
+  duration_sec: number;
+  completed: number;
+  category_id: number | null;
+  category_name: string | null;
+  category_color: string | null;
+  intention: string | null;
+}
+
+export async function getWeekSessions(
+  weekStart: string,
+  weekEnd: string,
+): Promise<WeekSession[]> {
+  const database = await getDb();
+  return database.select<WeekSession[]>(`
+    SELECT 
+      s.id,
+      s.task_id,
+      t.name AS task_name,
+      s.phase,
+      s.started_at,
+      s.duration_sec,
+      s.completed,
+      s.category_id,
+      c.name AS category_name,
+      c.color AS category_color,
+      s.intention
+    FROM sessions s
+    LEFT JOIN tasks t ON s.task_id = t.id
+    LEFT JOIN categories c ON s.category_id = c.id
+    WHERE date(s.started_at) >= $1 AND date(s.started_at) <= $2 AND s.completed = 1
+    ORDER BY s.started_at ASC
+  `, [weekStart, weekEnd]);
+}
+
+export interface WeekSummary {
+  total_seconds: number;
+  total_sessions: number;
+  work_sessions: number;
+  break_sessions: number;
+  avg_daily_seconds: number;
+  peak_day: string | null;
+  peak_day_seconds: number;
+}
+
+export async function getWeekSummary(
+  weekStart: string,
+  weekEnd: string,
+): Promise<WeekSummary> {
+  const database = await getDb();
+  const rows = await database.select<{
+    total_seconds: number;
+    total_sessions: number;
+    work_sessions: number;
+    break_sessions: number;
+  }[]>(`
+    SELECT 
+      COALESCE(SUM(duration_sec), 0) AS total_seconds,
+      COALESCE(COUNT(*), 0) AS total_sessions,
+      COALESCE(SUM(CASE WHEN phase = 'work' THEN 1 ELSE 0 END), 0) AS work_sessions,
+      COALESCE(SUM(CASE WHEN phase != 'work' THEN 1 ELSE 0 END), 0) AS break_sessions
+    FROM sessions
+    WHERE date(started_at) >= $1 AND date(started_at) <= $2 AND completed = 1
+  `, [weekStart, weekEnd]);
+
+  const raw = rows[0];
+  if (!raw || raw.total_sessions === 0) {
+    return {
+      total_seconds: 0,
+      total_sessions: 0,
+      work_sessions: 0,
+      break_sessions: 0,
+      avg_daily_seconds: 0,
+      peak_day: null,
+      peak_day_seconds: 0,
+    };
+  }
+
+  const dayRows = await database.select<{ d: string; total: number }[]>(`
+    SELECT date(started_at) AS d, COALESCE(SUM(duration_sec), 0) AS total
+    FROM sessions
+    WHERE date(started_at) >= $1 AND date(started_at) <= $2 AND completed = 1
+    GROUP BY date(started_at)
+    ORDER BY total DESC
+    LIMIT 1
+  `, [weekStart, weekEnd]);
+
+  return {
+    total_seconds: raw.total_seconds,
+    total_sessions: raw.total_sessions,
+    work_sessions: raw.work_sessions,
+    break_sessions: raw.break_sessions,
+    avg_daily_seconds: Math.round(raw.total_seconds / Math.max(dayRows.length, 1)),
+    peak_day: dayRows[0]?.d ?? null,
+    peak_day_seconds: dayRows[0]?.total ?? 0,
+  };
+}

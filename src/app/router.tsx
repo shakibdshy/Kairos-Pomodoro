@@ -7,7 +7,15 @@ import { SettingsPage } from "@/pages/settings-page";
 import { OnboardingPage } from "@/pages/onboarding-page";
 import { useTaskStore } from "@/features/tasks/use-task-store";
 
-export type Route = "timer" | "tasks" | "calendar" | "analytics" | "notes" | "library" | "settings" | "onboarding";
+export type Route =
+  | "timer"
+  | "tasks"
+  | "calendar"
+  | "analytics"
+  | "notes"
+  | "library"
+  | "settings"
+  | "onboarding";
 
 export function Router() {
   const [currentRoute, setCurrentRoute] = useState<Route>("timer");
@@ -20,15 +28,34 @@ export function Router() {
   const renderRoute = () => {
     switch (currentRoute) {
       case "timer":
-        return <TimerPage onNavigate={setCurrentRoute} currentRoute={currentRoute} />;
+        return (
+          <TimerPage onNavigate={setCurrentRoute} currentRoute={currentRoute} />
+        );
       case "tasks":
-        return <TasksPage onNavigate={setCurrentRoute} currentRoute={currentRoute} />;
+        return (
+          <TasksPage onNavigate={setCurrentRoute} currentRoute={currentRoute} />
+        );
       case "calendar":
-        return <CalendarPage onNavigate={setCurrentRoute} currentRoute={currentRoute} />;
+        return (
+          <CalendarPage
+            onNavigate={setCurrentRoute}
+            currentRoute={currentRoute}
+          />
+        );
       case "analytics":
-        return <AnalyticsPage onNavigate={setCurrentRoute} currentRoute={currentRoute} />;
+        return (
+          <AnalyticsPage
+            onNavigate={setCurrentRoute}
+            currentRoute={currentRoute}
+          />
+        );
       case "settings":
-        return <SettingsPage onNavigate={setCurrentRoute} currentRoute={currentRoute} />;
+        return (
+          <SettingsPage
+            onNavigate={setCurrentRoute}
+            currentRoute={currentRoute}
+          />
+        );
       case "onboarding":
         return <OnboardingPage onNavigate={setCurrentRoute} />;
       case "notes":
@@ -36,10 +63,18 @@ export function Router() {
         return (
           <div className="flex items-center justify-center h-full text-sahara-text-muted font-serif italic">
             Coming soon...
+            <button
+              className="text-sahara-primary hover:text-sahara-primary-light transition-colors"
+              onClick={() => setCurrentRoute("timer")}
+            >
+              Go to timer
+            </button>
           </div>
         );
       default:
-        return <TimerPage onNavigate={setCurrentRoute} currentRoute={currentRoute} />;
+        return (
+          <TimerPage onNavigate={setCurrentRoute} currentRoute={currentRoute} />
+        );
     }
   };
 
