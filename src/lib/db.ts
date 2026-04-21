@@ -163,6 +163,8 @@ export async function getSessions(): Promise<{
   ended_at: string | null;
   duration_sec: number;
   completed: number;
+  category_id: number | null;
+  intention: string | null;
 }[]> {
   const database = await getDb();
   return database.select(
@@ -178,6 +180,8 @@ export async function getTodaySessions(): Promise<{
   ended_at: string | null;
   duration_sec: number;
   completed: number;
+  category_id: number | null;
+  intention: string | null;
 }[]> {
   const database = await getDb();
   return database.select(
@@ -240,4 +244,40 @@ export async function updateCategory(id: number, name: string, color: string): P
 export async function deleteCategory(id: number): Promise<void> {
   const database = await getDb();
   await database.execute("DELETE FROM categories WHERE id = $1", [id]);
+}
+
+export interface CategoryBreakdown {
+  category_id: number | null;
+  intention: string | null;
+  category_name: string | null;
+  category_color: string | null;
+  total_seconds: number;
+  session_count: number;
+}
+
+export async function getCategoryBreakdown(): Promise<CategoryBreakdown[]> {
+  const database = await getDb();
+  return database.select<CategoryBreakdown[]>(`
+    SELECT 
+      s.category_id,
+      s.intention,
+      c.name AS category_name,
+      c.color AS category_color,
+      COALESCE(SUM(s.duration_sec), 0) AS total_seconds,
+      COUNT(*) AS session_count
+    FROM sessions s
+    LEFT JOIN categories c ON s.category_id = c.id
+    WHERE date(s.started_at) = date('now') AND s.completed = 1
+    GROUP BY s.category_id, s.intention, c.name, c.color
+    ORDER BY total_seconds DESC
+  `);
+}
+
+export async function getTaskTimeToday(taskId: number): Promise<number> {
+  const database = await getDb();
+  const rows = await database.select<{ total: number }[]>(
+    "SELECT COALESCE(SUM(duration_sec), 0) AS total FROM sessions WHERE task_id = $1 AND date(started_at) = date('now') AND completed = 1",
+    [taskId]
+  );
+  return rows[0]?.total ?? 0;
 }
