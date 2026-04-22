@@ -260,16 +260,33 @@ export const useTimerStore = create<TimerStore>((set, get) => ({
   },
 
   adjustDuration: (minutes: number) => {
-    const { status } = get();
-    if (status !== "idle") return;
-
+    const { status, worker } = get();
     const { phase } = get();
     const key =
       phase === "work" ? "work" : phase === "short_break" ? "short" : "long";
-    const currentDuration = durations[key];
-    const newDuration = Math.max(60, currentDuration + minutes * 60);
-    durations[key] = newDuration;
-    set({ secondsRemaining: newDuration, totalSeconds: newDuration });
+
+    if (status === "idle") {
+      const currentDuration = durations[key];
+      const newDuration = Math.max(60, currentDuration + minutes * 60);
+      durations[key] = newDuration;
+      set({ secondsRemaining: newDuration, totalSeconds: newDuration });
+    } else {
+      const deltaSec = minutes * 60;
+      set((s) => {
+        const newTotal = Math.max(60, s.totalSeconds + deltaSec);
+        const newRemaining = Math.max(
+          0,
+          s.secondsRemaining + deltaSec,
+        );
+        return {
+          totalSeconds: newTotal,
+          secondsRemaining: newRemaining,
+        };
+      });
+      if (status === "running" && worker) {
+        worker.postMessage({ command: "add_time", seconds: deltaSec });
+      }
+    }
   },
 
   finishSession: async (mood?: string, notes?: string) => {

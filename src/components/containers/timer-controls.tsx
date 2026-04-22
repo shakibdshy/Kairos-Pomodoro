@@ -120,39 +120,37 @@ export function TimerControls() {
         overtimeSeconds={overtimeSeconds}
       />
 
-      {!isFocusComplete && status === "idle" && (
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => adjustDuration(-5)}
-            className={cn(
-              "p-2 rounded-full border transition-all",
-              "border-sahara-border/30 text-sahara-text-secondary hover:bg-sahara-card hover:border-sahara-primary/40 hover:text-sahara-primary cursor-pointer",
-            )}
-          >
-            <Minus className="w-3.5 h-3.5" />
-          </button>
+      <div className="flex items-center gap-3">
+        <button
+          onClick={() => adjustDuration(-5)}
+          className={cn(
+            "p-2 rounded-full border transition-all",
+            "border-sahara-border/30 text-sahara-text-secondary hover:bg-sahara-card hover:border-sahara-primary/40 hover:text-sahara-primary cursor-pointer",
+          )}
+        >
+          <Minus className="w-3.5 h-3.5" />
+        </button>
 
-          <div className="inline-flex items-center gap-2.5 px-4 py-2 rounded-full border border-sahara-border/30 bg-sahara-surface shadow-sm">
-            <span className="text-sm font-semibold text-sahara-text tabular-nums tracking-wide">
-              {formatTimeBadge(startTime)}
-            </span>
-            <ArrowRight className="w-3.5 h-3.5 text-sahara-text-muted" />
-            <span className="text-sm font-semibold text-sahara-text tabular-nums tracking-wide">
-              {formatTimeBadge(endTime)}
-            </span>
-          </div>
-
-          <button
-            onClick={() => adjustDuration(5)}
-            className={cn(
-              "p-2 rounded-full border transition-all",
-              "border-sahara-border/30 text-sahara-text-secondary hover:bg-sahara-card hover:border-sahara-primary/40 hover:text-sahara-primary cursor-pointer",
-            )}
-          >
-            <Plus className="w-3.5 h-3.5" />
-          </button>
+        <div className="inline-flex items-center gap-2.5 px-4 py-2 rounded-full border border-sahara-border/30 bg-sahara-surface shadow-sm">
+          <span className="text-sm font-semibold text-sahara-text tabular-nums tracking-wide">
+            {formatTimeBadge(startTime)}
+          </span>
+          <ArrowRight className="w-3.5 h-3.5 text-sahara-text-muted" />
+          <span className="text-sm font-semibold text-sahara-text tabular-nums tracking-wide">
+            {formatTimeBadge(endTime)}
+          </span>
         </div>
-      )}
+
+        <button
+          onClick={() => adjustDuration(5)}
+          className={cn(
+            "p-2 rounded-full border transition-all",
+            "border-sahara-border/30 text-sahara-text-secondary hover:bg-sahara-card hover:border-sahara-primary/40 hover:text-sahara-primary cursor-pointer",
+          )}
+        >
+          <Plus className="w-3.5 h-3.5" />
+        </button>
+      </div>
 
       <div className="flex items-center gap-4 flex-wrap justify-center">
         {isFocusComplete ? (
