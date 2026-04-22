@@ -12,7 +12,7 @@ import { CalendarWeekStats } from "@/components/base/calendar-week-stats";
 
 const START_HOUR = 6;
 const END_HOUR = 22;
-const HOUR_HEIGHT = 64;
+const HOUR_HEIGHT = 72;
 
 const EMPTY_SUMMARY: WeekSummary = {
   total_seconds: 0,
@@ -117,7 +117,7 @@ export function CalendarDashboard() {
     return (
       <div className="flex flex-col items-center justify-center h-full gap-4">
         <Loader2 className="w-8 h-8 text-sahara-primary animate-spin" />
-        <p className="text-xs font-bold text-sahara-text-muted uppercase tracking-wider">
+        <p className="text-xs font-semibold text-sahara-text-muted uppercase tracking-wider">
           Loading calendar...
         </p>
       </div>
@@ -125,7 +125,7 @@ export function CalendarDashboard() {
   }
 
   return (
-    <div className="px-10 py-8 max-w-7xl mx-auto h-full flex flex-col gap-6">
+    <div className="px-10 py-8 max-w-7xl mx-auto h-full flex flex-col gap-5">
       {/* Header */}
       <div className="flex items-start justify-between gap-6">
         <div>

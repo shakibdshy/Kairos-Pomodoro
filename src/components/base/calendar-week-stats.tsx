@@ -33,8 +33,8 @@ export function CalendarWeekStats({ summary }: CalendarWeekStatsProps) {
       icon: Flame,
       label: "Daily Avg",
       value: formatHours(summary.avg_daily_seconds),
-      color: "text-orange-500",
-      bg: "bg-orange-50",
+      color: "text-sahara-primary",
+      bg: "bg-sahara-primary-light",
     },
     {
       icon: TrendingUp,
@@ -42,8 +42,8 @@ export function CalendarWeekStats({ summary }: CalendarWeekStatsProps) {
       value: summary.peak_day
         ? `${new Date(summary.peak_day + "T00:00:00").toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })} (${formatHours(summary.peak_day_seconds)})`
         : "—",
-      color: "text-emerald-600",
-      bg: "bg-emerald-50",
+      color: "text-emerald-600 dark:text-emerald-400",
+      bg: "bg-emerald-50 dark:bg-emerald-950/30",
     },
   ];
 
@@ -54,20 +54,25 @@ export function CalendarWeekStats({ summary }: CalendarWeekStatsProps) {
         return (
           <div
             key={stat.label}
-            className="bg-sahara-surface border border-sahara-border/15 rounded-xl p-3"
+            className="bg-sahara-surface border border-sahara-border/30 rounded-xl p-3.5"
           >
             <div
               className={cn(
-                "w-7 h-7 rounded-lg flex items-center justify-center mb-2",
+                "w-8 h-8 rounded-lg flex items-center justify-center mb-2.5",
                 stat.bg,
               )}
             >
-              <Icon className={cn("w-3.5 h-3.5", stat.color)} />
+              <Icon className={cn("w-4 h-4", stat.color)} />
             </div>
-            <p className="text-[9px] font-bold text-sahara-text-muted uppercase tracking-wider">
+            <p className="text-[9px] font-semibold text-sahara-text-muted uppercase tracking-wider">
               {stat.label}
             </p>
-            <p className={cn("text-xs font-bold mt-0.5 leading-tight", stat.color)}>
+            <p
+              className={cn(
+                "text-sm font-bold mt-1 leading-tight",
+                stat.color,
+              )}
+            >
               {stat.value}
             </p>
           </div>

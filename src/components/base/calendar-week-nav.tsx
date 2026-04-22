@@ -1,4 +1,4 @@
-import { ChevronLeft, ChevronRight, CalendarDays } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 interface CalendarWeekNavProps {
   weekStart: Date;
@@ -45,35 +45,35 @@ export function CalendarWeekNav({
   const isCurrentWeek = now >= weekStart && now <= weekEnd;
 
   return (
-    <div className="flex items-center gap-4">
-      <div className="flex items-center gap-1.5 bg-sahara-surface border border-sahara-border/20 rounded-xl px-1 py-1">
+    <div className="flex items-center gap-3">
+      <button
+        onClick={onPrev}
+        className="w-8 h-8 flex items-center justify-center rounded-full text-sahara-text-muted hover:text-sahara-primary hover:bg-sahara-bg transition-colors cursor-pointer"
+        title="Previous week"
+      >
+        <ChevronLeft className="w-4 h-4" />
+      </button>
+
+      {!isCurrentWeek && (
         <button
-          onClick={onPrev}
-          className="p-2 rounded-lg text-sahara-text-muted hover:text-sahara-primary hover:bg-sahara-bg/50 transition-colors"
-          title="Previous week"
+          onClick={onToday}
+          className="px-3 py-1.5 rounded-lg text-[11px] font-semibold text-sahara-primary hover:bg-sahara-primary-light transition-colors cursor-pointer"
         >
-          <ChevronLeft className="w-4 h-4" />
+          Today
         </button>
-        {!isCurrentWeek && (
-          <button
-            onClick={onToday}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider text-sahara-primary hover:bg-sahara-primary-light transition-colors"
-          >
-            <CalendarDays className="w-3 h-3" />
-            Today
-          </button>
-        )}
-        <span className="text-xs font-bold text-sahara-text-secondary min-w-45 text-center">
-          {formatDateRange(weekStart, weekEnd)}
-        </span>
-        <button
-          onClick={onNext}
-          className="p-2 rounded-lg text-sahara-text-muted hover:text-sahara-primary hover:bg-sahara-bg/50 transition-colors"
-          title="Next week"
-        >
-          <ChevronRight className="w-4 h-4" />
-        </button>
-      </div>
+      )}
+
+      <span className="text-sm font-medium text-sahara-text min-w-45 text-center">
+        {formatDateRange(weekStart, weekEnd)}
+      </span>
+
+      <button
+        onClick={onNext}
+        className="w-8 h-8 flex items-center justify-center rounded-full text-sahara-text-muted hover:text-sahara-primary hover:bg-sahara-bg transition-colors cursor-pointer"
+        title="Next week"
+      >
+        <ChevronRight className="w-4 h-4" />
+      </button>
     </div>
   );
 }
