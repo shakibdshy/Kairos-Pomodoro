@@ -274,10 +274,7 @@ export const useTimerStore = create<TimerStore>((set, get) => ({
       const deltaSec = minutes * 60;
       set((s) => {
         const newTotal = Math.max(60, s.totalSeconds + deltaSec);
-        const newRemaining = Math.max(
-          0,
-          s.secondsRemaining + deltaSec,
-        );
+        const newRemaining = Math.max(0, s.secondsRemaining + deltaSec);
         return {
           totalSeconds: newTotal,
           secondsRemaining: newRemaining,
