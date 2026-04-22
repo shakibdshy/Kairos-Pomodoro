@@ -199,19 +199,33 @@ export async function startSession(
 
 export async function finishSession(
   sessionId: number,
+  durationSec?: number,
   mood?: string,
   notes?: string,
 ): Promise<void> {
   const database = await getDb();
-  await database.execute(`
-    UPDATE sessions 
-    SET ended_at = datetime('now', 'localtime'), 
-        duration_sec = CAST((julianday(datetime('now', 'localtime')) - julianday(started_at)) * 86400 AS INTEGER),
-        completed = 1,
-        mood = $2,
-        notes = $3
-    WHERE id = $1
-  `, [sessionId, mood || null, notes || null]);
+
+  if (durationSec !== undefined) {
+    await database.execute(`
+      UPDATE sessions 
+      SET ended_at = datetime('now', 'localtime'), 
+          duration_sec = $2,
+          completed = 1,
+          mood = $3,
+          notes = $4
+      WHERE id = $1
+    `, [sessionId, durationSec, mood || null, notes || null]);
+  } else {
+    await database.execute(`
+      UPDATE sessions 
+      SET ended_at = datetime('now', 'localtime'), 
+          duration_sec = CAST((julianday(datetime('now', 'localtime')) - julianday(started_at)) * 86400 AS INTEGER),
+          completed = 1,
+          mood = $2,
+          notes = $3
+      WHERE id = $1
+    `, [sessionId, mood || null, notes || null]);
+  }
 }
 
 export async function abandonSession(sessionId: number): Promise<void> {

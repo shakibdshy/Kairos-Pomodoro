@@ -16,6 +16,7 @@ export function useHotkeys() {
       if (status === "idle") start();
       else if (status === "running") pause();
       else if (status === "paused") resume();
+      else if (status === "focus_complete") resume();
     });
 
     return () => {

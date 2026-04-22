@@ -2,19 +2,24 @@ import { useSettingsStore } from "@/features/settings/use-settings-store";
 import { useNotificationStore } from "@/features/settings/use-notification-store";
 import { isTauri, invoke } from "@/lib/tauri";
 
-type NotificationType = "session-complete" | "break-over" | "focus-start";
+type NotificationType =
+  | "session-complete"
+  | "break-over"
+  | "focus-start"
+  | "focus-complete";
 
 const NOTIFICATION_TITLES: Record<NotificationType, string> = {
   "session-complete": "Focus Session Complete!",
   "break-over": "Break is Over",
   "focus-start": "Time to Focus",
+  "focus-complete": "Focus time's up!",
 };
 
 function getSettings() {
   return useSettingsStore.getState().settings;
 }
 
-async function playChime(): Promise<void> {
+export async function playChime(): Promise<void> {
   try {
     const ctx = new AudioContext();
     const now = ctx.currentTime;
@@ -36,9 +41,7 @@ async function playChime(): Promise<void> {
       gain.connect(ctx.destination);
 
       osc.start(now + durations.slice(0, i).reduce((a, b) => a + b, 0));
-      osc.stop(
-        now + durations.slice(0, i + 1).reduce((a, b) => a + b, 0),
-      );
+      osc.stop(now + durations.slice(0, i + 1).reduce((a, b) => a + b, 0));
     });
 
     setTimeout(() => ctx.close(), 1000);
@@ -57,9 +60,7 @@ export async function sendNotification(
     try {
       const dndEnabled = await invoke("is_dnd_enabled");
       if (dndEnabled) return;
-    } catch {
-      // DnD check failed, continue with notification
-    }
+    } catch {}
   }
 
   const tauri = await isTauri();

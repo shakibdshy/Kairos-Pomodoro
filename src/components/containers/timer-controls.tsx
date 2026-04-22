@@ -15,6 +15,9 @@ import {
   CheckCircle2,
   XCircle,
   ArrowRight,
+  Coffee,
+  ClockPlus,
+  Flag,
 } from "lucide-react";
 import { cn } from "@/lib/cn";
 import type { TimerPhase } from "@/features/timer/timer-types";
@@ -32,6 +35,7 @@ export function TimerControls() {
   const status = useTimerStore((s) => s.status);
   const secondsRemaining = useTimerStore((s) => s.secondsRemaining);
   const totalSeconds = useTimerStore((s) => s.totalSeconds);
+  const overtimeSeconds = useTimerStore((s) => s.overtimeSeconds);
   const start = useTimerStore((s) => s.start);
   const pause = useTimerStore((s) => s.pause);
   const resume = useTimerStore((s) => s.resume);
@@ -42,8 +46,12 @@ export function TimerControls() {
   const abandonSession = useTimerStore((s) => s.abandonSession);
   const selectedCategory = useTimerStore((s) => s.selectedCategory);
   const setSelectedCategory = useTimerStore((s) => s.setSelectedCategory);
+  const addFiveMinutes = useTimerStore((s) => s.addFiveMinutes);
+  const confirmStartNextPhase = useTimerStore((s) => s.confirmStartNextPhase);
+  const endWithoutBreak = useTimerStore((s) => s.endWithoutBreak);
 
   const [showFinishModal, setShowFinishModal] = useState(false);
+  const [modalMode, setModalMode] = useState<"finish" | "nextPhase">("finish");
 
   const phases: { id: TimerPhase; label: string }[] = [
     { id: "work", label: "Work" },
@@ -53,10 +61,14 @@ export function TimerControls() {
 
   const durationMinutes = Math.round(totalSeconds / 60);
 
+  const isFocusComplete = status === "focus_complete";
+  const isWorkPhase = phase === "work";
+
   const endTime = useMemo(() => {
+    if (isFocusComplete) return new Date();
     const now = new Date();
     return new Date(now.getTime() + secondsRemaining * 1000);
-  }, [secondsRemaining]);
+  }, [secondsRemaining, isFocusComplete]);
 
   const startTime = useMemo(() => {
     return new Date(endTime.getTime() - totalSeconds * 1000);
@@ -66,23 +78,28 @@ export function TimerControls() {
     mood: SessionMood;
     notes: string;
   }) => {
-    await finishSession(data.mood, data.notes);
+    if (modalMode === "nextPhase") {
+      await confirmStartNextPhase(data.mood, data.notes);
+    } else {
+      await finishSession(data.mood, data.notes);
+    }
     setShowFinishModal(false);
   };
 
   return (
     <div className="flex flex-col items-center gap-8">
-      {/* Phase Selector */}
       <div className="flex bg-sahara-card p-1 rounded-full border border-sahara-border/20">
         {phases.map((p) => (
           <button
             key={p.id}
             onClick={() => setPhase(p.id)}
+            disabled={status !== "idle"}
             className={cn(
               "px-6 py-2 rounded-full text-xs font-bold tracking-wider transition-all",
               phase === p.id
                 ? "bg-sahara-surface text-sahara-primary shadow-sm"
                 : "text-sahara-text-muted hover:text-sahara-text-secondary",
+              status !== "idle" && "opacity-50 cursor-not-allowed",
             )}
           >
             {p.label}
@@ -100,10 +117,10 @@ export function TimerControls() {
         secondsRemaining={secondsRemaining}
         totalSeconds={totalSeconds}
         phase={phase}
+        overtimeSeconds={overtimeSeconds}
       />
 
-      {/* Time Range Badge with +/- controls (only when idle) */}
-      {status === "idle" && (
+      {!isFocusComplete && status === "idle" && (
         <div className="flex items-center gap-3">
           <button
             onClick={() => adjustDuration(-5)}
@@ -137,8 +154,49 @@ export function TimerControls() {
         </div>
       )}
 
-      <div className="flex items-center gap-4">
-        {status === "idle" ? (
+      <div className="flex items-center gap-4 flex-wrap justify-center">
+        {isFocusComplete ? (
+          <>
+            <button
+              onClick={() => {
+                setModalMode("nextPhase");
+                setShowFinishModal(true);
+              }}
+              className="flex items-center gap-2 bg-emerald-600 text-white px-6 py-3 rounded-full font-bold text-xs tracking-widest hover:bg-emerald-700 transition-colors shadow-lg shadow-emerald-600/20"
+            >
+              <Coffee className="w-4 h-4" />
+              {isWorkPhase ? "Start Break" : "Back to Work"}
+            </button>
+
+            <button
+              onClick={() => addFiveMinutes()}
+              className="flex items-center gap-2 bg-amber-500 text-white px-6 py-3 rounded-full font-bold text-xs tracking-widest hover:bg-amber-600 transition-colors shadow-lg shadow-amber-500/20"
+            >
+              <ClockPlus className="w-4 h-4" />
+              Add 5 Min
+            </button>
+
+            <button
+              onClick={() => endWithoutBreak()}
+              className="flex items-center gap-1.5 px-4 py-3 rounded-full font-bold text-[10px] tracking-wider uppercase border border-slate-300/50 text-slate-500 bg-slate-50/80 hover:bg-slate-100/80 transition-colors"
+            >
+              <Flag className="w-4 h-4" />
+              End Session
+            </button>
+
+            <div className="h-8 w-px bg-sahara-border/20 mx-1" />
+
+            {overtimeSeconds > 0 && (
+              <button
+                onClick={pause}
+                className="flex items-center gap-2 bg-sahara-primary text-white px-6 py-3 rounded-full font-bold text-xs tracking-widest hover:bg-sahara-primary/90 transition-colors shadow-lg shadow-sahara-primary/20"
+              >
+                <Pause className="w-4 h-4 fill-current" />
+                Pause Overtime
+              </button>
+            )}
+          </>
+        ) : status === "idle" ? (
           <>
             <button
               onClick={() => start()}
@@ -180,7 +238,10 @@ export function TimerControls() {
             <div className="h-8 w-px bg-sahara-border/20 mx-1" />
 
             <button
-              onClick={() => setShowFinishModal(true)}
+              onClick={() => {
+                setModalMode("finish");
+                setShowFinishModal(true);
+              }}
               className="flex items-center gap-1.5 px-4 py-3 rounded-full font-bold text-[10px] tracking-wider uppercase border border-green-500/30 text-green-600 bg-green-50 hover:bg-green-100 transition-colors"
             >
               <CheckCircle2 className="w-4 h-4" />

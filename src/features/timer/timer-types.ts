@@ -1,6 +1,6 @@
 export type TimerPhase = "work" | "short_break" | "long_break";
 
-export type TimerStatus = "idle" | "running" | "paused";
+export type TimerStatus = "idle" | "running" | "paused" | "focus_complete";
 
 export interface TimerState {
   phase: TimerPhase;
@@ -9,4 +9,5 @@ export interface TimerState {
   totalSeconds: number;
   completedPomos: number;
   activeTaskId: number | null;
+  overtimeSeconds: number;
 }

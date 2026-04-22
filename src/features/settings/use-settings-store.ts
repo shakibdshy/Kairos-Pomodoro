@@ -14,7 +14,7 @@ const DEFAULTS: Settings = {
   shortBreakDuration: DEFAULT_SHORT_BREAK_SEC,
   longBreakDuration: DEFAULT_LONG_BREAK_SEC,
   pomosBeforeLongBreak: POMOS_BEFORE_LONG_BREAK,
-  autoStartBreaks: true,
+  autoStartBreaks: false,
   hotkey: HOTKEY_DEFAULT,
   soundEnabled: true,
   respectDnd: true,
