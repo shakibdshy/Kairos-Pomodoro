@@ -1,17 +1,10 @@
 import { MainLayout } from "@/components/template/main-layout";
+import { Button } from "@/components/ui/button";
 import { Download } from "lucide-react";
-import type { Route } from "@/app/router";
+import type { PageProps } from "@/app/router";
 import { AnalyticsDashboard } from "@/components/containers/analytics";
 
-interface AnalyticsPageProps {
-  onNavigate: (route: Route) => void;
-  currentRoute: Route;
-}
-
-export function AnalyticsPage({
-  onNavigate,
-  currentRoute,
-}: AnalyticsPageProps) {
+export function AnalyticsPage({ onNavigate, currentRoute }: PageProps) {
   return (
     <MainLayout onNavigate={onNavigate} currentRoute={currentRoute}>
       <div className="px-12 py-12 max-w-6xl mx-auto">
@@ -25,14 +18,26 @@ export function AnalyticsPage({
             </p>
           </div>
           <div className="flex gap-4">
-            <button className="flex items-center gap-2 bg-sahara-surface border border-sahara-border/30 text-sahara-text-secondary px-6 py-3 rounded-xl font-bold text-xs tracking-widest hover:bg-sahara-card transition-colors">
+            <Button
+              variant="outline"
+              intent="default"
+              size="md"
+              disabled
+              className="gap-2"
+            >
               <Download className="w-4 h-4" />
               EXPORT CSV
-            </button>
-            <button className="flex items-center gap-2 bg-sahara-primary text-white px-6 py-3 rounded-xl font-bold text-xs tracking-widest hover:bg-sahara-primary/90 transition-colors shadow-lg shadow-sahara-primary/20">
+            </Button>
+            <Button
+              variant="solid"
+              intent="sahara"
+              size="md"
+              disabled
+              className="gap-2 bg-sahara-primary/50"
+            >
               <Download className="w-4 h-4" />
               EXPORT PDF
-            </button>
+            </Button>
           </div>
         </header>
 

@@ -20,6 +20,12 @@ import type { Category } from "@/lib/db";
 import { sendNotification, playChime } from "@/lib/notifications";
 import { useSettingsStore } from "@/features/settings/use-settings-store";
 
+interface TimerDurations {
+  work: number;
+  short: number;
+  long: number;
+}
+
 interface TimerStore {
   phase: TimerPhase;
   status: TimerStatus;
@@ -32,6 +38,7 @@ interface TimerStore {
   worker: Worker | null;
   overtimeSeconds: number;
   overtimeNotifInterval: ReturnType<typeof setInterval> | null;
+  durations: TimerDurations;
 
   start: (duration?: number) => void;
   pause: () => void;
@@ -45,19 +52,12 @@ interface TimerStore {
   finishSession: (mood?: string, notes?: string) => Promise<void>;
   abandonSession: () => Promise<void>;
   setSelectedCategory: (category: Category | null) => void;
-  startNextPhase: () => void;
   confirmStartNextPhase: (mood?: string, notes?: string) => Promise<void>;
   addFiveMinutes: () => void;
   endWithoutBreak: () => Promise<void>;
 }
 
-let durations = {
-  work: DEFAULT_WORK_SEC,
-  short: DEFAULT_SHORT_BREAK_SEC,
-  long: DEFAULT_LONG_BREAK_SEC,
-};
-
-function getPhaseDuration(phase: TimerPhase): number {
+function getPhaseDuration(phase: TimerPhase, durations: TimerDurations): number {
   return durations[
     phase === "work" ? "work" : phase === "short_break" ? "short" : "long"
   ];
@@ -66,6 +66,7 @@ function getPhaseDuration(phase: TimerPhase): number {
 function getNextPhase(
   currentPhase: TimerPhase,
   pomosCompleted: number,
+  durations: TimerDurations,
 ): {
   phase: TimerPhase;
   duration: number;
@@ -85,11 +86,27 @@ function clearOvertimeNotif(store: TimerStore) {
   }
 }
 
+function terminateWorker(store: { worker: Worker | null }) {
+  store.worker?.terminate();
+}
+
+function createWorkerHandler(
+  set: (partial: Partial<TimerStore> | ((s: TimerStore) => Partial<TimerStore>)) => void,
+  onDone?: () => void,
+) {
+  return (e: MessageEvent) => {
+    const { type, remaining, overtime } = e.data;
+    if (type === "tick") set({ secondsRemaining: remaining });
+    if (type === "done") onDone?.();
+    if (type === "overtime_tick") set({ overtimeSeconds: overtime });
+  };
+}
+
 export const useTimerStore = create<TimerStore>((set, get) => ({
   phase: "work",
   status: "idle",
-  secondsRemaining: durations.work,
-  totalSeconds: durations.work,
+  secondsRemaining: DEFAULT_WORK_SEC,
+  totalSeconds: DEFAULT_WORK_SEC,
   completedPomos: 0,
   activeTaskId: null,
   currentSessionId: null,
@@ -97,13 +114,18 @@ export const useTimerStore = create<TimerStore>((set, get) => ({
   worker: null,
   overtimeSeconds: 0,
   overtimeNotifInterval: null,
+  durations: {
+    work: DEFAULT_WORK_SEC,
+    short: DEFAULT_SHORT_BREAK_SEC,
+    long: DEFAULT_LONG_BREAK_SEC,
+  },
 
   start: async (duration?: number) => {
     const state = get();
-    state.worker?.terminate();
+    terminateWorker(state);
     clearOvertimeNotif(state);
 
-    const secs = duration ?? getPhaseDuration(state.phase);
+    const secs = duration ?? getPhaseDuration(state.phase, state.durations);
 
     const sessionId = await dbStartSession(
       state.activeTaskId,
@@ -113,20 +135,7 @@ export const useTimerStore = create<TimerStore>((set, get) => ({
     );
 
     const worker = createTimerWorker();
-
-    worker.onmessage = (e: MessageEvent) => {
-      const { type, remaining, overtime } = e.data;
-      if (type === "tick") {
-        set({ secondsRemaining: remaining });
-      }
-      if (type === "done") {
-        handleTimerDone();
-      }
-      if (type === "overtime_tick") {
-        set({ overtimeSeconds: overtime });
-      }
-    };
-
+    worker.onmessage = createWorkerHandler(set, handleTimerDone);
     worker.postMessage({ command: "start", seconds: secs });
 
     set({
@@ -182,13 +191,13 @@ export const useTimerStore = create<TimerStore>((set, get) => ({
       sendNotification(notifType, `Your ${phase.replace("_", " ")} has ended.`);
     }
 
-    state.worker?.terminate();
+    terminateWorker(state);
     clearOvertimeNotif(state);
 
     const newPomos =
       phase === "work" && completed ? completedPomos + 1 : completedPomos;
 
-    const next = getNextPhase(phase, newPomos);
+    const next = getNextPhase(phase, newPomos, state.durations);
 
     set({
       phase: next.phase,
@@ -198,6 +207,7 @@ export const useTimerStore = create<TimerStore>((set, get) => ({
       completedPomos: newPomos,
       worker: null,
       overtimeSeconds: 0,
+      overtimeNotifInterval: null,
     });
 
     if (phase === "work" && completed) {
@@ -207,9 +217,9 @@ export const useTimerStore = create<TimerStore>((set, get) => ({
 
   reset: () => {
     const state = get();
-    state.worker?.terminate();
+    terminateWorker(state);
     clearOvertimeNotif(state);
-    const duration = getPhaseDuration(state.phase);
+    const duration = getPhaseDuration(state.phase, state.durations);
     set({
       status: "idle",
       secondsRemaining: duration,
@@ -222,9 +232,9 @@ export const useTimerStore = create<TimerStore>((set, get) => ({
 
   setPhase: (phase: TimerPhase) => {
     const state = get();
-    state.worker?.terminate();
+    terminateWorker(state);
     clearOvertimeNotif(state);
-    const duration = getPhaseDuration(phase);
+    const duration = getPhaseDuration(phase, state.durations);
     set({
       phase,
       status: "idle",
@@ -246,30 +256,33 @@ export const useTimerStore = create<TimerStore>((set, get) => ({
           const category = await getCategory(task.category_id);
           if (category) set({ selectedCategory: category });
         }
-      } catch {}
+      } catch (err) {
+        console.error("[TimerStore] Failed to load category for task:", taskId, err);
+      }
     }
   },
 
   setDurations: (work: number, short: number, long: number) => {
-    durations = { work, short, long };
+    const durations = { work, short, long };
     const { phase, status } = get();
     if (status === "idle") {
-      const dur = getPhaseDuration(phase);
-      set({ secondsRemaining: dur, totalSeconds: dur });
+      const dur = getPhaseDuration(phase, durations);
+      set({ durations, secondsRemaining: dur, totalSeconds: dur });
+    } else {
+      set({ durations });
     }
   },
 
   adjustDuration: (minutes: number) => {
-    const { status, worker } = get();
-    const { phase } = get();
+    const { status, worker, phase, durations } = get();
     const key =
       phase === "work" ? "work" : phase === "short_break" ? "short" : "long";
 
     if (status === "idle") {
       const currentDuration = durations[key];
       const newDuration = Math.max(60, currentDuration + minutes * 60);
-      durations[key] = newDuration;
-      set({ secondsRemaining: newDuration, totalSeconds: newDuration });
+      const newDurations = { ...durations, [key]: newDuration };
+      set({ durations: newDurations, secondsRemaining: newDuration, totalSeconds: newDuration });
     } else {
       const deltaSec = minutes * 60;
       set((s) => {
@@ -288,8 +301,8 @@ export const useTimerStore = create<TimerStore>((set, get) => ({
 
   finishSession: async (mood?: string, notes?: string) => {
     const state = get();
-    const { worker, currentSessionId, activeTaskId, phase } = state;
-    worker?.terminate();
+    const { currentSessionId, activeTaskId, phase } = state;
+    terminateWorker(state);
     clearOvertimeNotif(state);
 
     if (currentSessionId) {
@@ -305,7 +318,7 @@ export const useTimerStore = create<TimerStore>((set, get) => ({
       }
     }
 
-    const duration = getPhaseDuration("work");
+    const duration = getPhaseDuration("work", state.durations);
     set({
       status: "idle",
       phase: "work",
@@ -321,15 +334,15 @@ export const useTimerStore = create<TimerStore>((set, get) => ({
 
   abandonSession: async () => {
     const state = get();
-    const { worker, currentSessionId } = state;
-    worker?.terminate();
+    const { currentSessionId } = state;
+    terminateWorker(state);
     clearOvertimeNotif(state);
 
     if (currentSessionId) {
       await dbAbandonSession(currentSessionId);
     }
 
-    const duration = getPhaseDuration(state.phase);
+    const duration = getPhaseDuration(state.phase, state.durations);
 
     set({
       status: "idle",
@@ -346,22 +359,16 @@ export const useTimerStore = create<TimerStore>((set, get) => ({
     set({ selectedCategory: category });
   },
 
-  startNextPhase: () => {
-    // Just signals the UI to show the finish modal
-    // The actual phase transition happens in confirmStartNextPhase
-  },
-
   confirmStartNextPhase: async (mood?: string, notes?: string) => {
     const state = get();
     const {
-      worker,
       currentSessionId,
       activeTaskId,
       phase,
       totalSeconds,
       overtimeSeconds,
     } = state;
-    worker?.terminate();
+    terminateWorker(state);
     clearOvertimeNotif(state);
 
     if (currentSessionId) {
@@ -375,7 +382,7 @@ export const useTimerStore = create<TimerStore>((set, get) => ({
     const newPomos =
       state.phase === "work" ? state.completedPomos + 1 : state.completedPomos;
 
-    const next = getNextPhase(state.phase, newPomos);
+    const next = getNextPhase(state.phase, newPomos, state.durations);
 
     set({
       phase: next.phase,
@@ -399,36 +406,14 @@ export const useTimerStore = create<TimerStore>((set, get) => ({
     clearOvertimeNotif(state);
 
     if (overtimeSeconds > 0 || state.secondsRemaining <= 0) {
-      const newRemaining = 5 * 60;
-      worker?.terminate();
-
-      const newWorker = createTimerWorker();
-      newWorker.onmessage = (e: MessageEvent) => {
-        const { type, remaining, overtime } = e.data;
-        if (type === "tick") {
-          set({ secondsRemaining: remaining });
-        }
-        if (type === "done") {
-          handleTimerDone();
-        }
-        if (type === "overtime_tick") {
-          set({ overtimeSeconds: overtime });
-        }
-      };
-
-      newWorker.postMessage({ command: "start", seconds: newRemaining });
-
-      set({
-        status: "running",
-        secondsRemaining: newRemaining,
-        totalSeconds: newRemaining,
-        worker: newWorker,
-        overtimeSeconds: 0,
-      });
+      terminateWorker(state);
+      get().start(5 * 60);
     } else {
-      worker?.postMessage({ command: "add_time", seconds: 5 * 60 });
+      const addedSec = 5 * 60;
+      worker?.postMessage({ command: "add_time", seconds: addedSec });
       set((s) => ({
-        totalSeconds: s.totalSeconds + 5 * 60,
+        totalSeconds: s.totalSeconds + addedSec,
+        secondsRemaining: s.secondsRemaining + addedSec,
       }));
     }
   },
@@ -436,14 +421,13 @@ export const useTimerStore = create<TimerStore>((set, get) => ({
   endWithoutBreak: async () => {
     const state = get();
     const {
-      worker,
       currentSessionId,
       activeTaskId,
       phase,
       totalSeconds,
       overtimeSeconds,
     } = state;
-    worker?.terminate();
+    terminateWorker(state);
     clearOvertimeNotif(state);
 
     if (currentSessionId) {
@@ -454,7 +438,7 @@ export const useTimerStore = create<TimerStore>((set, get) => ({
       }
     }
 
-    const duration = getPhaseDuration("work");
+    const duration = getPhaseDuration("work", state.durations);
     set({
       phase: "work",
       status: "idle",
@@ -483,7 +467,7 @@ async function handleTimerDone() {
     return;
   }
 
-  state.worker?.terminate();
+  terminateWorker(state);
 
   const overtimeWorker = createTimerWorker();
   overtimeWorker.onmessage = (e: MessageEvent) => {
@@ -494,8 +478,9 @@ async function handleTimerDone() {
   };
   overtimeWorker.postMessage({ command: "start_overtime", startFrom: 0 });
 
+  const current = useTimerStore.getState();
   const phaseLabel = isWorkPhase ? "focus" : phase.replace("_", " ");
-  const durationMin = Math.round(state.totalSeconds / 60);
+  const durationMin = Math.round(current.totalSeconds / 60);
 
   sendNotification(
     isWorkPhase ? "focus-complete" : "break-over",

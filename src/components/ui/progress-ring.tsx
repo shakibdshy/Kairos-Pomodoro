@@ -19,6 +19,10 @@ export function ProgressRing({
 
   return (
     <div
+      role="progressbar"
+      aria-valuenow={Math.round(progress)}
+      aria-valuemin={0}
+      aria-valuemax={100}
       className={`relative inline-flex items-center justify-center ${className}`}
     >
       <svg width={size} height={size} className="-rotate-90">
@@ -29,7 +33,7 @@ export function ProgressRing({
           fill="none"
           stroke="currentColor"
           strokeWidth={strokeWidth}
-          className="text-neutral-200 dark:text-neutral-800"
+          className="text-sahara-border/30"
         />
         <circle
           cx={size / 2}

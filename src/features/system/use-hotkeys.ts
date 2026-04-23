@@ -20,7 +20,7 @@ export function useHotkeys() {
     });
 
     return () => {
-      unlisten.then((fn) => fn());
+      unlisten.then((fn) => fn()).catch(() => {});
       invokeUnregisterHotkey("CommandOrControl+Alt+S").catch(() => {});
     };
   }, [status, start, pause, resume]);

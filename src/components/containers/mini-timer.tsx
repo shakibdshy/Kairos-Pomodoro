@@ -1,6 +1,8 @@
 import { useTimerStore } from "@/features/timer/use-timer-store";
 import { Text } from "@/components/ui/text";
+import { Button } from "@/components/ui/button";
 import { formatSeconds, getPhaseColor } from "@/lib/time";
+import { Pause, Play } from "lucide-react";
 
 export function MiniTimer() {
   const secondsRemaining = useTimerStore((s) => s.secondsRemaining);
@@ -20,21 +22,24 @@ export function MiniTimer() {
       >
         {formatSeconds(secondsRemaining)}
       </Text>
-      <button
-        onClick={status === "running" ? pause : status === "paused" ? resume : undefined}
-        className="text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-100 transition-colors"
+      <Button
+        variant="ghost"
+        size="icon-sm"
+        onClick={
+          status === "running"
+            ? pause
+            : status === "paused"
+              ? resume
+              : undefined
+        }
+        className="text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-100"
       >
         {status === "running" ? (
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
-            <rect x="6" y="4" width="4" height="16" />
-            <rect x="14" y="4" width="4" height="16" />
-          </svg>
+          <Pause className="w-3 h-3" />
         ) : (
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M8 5v14l11-7z" />
-          </svg>
+          <Play className="w-3 h-3" />
         )}
-      </button>
+      </Button>
     </div>
   );
 }

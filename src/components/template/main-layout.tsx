@@ -1,5 +1,6 @@
 import { useState, type ReactNode } from "react";
 import type { Route } from "@/app/router";
+import { Button } from "@/components/ui/button";
 import {
   Timer,
   CheckSquare,
@@ -47,16 +48,20 @@ export function MainLayout({
         )}
       >
         {/* Toggle Button */}
-        <button
+        <Button
+          variant="outline"
+          size="icon-lg"
+          intent="default"
+          shape="rounded-full"
           onClick={() => setIsCollapsed(!isCollapsed)}
-          className="absolute -right-3.5 top-20 w-7 h-7 bg-sahara-surface border border-sahara-border/30 rounded-full flex items-center justify-center text-sahara-text-muted hover:text-sahara-primary hover:border-sahara-primary/40 hover:shadow-md transition-all shadow-sm z-50 cursor-pointer"
+          className="absolute -right-3.5 top-20 z-50 w-7 h-7 bg-sahara-surface shadow-sm hover:text-sahara-primary hover:border-sahara-primary/40 hover:shadow-md"
         >
           {isCollapsed ? (
             <PanelLeftOpen className="w-3.5 h-3.5" />
           ) : (
             <PanelLeftClose className="w-3.5 h-3.5" />
           )}
-        </button>
+        </Button>
 
         {/* Brand */}
         <div
@@ -87,15 +92,17 @@ export function MainLayout({
             const Icon = item.icon;
             const isActive = currentRoute === item.id;
             return (
-              <button
+              <Button
                 key={item.id}
+                variant="nav"
+                active={isActive}
                 onClick={() => onNavigate?.(item.id as Route)}
                 title={isCollapsed ? item.label : undefined}
                 className={cn(
-                  "w-full flex items-center rounded-xl transition-all duration-200 group overflow-hidden",
+                  "overflow-hidden",
                   isCollapsed ? "justify-center p-3" : "gap-4 px-4 py-3",
                   isActive
-                    ? "bg-sahara-primary-light text-sahara-primary font-bold shadow-sm shadow-sahara-primary/5"
+                    ? ""
                     : "text-sahara-text-secondary hover:bg-sahara-card hover:text-sahara-text",
                 )}
               >
@@ -112,18 +119,21 @@ export function MainLayout({
                     {item.label}
                   </span>
                 )}
-              </button>
+              </Button>
             );
           })}
         </nav>
 
         {/* Start Session CTA */}
         <div className="px-3 mb-8">
-          <button
+          <Button
+            variant="solid"
+            intent="sahara"
+            fullWidth
             onClick={() => onNavigate?.("timer")}
             title={isCollapsed ? "START SESSION" : undefined}
             className={cn(
-              "w-full bg-sahara-primary text-white rounded-xl font-bold text-xs tracking-[0.15em] hover:bg-sahara-primary/90 transition-all shadow-lg shadow-sahara-primary/20 flex items-center justify-center",
+              "tracking-[0.15em]",
               isCollapsed ? "h-12" : "py-4 gap-3",
             )}
           >
@@ -131,19 +141,21 @@ export function MainLayout({
               className={cn("w-4 h-4 fill-current", !isCollapsed && "ml-1")}
             />
             {!isCollapsed && <span>START SESSION</span>}
-          </button>
+          </Button>
         </div>
 
         {/* Bottom Actions */}
         <div className="px-3 space-y-1 border-t border-sahara-border/20 pt-6">
-          <button
+          <Button
+            variant="nav"
+            intent="default"
             onClick={() => onNavigate?.("onboarding")}
             title={isCollapsed ? "HELP" : undefined}
             className={cn(
-              "w-full flex items-center transition-colors group",
+              "rounded-none",
               isCollapsed
                 ? "justify-center p-3"
-                : "gap-4 px-4 py-3 text-sahara-text-muted hover:text-sahara-text-secondary",
+                : "gap-4 px-4 py-3",
             )}
           >
             <HelpCircle
@@ -157,15 +169,16 @@ export function MainLayout({
             {!isCollapsed && (
               <span className="text-xs tracking-widest font-bold">HELP</span>
             )}
-          </button>
-          <button
+          </Button>
+          <Button
+            variant="nav"
+            active={currentRoute === "settings"}
             onClick={() => onNavigate?.("settings")}
             title={isCollapsed ? "SETTINGS" : undefined}
             className={cn(
-              "w-full flex items-center rounded-xl transition-all duration-200 group",
               isCollapsed ? "justify-center p-3" : "gap-4 px-4 py-3",
               currentRoute === "settings"
-                ? "bg-sahara-primary-light text-sahara-primary font-bold"
+                ? ""
                 : "text-sahara-text-muted hover:text-sahara-text-secondary",
             )}
           >
@@ -182,7 +195,7 @@ export function MainLayout({
                 SETTINGS
               </span>
             )}
-          </button>
+          </Button>
         </div>
       </aside>
 

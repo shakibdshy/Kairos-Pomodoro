@@ -2,10 +2,8 @@ import { useState, useEffect, useCallback } from "react";
 import { Text } from "@/components/ui/text";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { getTodaySessions } from "@/lib/db";
-import {
-  type Session,
-  formatTotalTime,
-} from "@/lib/session-utils";
+import type { Session } from "@/lib/db";
+import { formatTotalTime } from "@/lib/session-utils";
 import { SessionCard } from "@/components/base/session-card";
 import { SessionStatsCards } from "@/components/base/session-stats-cards";
 import { TopCategoryBadge } from "@/components/base/top-category-badge";
@@ -15,8 +13,13 @@ export function TodaySessions() {
   const [sessions, setSessions] = useState<Session[]>([]);
   const [isCollapsed, setIsCollapsed] = useState(false);
 
-  const refreshSessions = useCallback(() => {
-    getTodaySessions().then(setSessions);
+  const refreshSessions = useCallback(async () => {
+    try {
+      const data = await getTodaySessions();
+      setSessions(data);
+    } catch (err) {
+      console.error("[TodaySessions] Failed to refresh:", err);
+    }
   }, []);
 
   useEffect(() => {

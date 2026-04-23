@@ -1,3 +1,5 @@
+import { cn } from "@/lib/cn";
+import { Button } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
 import type { Task } from "@/features/tasks/task-types";
 
@@ -9,14 +11,23 @@ interface TaskItemProps {
   onSelect: () => void;
 }
 
-export function TaskItem({ task, isActive, onToggle, onDelete, onSelect }: TaskItemProps) {
+export function TaskItem({
+  task,
+  isActive,
+  onToggle,
+  onDelete,
+  onSelect,
+}: TaskItemProps) {
+  const isComplete = task.completed_pomos >= task.estimated_pomos;
+
   return (
     <div
-      className={`group flex items-center gap-3 rounded-lg px-3 py-2 transition-colors cursor-pointer ${
+      className={cn(
+        "group flex items-center gap-3 rounded-lg px-3 py-2 transition-colors cursor-pointer",
         isActive
-          ? "bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800"
-          : "hover:bg-neutral-50 dark:hover:bg-neutral-800/50"
-      }`}
+          ? "bg-sahara-primary-light border border-sahara-primary/30"
+          : "hover:bg-sahara-card",
+      )}
       onClick={onSelect}
     >
       <button
@@ -24,14 +35,22 @@ export function TaskItem({ task, isActive, onToggle, onDelete, onSelect }: TaskI
           e.stopPropagation();
           onToggle();
         }}
-        className={`flex h-5 w-5 shrink-0 items-center justify-center rounded border transition-colors ${
-          task.completed_pomos >= task.estimated_pomos
-            ? "border-green-500 bg-green-500 text-white"
-            : "border-neutral-300 dark:border-neutral-600"
-        }`}
+        className={cn(
+          "flex h-5 w-5 shrink-0 items-center justify-center rounded border transition-colors",
+          isComplete
+            ? "border-sahara-primary bg-sahara-primary text-white"
+            : "border-sahara-border/40",
+        )}
       >
-        {task.completed_pomos >= task.estimated_pomos && (
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+        {isComplete && (
+          <svg
+            width="12"
+            height="12"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="3"
+          >
             <path d="M5 12l5 5L20 7" />
           </svg>
         )}
@@ -40,31 +59,39 @@ export function TaskItem({ task, isActive, onToggle, onDelete, onSelect }: TaskI
       <div className="flex-1 min-w-0">
         <Text
           variant="body"
-          className={`truncate ${
-            task.completed_pomos >= task.estimated_pomos
-              ? "line-through text-neutral-400"
-              : ""
-          }`}
+          className={cn(
+            "truncate",
+            isComplete && "line-through text-sahara-text-muted",
+          )}
         >
           {task.name}
         </Text>
       </div>
 
-      <span className="text-xs text-neutral-400 tabular-nums shrink-0">
+      <span className="text-xs text-sahara-text-muted tabular-nums shrink-0">
         {task.completed_pomos}/{task.estimated_pomos}
       </span>
 
-      <button
+      <Button
+        variant="ghost"
+        size="icon-sm"
         onClick={(e) => {
           e.stopPropagation();
           onDelete();
         }}
-        className="shrink-0 opacity-0 group-hover:opacity-100 text-neutral-400 hover:text-red-500 transition-all"
+        className="shrink-0 opacity-0 group-hover:opacity-100 text-sahara-text-muted hover:text-sahara-primary"
       >
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <svg
+          width="14"
+          height="14"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+        >
           <path d="M18 6L6 18M6 6l12 12" />
         </svg>
-      </button>
+      </Button>
     </div>
   );
 }

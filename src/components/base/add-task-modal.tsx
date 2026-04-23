@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { X, Plus, Edit3, Tag } from "lucide-react";
-import { cn } from "@/lib/cn";
+import { Button } from "@/components/ui/button";
 import type { Task } from "@/features/tasks/task-types";
 import type { Category } from "@/lib/db";
 import { getCategories } from "@/lib/db";
@@ -40,7 +40,12 @@ export function AddTaskModal({
 
   useEffect(() => {
     if (open) {
-      getCategories().then(setCategories).catch(() => setCategories([]));
+      getCategories()
+        .then(setCategories)
+        .catch((err) => {
+          console.error("[AddTaskModal] Failed to load categories:", err);
+          setCategories([]);
+        });
     }
   }, [open]);
 
@@ -84,12 +89,16 @@ export function AddTaskModal({
         onClick={onClose}
       />
       <div className="relative bg-sahara-surface rounded-2xl border border-sahara-border/20 shadow-xl w-full max-w-md mx-4 p-8 animate-in fade-in zoom-in-95 duration-200">
-        <button
+        <Button
+          variant="ghost"
+          size="icon-lg"
+          intent="default"
+          shape="rounded-lg"
           onClick={onClose}
-          className="absolute top-4 right-4 w-8 h-8 rounded-lg flex items-center justify-center text-sahara-text-muted hover:text-sahara-text hover:bg-sahara-bg transition-colors"
+          className="absolute top-4 right-4 text-sahara-text-muted hover:text-sahara-text hover:bg-sahara-bg"
         >
           <X className="w-4 h-4" />
-        </button>
+        </Button>
 
         <div className="flex items-center gap-3 mb-6">
           <div className="w-10 h-10 rounded-xl bg-sahara-primary-light flex items-center justify-center text-sahara-primary">
@@ -135,7 +144,9 @@ export function AddTaskModal({
                 max={100}
                 value={estimatedPomos}
                 onChange={(e) =>
-                  setEstimatedPomos(Math.max(1, parseInt(e.target.value) || 1))
+                  setEstimatedPomos(
+                    Math.max(1, parseInt(e.target.value, 10) || 1),
+                  )
                 }
                 className="w-full px-4 py-3 bg-sahara-bg/40 border border-sahara-border/20 rounded-xl text-sm text-sahara-text tabular-nums focus:outline-none focus:border-sahara-primary/50 focus:ring-2 focus:ring-sahara-primary/10 transition-all"
               />
@@ -218,22 +229,23 @@ export function AddTaskModal({
           </div>
 
           <div className="flex gap-3 pt-2">
-            <button
+            <Button
               type="button"
+              variant="outline"
+              intent="default"
+              size="md"
+              fullWidth
               onClick={onClose}
-              className="flex-1 px-4 py-3 rounded-xl border border-sahara-border/20 text-sm font-bold text-sahara-text-secondary hover:bg-sahara-card transition-colors"
             >
               Cancel
-            </button>
-            <button
+            </Button>
+            <Button
               type="submit"
+              variant="solid"
+              intent={name.trim() ? "sahara" : "default"}
+              fullWidth
               disabled={!name.trim()}
-              className={cn(
-                "flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-bold text-white tracking-widest transition-all",
-                name.trim()
-                  ? "bg-sahara-primary hover:bg-sahara-primary/90 shadow-lg shadow-sahara-primary/20"
-                  : "bg-sahara-border/30 cursor-not-allowed text-sahara-text-muted",
-              )}
+              className="gap-2"
             >
               {isEditing ? (
                 <>
@@ -244,7 +256,7 @@ export function AddTaskModal({
                   <Plus className="w-4 h-4" /> CREATE TASK
                 </>
               )}
-            </button>
+            </Button>
           </div>
         </form>
       </div>

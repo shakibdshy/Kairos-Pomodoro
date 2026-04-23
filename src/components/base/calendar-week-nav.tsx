@@ -1,3 +1,4 @@
+import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
 interface CalendarWeekNavProps {
@@ -46,34 +47,44 @@ export function CalendarWeekNav({
 
   return (
     <div className="flex items-center gap-3">
-      <button
+      <Button
+        variant="ghost"
+        size="icon-lg"
+        intent="default"
+        shape="rounded-full"
         onClick={onPrev}
-        className="w-8 h-8 flex items-center justify-center rounded-full text-sahara-text-muted hover:text-sahara-primary hover:bg-sahara-bg transition-colors cursor-pointer"
         title="Previous week"
       >
         <ChevronLeft className="w-4 h-4" />
-      </button>
+      </Button>
 
       {!isCurrentWeek && (
-        <button
+        <Button
+          variant="ghost"
+          size="xs"
+          intent="sahara"
+          shape="rounded-lg"
+          className="text-[11px] font-semibold"
           onClick={onToday}
-          className="px-3 py-1.5 rounded-lg text-[11px] font-semibold text-sahara-primary hover:bg-sahara-primary-light transition-colors cursor-pointer"
         >
           Today
-        </button>
+        </Button>
       )}
 
       <span className="text-sm font-medium text-sahara-text min-w-45 text-center">
         {formatDateRange(weekStart, weekEnd)}
       </span>
 
-      <button
+      <Button
+        variant="ghost"
+        size="icon-lg"
+        intent="default"
+        shape="rounded-full"
         onClick={onNext}
-        className="w-8 h-8 flex items-center justify-center rounded-full text-sahara-text-muted hover:text-sahara-primary hover:bg-sahara-bg transition-colors cursor-pointer"
         title="Next week"
       >
         <ChevronRight className="w-4 h-4" />
-      </button>
+      </Button>
     </div>
   );
 }

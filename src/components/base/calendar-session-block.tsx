@@ -1,6 +1,7 @@
 import { Clock, CheckCircle2, Circle, Tag } from "lucide-react";
 import { cn } from "@/lib/cn";
 import type { WeekSession } from "@/lib/db";
+import { formatTimeAmPm } from "@/lib/time";
 
 interface CalendarSessionBlockProps {
   session: WeekSession;
@@ -8,18 +9,10 @@ interface CalendarSessionBlockProps {
   heightPx: number;
 }
 
-function formatTime(date: Date): string {
-  const h = date.getHours();
-  const m = date.getMinutes();
-  const ampm = h >= 12 ? "PM" : "AM";
-  const h12 = h === 0 ? 12 : h > 12 ? h - 12 : h;
-  return `${h12}:${String(m).padStart(2, "0")} ${ampm}`;
-}
-
 function getTimeRange(session: WeekSession): string {
   const start = new Date(session.started_at);
   const end = new Date(start.getTime() + session.duration_sec * 1000);
-  return `${formatTime(start)} – ${formatTime(end)}`;
+  return `${formatTimeAmPm(start)} – ${formatTimeAmPm(end)}`;
 }
 
 const CARD_STYLES = {

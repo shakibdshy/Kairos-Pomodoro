@@ -84,11 +84,11 @@ export function WeeklyChart({ data }: WeeklyChartProps) {
                   return (
                     <div className="bg-sahara-text text-white px-4 py-2.5 rounded-lg text-xs shadow-xl space-y-1">
                       <p className="font-bold">
-                        {entry.name} — {entry.payload.hours}h
+                        {entry.name} — {entry.hours}h
                       </p>
                       <p className="opacity-80">
-                        {entry.payload.sessions} session
-                        {entry.payload.sessions !== 1 ? "s" : ""}
+                        {entry.sessions} session
+                        {entry.sessions !== 1 ? "s" : ""}
                       </p>
                     </div>
                   );

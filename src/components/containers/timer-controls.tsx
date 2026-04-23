@@ -2,6 +2,7 @@ import { useState, useMemo } from "react";
 import { useTimerStore } from "@/features/timer/use-timer-store";
 import { TimerDisplay } from "@/components/base/timer-display";
 import { IntentionSelector } from "@/components/intention-selector";
+import { Button } from "@/components/ui/button";
 import {
   FinishSessionModal,
   type SessionMood,
@@ -19,16 +20,8 @@ import {
   ClockPlus,
   Flag,
 } from "lucide-react";
-import { cn } from "@/lib/cn";
+import { formatTimeAmPm } from "@/lib/time";
 import type { TimerPhase } from "@/features/timer/timer-types";
-
-function formatTimeBadge(date: Date): string {
-  let h = date.getHours();
-  const m = date.getMinutes();
-  const ampm = h >= 12 ? "PM" : "AM";
-  h = h % 12 || 12;
-  return `${h}:${m.toString().padStart(2, "0")}${ampm}`;
-}
 
 export function TimerControls() {
   const phase = useTimerStore((s) => s.phase);
@@ -64,15 +57,13 @@ export function TimerControls() {
   const isFocusComplete = status === "focus_complete";
   const isWorkPhase = phase === "work";
 
-  const endTime = useMemo(() => {
-    if (isFocusComplete) return new Date();
-    const now = new Date();
-    return new Date(now.getTime() + secondsRemaining * 1000);
-  }, [secondsRemaining, isFocusComplete]);
-
-  const startTime = useMemo(() => {
-    return new Date(endTime.getTime() - totalSeconds * 1000);
-  }, [endTime, totalSeconds]);
+  const [endTime, startTime] = useMemo(() => {
+    const end = isFocusComplete
+      ? new Date()
+      : new Date(Date.now() + secondsRemaining * 1000);
+    const start = new Date(end.getTime() - totalSeconds * 1000);
+    return [end, start];
+  }, [secondsRemaining, totalSeconds, isFocusComplete]);
 
   const handleFinishWithReflection = async (data: {
     mood: SessionMood;
@@ -90,20 +81,19 @@ export function TimerControls() {
     <div className="flex flex-col items-center gap-8">
       <div className="flex bg-sahara-card p-1 rounded-full border border-sahara-border/20">
         {phases.map((p) => (
-          <button
+          <Button
             key={p.id}
+            variant="ghost"
+            size="sm"
+            intent="default"
+            shape="rounded-full"
+            active={phase === p.id}
             onClick={() => setPhase(p.id)}
             disabled={status !== "idle"}
-            className={cn(
-              "px-6 py-2 rounded-full text-xs font-bold tracking-wider transition-all",
-              phase === p.id
-                ? "bg-sahara-surface text-sahara-primary shadow-sm"
-                : "text-sahara-text-muted hover:text-sahara-text-secondary",
-              status !== "idle" && "opacity-50 cursor-not-allowed",
-            )}
+            className="px-6 py-2 text-xs font-bold tracking-wider"
           >
             {p.label}
-          </button>
+          </Button>
         ))}
       </div>
 
@@ -121,147 +111,193 @@ export function TimerControls() {
       />
 
       <div className="flex items-center gap-3">
-        <button
+        <Button
+          variant="outline"
+          size="icon"
+          intent="default"
+          shape="rounded-full"
           onClick={() => adjustDuration(-5)}
-          className={cn(
-            "p-2 rounded-full border transition-all",
-            "border-sahara-border/30 text-sahara-text-secondary hover:bg-sahara-card hover:border-sahara-primary/40 hover:text-sahara-primary cursor-pointer",
-          )}
+          className="border-sahara-border/30 text-sahara-text-secondary hover:border-sahara-primary/40 hover:text-sahara-primary"
         >
           <Minus className="w-3.5 h-3.5" />
-        </button>
+        </Button>
 
         <div className="inline-flex items-center gap-2.5 px-4 py-2 rounded-full border border-sahara-border/30 bg-sahara-surface shadow-sm">
           <span className="text-sm font-semibold text-sahara-text tabular-nums tracking-wide">
-            {formatTimeBadge(startTime)}
+            {formatTimeAmPm(startTime)}
           </span>
           <ArrowRight className="w-3.5 h-3.5 text-sahara-text-muted" />
           <span className="text-sm font-semibold text-sahara-text tabular-nums tracking-wide">
-            {formatTimeBadge(endTime)}
+            {formatTimeAmPm(endTime)}
           </span>
         </div>
 
-        <button
+        <Button
+          variant="outline"
+          size="icon"
+          intent="default"
+          shape="rounded-full"
           onClick={() => adjustDuration(5)}
-          className={cn(
-            "p-2 rounded-full border transition-all",
-            "border-sahara-border/30 text-sahara-text-secondary hover:bg-sahara-card hover:border-sahara-primary/40 hover:text-sahara-primary cursor-pointer",
-          )}
+          className="border-sahara-border/30 text-sahara-text-secondary hover:border-sahara-primary/40 hover:text-sahara-primary"
         >
           <Plus className="w-3.5 h-3.5" />
-        </button>
+        </Button>
       </div>
 
       <div className="flex items-center gap-4 flex-wrap justify-center">
         {isFocusComplete ? (
           <>
-            <button
+            <Button
+              variant="solid"
+              intent="emerald"
+              size="md"
+              shape="rounded-full"
               onClick={() => {
                 setModalMode("nextPhase");
                 setShowFinishModal(true);
               }}
-              className="flex items-center gap-2 bg-emerald-600 text-white px-6 py-3 rounded-full font-bold text-xs tracking-widest hover:bg-emerald-700 transition-colors shadow-lg shadow-emerald-600/20"
+              className="gap-2"
             >
               <Coffee className="w-4 h-4" />
               {isWorkPhase ? "Start Break" : "Back to Work"}
-            </button>
+            </Button>
 
-            <button
+            <Button
+              variant="solid"
+              intent="amber"
+              size="md"
+              shape="rounded-full"
               onClick={() => addFiveMinutes()}
-              className="flex items-center gap-2 bg-amber-500 text-white px-6 py-3 rounded-full font-bold text-xs tracking-widest hover:bg-amber-600 transition-colors shadow-lg shadow-amber-500/20"
+              className="gap-2"
             >
               <ClockPlus className="w-4 h-4" />
               Add 5 Min
-            </button>
+            </Button>
 
-            <button
+            <Button
+              variant="outline"
+              intent="slate"
+              size="sm"
+              shape="rounded-full"
               onClick={() => endWithoutBreak()}
-              className="flex items-center gap-1.5 px-4 py-3 rounded-full font-bold text-[10px] tracking-wider uppercase border border-slate-300/50 text-slate-500 bg-slate-50/80 hover:bg-slate-100/80 transition-colors"
+              className="gap-1.5"
             >
               <Flag className="w-4 h-4" />
               End Session
-            </button>
+            </Button>
 
             <div className="h-8 w-px bg-sahara-border/20 mx-1" />
 
             {overtimeSeconds > 0 && (
-              <button
+              <Button
+                variant="solid"
+                intent="sahara"
+                size="md"
+                shape="rounded-full"
                 onClick={pause}
-                className="flex items-center gap-2 bg-sahara-primary text-white px-6 py-3 rounded-full font-bold text-xs tracking-widest hover:bg-sahara-primary/90 transition-colors shadow-lg shadow-sahara-primary/20"
+                className="gap-2"
               >
                 <Pause className="w-4 h-4 fill-current" />
                 Pause Overtime
-              </button>
+              </Button>
             )}
           </>
         ) : status === "idle" ? (
           <>
-            <button
+            <Button
+              variant="solid"
+              intent="sahara"
+              size="lg"
+              shape="rounded-full"
               onClick={() => start()}
-              className="flex items-center gap-2 bg-sahara-primary text-white px-8 py-3.5 rounded-full font-bold text-xs tracking-widest hover:bg-sahara-primary/90 transition-colors shadow-lg shadow-sahara-primary/20"
+              className="gap-2"
             >
               <Play className="w-4 h-4 fill-current ml-0.5" />
               START FOCUS
-            </button>
+            </Button>
 
             <div className="h-8 w-px bg-sahara-border/20 mx-1" />
 
-            <button
+            <Button
+              variant="outline"
+              size="icon"
+              intent="default"
+              shape="rounded-full"
               onClick={reset}
-              className="p-3 rounded-full border border-sahara-border/30 text-sahara-text-secondary hover:bg-sahara-card transition-colors"
+              className="border-sahara-border/30 text-sahara-text-secondary p-3"
             >
               <RotateCcw className="w-4 h-4" />
-            </button>
+            </Button>
           </>
         ) : (
           <>
             {status === "running" ? (
-              <button
+              <Button
+                variant="solid"
+                intent="sahara"
+                size="md"
+                shape="rounded-full"
                 onClick={pause}
-                className="flex items-center gap-2 bg-sahara-primary text-white px-6 py-3 rounded-full font-bold text-xs tracking-widest hover:bg-sahara-primary/90 transition-colors shadow-lg shadow-sahara-primary/20"
+                className="gap-2"
               >
                 <Pause className="w-4 h-4 fill-current" />
                 PAUSE
-              </button>
+              </Button>
             ) : (
-              <button
+              <Button
+                variant="solid"
+                intent="sahara"
+                size="md"
+                shape="rounded-full"
                 onClick={resume}
-                className="flex items-center gap-2 bg-sahara-primary text-white px-6 py-3 rounded-full font-bold text-xs tracking-widest hover:bg-sahara-primary/90 transition-colors shadow-lg shadow-sahara-primary/20"
+                className="gap-2"
               >
                 <Play className="w-4 h-4 fill-current ml-0.5" />
                 RESUME
-              </button>
+              </Button>
             )}
 
             <div className="h-8 w-px bg-sahara-border/20 mx-1" />
 
-            <button
+            <Button
+              variant="outline"
+              intent="green"
+              size="sm"
+              shape="rounded-full"
               onClick={() => {
                 setModalMode("finish");
                 setShowFinishModal(true);
               }}
-              className="flex items-center gap-1.5 px-4 py-3 rounded-full font-bold text-[10px] tracking-wider uppercase border border-green-500/30 text-green-600 bg-green-50 hover:bg-green-100 transition-colors"
+              className="gap-1.5"
             >
               <CheckCircle2 className="w-4 h-4" />
               Finish
-            </button>
+            </Button>
 
-            <button
+            <Button
+              variant="outline"
+              intent="red"
+              size="sm"
+              shape="rounded-full"
               onClick={() => abandonSession()}
-              className="flex items-center gap-1.5 px-4 py-3 rounded-full font-bold text-[10px] tracking-wider uppercase border border-red-300/50 text-red-500 bg-red-50/50 hover:bg-red-100/80 transition-colors"
+              className="gap-1.5"
             >
               <XCircle className="w-4 h-4" />
               Abandon
-            </button>
+            </Button>
 
             <div className="h-8 w-px bg-sahara-border/20 mx-1" />
 
-            <button
+            <Button
+              variant="outline"
+              size="icon"
+              intent="default"
+              shape="rounded-full"
               onClick={reset}
-              className="p-3 rounded-full border border-sahara-border/30 text-sahara-text-secondary hover:bg-sahara-card transition-colors"
+              className="border-sahara-border/30 text-sahara-text-secondary p-3"
             >
               <RotateCcw className="w-4 h-4" />
-            </button>
+            </Button>
           </>
         )}
       </div>

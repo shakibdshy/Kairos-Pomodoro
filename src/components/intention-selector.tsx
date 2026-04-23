@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useCategoriesStore } from "@/features/categories/use-categories-store";
+import { Button } from "@/components/ui/button";
 import { X, Plus, Search, Pencil, Check, ChevronDown } from "lucide-react";
 import type { Category } from "@/lib/db";
 import { cn } from "@/lib/cn";
@@ -83,15 +84,18 @@ export function IntentionSelector({
 
   return (
     <>
-      <button
+      <Button
+        variant="outline"
+        intent={selectedCategory ? "sahara" : "default"}
+        size="sm"
+        shape="rounded-full"
+        active={!!selectedCategory}
         onClick={() => !disabled && setIsOpen(true)}
         disabled={disabled}
         className={cn(
-          "inline-flex items-center gap-2 px-4 py-2 rounded-full text-left transition-all group",
-          selectedCategory
-            ? "bg-sahara-surface border border-sahara-primary/30 shadow-sm hover:shadow-md"
-            : "bg-sahara-card border border-dashed border-sahara-border/40 hover:border-sahara-primary/30",
-          disabled && "opacity-50 cursor-not-allowed",
+          "text-left",
+          !selectedCategory && "border-dashed border-sahara-border/40 hover:border-sahara-primary/30",
+          selectedCategory && "hover:shadow-md",
         )}
       >
         {selectedCategory ? (
@@ -113,7 +117,7 @@ export function IntentionSelector({
             <ChevronDown className="w-3 h-3 text-sahara-text-muted group-hover:text-sahara-text-secondary transition-colors" />
           </>
         )}
-      </button>
+      </Button>
 
       {isOpen && (
         <div className="fixed inset-0 z-100 flex items-center justify-center p-4">
@@ -127,12 +131,16 @@ export function IntentionSelector({
               <h2 className="font-serif text-xl text-sahara-text">
                 Categories
               </h2>
-              <button
+              <Button
+                variant="ghost"
+                size="icon"
+                intent="default"
+                shape="rounded-full"
                 onClick={() => setIsOpen(false)}
-                className="p-2 rounded-full hover:bg-sahara-card transition-colors text-sahara-text-muted hover:text-sahara-text"
+                className="text-sahara-text-muted hover:text-sahara-text"
               >
                 <X className="w-5 h-5" />
-              </button>
+              </Button>
             </div>
 
             {/* Search */}
@@ -180,18 +188,27 @@ export function IntentionSelector({
                           />
                         ))}
                       </div>
-                      <button
+                      <Button
+                        variant="solid"
+                        intent="green"
+                        size="icon-sm"
+                        shape="rounded-lg"
                         onClick={() => handleEditSave(category.id)}
-                        className="p-1.5 rounded-lg bg-green-500 text-white hover:bg-green-600 transition-colors"
                       >
                         <Check className="w-3.5 h-3.5" />
-                      </button>
+                      </Button>
                     </div>
                   ) : (
-                    <button
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      intent="default"
+                      fullWidth
+                      shape="rounded-xl"
+                      active={selectedCategory?.id === category.id}
                       onClick={() => handleSelect(category)}
                       className={cn(
-                        "w-full flex items-center justify-between px-4 py-3 rounded-xl mb-1 transition-all group/item",
+                        "justify-between px-4 py-3 mb-1 group/item",
                         selectedCategory?.id === category.id
                           ? "bg-sahara-primary-light ring-1 ring-sahara-primary/20"
                           : "hover:bg-sahara-card",
@@ -218,18 +235,20 @@ export function IntentionSelector({
                           </span>
                         )}
                       </div>
-                      <button
+                      <Button
+                        variant="ghost"
+                        size="icon-sm"
                         onClick={(e) => {
                           e.stopPropagation();
                           setEditingId(category.id);
                           setEditName(category.name);
                           setEditColor(category.color);
                         }}
-                        className="opacity-0 group-hover/item:opacity-100 p-1.5 rounded-lg text-sahara-text-muted hover:text-sahara-text-secondary hover:bg-sahara-card transition-all"
+                        className="opacity-0 group-hover/item:opacity-100 text-sahara-text-muted hover:text-sahara-text-secondary hover:bg-sahara-card"
                       >
                         <Pencil className="w-3.5 h-3.5" />
-                      </button>
-                    </button>
+                      </Button>
+                    </Button>
                   )}
                 </div>
               ))}
@@ -269,22 +288,28 @@ export function IntentionSelector({
                       ))}
                     </div>
                     <div className="flex gap-2">
-                      <button
+                      <Button
+                        variant="ghost"
+                        size="xs"
+                        intent="default"
+                        shape="rounded-lg"
                         onClick={() => {
                           setIsAddingNew(false);
                           setNewName("");
                         }}
-                        className="px-3 py-1.5 rounded-lg text-xs font-bold text-sahara-text-muted hover:bg-sahara-card transition-colors"
                       >
                         Cancel
-                      </button>
-                      <button
+                      </Button>
+                      <Button
+                        variant="solid"
+                        intent="green"
+                        size="xs"
+                        shape="rounded-lg"
                         onClick={handleAddNew}
                         disabled={!newName.trim()}
-                        className="px-3 py-1.5 rounded-lg text-xs font-bold text-white bg-green-500 hover:bg-green-600 disabled:opacity-50 transition-colors"
                       >
                         Add
-                      </button>
+                      </Button>
                     </div>
                   </div>
                 </div>
@@ -294,13 +319,16 @@ export function IntentionSelector({
             {/* Footer */}
             {!isAddingNew && (
               <div className="px-6 pb-6">
-                <button
+                <Button
+                  variant="solid"
+                  intent="green"
+                  fullWidth
                   onClick={() => setIsAddingNew(true)}
-                  className="w-full py-3.5 rounded-xl bg-green-500/90 text-white font-bold text-xs tracking-widest uppercase hover:bg-green-500 transition-colors shadow-lg shadow-green-500/20 flex items-center justify-center gap-2"
+                  className="gap-2 bg-green-500/90 hover:bg-green-500"
                 >
                   <Plus className="w-4 h-4" />
                   ADD NEW CATEGORY
-                </button>
+                </Button>
               </div>
             )}
           </div>

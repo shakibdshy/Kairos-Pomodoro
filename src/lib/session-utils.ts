@@ -1,14 +1,4 @@
-export interface Session {
-  id: number;
-  task_id: number | null;
-  phase: string;
-  started_at: string;
-  ended_at: string | null;
-  duration_sec: number;
-  completed: number;
-  category_id: number | null;
-  intention: string | null;
-}
+export type { Session } from "@/lib/db";
 
 export function formatTime(dateStr: string): string {
   const date = new Date(dateStr);

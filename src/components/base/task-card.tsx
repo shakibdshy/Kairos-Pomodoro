@@ -8,6 +8,7 @@ import {
   Edit3,
 } from "lucide-react";
 import type { Task } from "@/features/tasks/task-types";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/cn";
 
 interface TaskCardProps {
@@ -66,15 +67,17 @@ export function TaskCard({
         </div>
 
         <div className="relative">
-          <button
+          <Button
+            variant="ghost"
+            size="icon-sm"
             onClick={(e) => {
               e.stopPropagation();
               setMenuOpen(!menuOpen);
             }}
-            className="text-sahara-text-muted hover:text-sahara-text transition-colors p-1"
+            className="text-sahara-text-muted hover:text-sahara-text"
           >
             <MoreVertical className="w-4 h-4" />
-          </button>
+          </Button>
 
           {menuOpen && (
             <>
@@ -87,28 +90,36 @@ export function TaskCard({
               />
               <div className="absolute right-0 top-8 z-20 bg-sahara-surface border border-sahara-border/20 rounded-xl shadow-lg py-1 w-36 animate-in fade-in slide-in-from-top-2 duration-150">
                 {onEdit && (
-                  <button
+                  <Button
+                    variant="ghost"
+                    size="xs"
+                    fullWidth
+                    intent="default"
                     onClick={(e) => {
                       e.stopPropagation();
                       setMenuOpen(false);
                       onEdit(task);
                     }}
-                    className="w-full flex items-center gap-2 px-3 py-2 text-xs font-medium text-sahara-text-secondary hover:bg-sahara-bg/50 transition-colors"
+                    className="gap-2 text-xs font-medium text-sahara-text-secondary hover:bg-sahara-bg/50"
                   >
                     <Edit3 className="w-3.5 h-3.5" /> Edit
-                  </button>
+                  </Button>
                 )}
                 {onDelete && (
-                  <button
+                  <Button
+                    variant="ghost"
+                    size="xs"
+                    fullWidth
+                    intent="red"
                     onClick={(e) => {
                       e.stopPropagation();
                       setMenuOpen(false);
                       onDelete();
                     }}
-                    className="w-full flex items-center gap-2 px-3 py-2 text-xs font-medium text-red-500 hover:bg-red-50 transition-colors"
+                    className="gap-2 text-xs font-medium hover:bg-red-50"
                   >
                     <Trash2 className="w-3.5 h-3.5" /> Delete
-                  </button>
+                  </Button>
                 )}
               </div>
             </>

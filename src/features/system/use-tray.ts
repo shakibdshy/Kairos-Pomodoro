@@ -2,6 +2,16 @@ import { useEffect } from "react";
 import { useTimerStore } from "@/features/timer/use-timer-store";
 import { formatSeconds, formatOvertime } from "@/lib/time";
 
+let cachedInvoke: ((cmd: string, args?: Record<string, unknown>) => Promise<unknown>) | null = null;
+
+async function getInvoke() {
+  if (!cachedInvoke) {
+    const { invoke } = await import("@tauri-apps/api/core");
+    cachedInvoke = invoke;
+  }
+  return cachedInvoke;
+}
+
 export function useTray() {
   const secondsRemaining = useTimerStore((s) => s.secondsRemaining);
   const phase = useTimerStore((s) => s.phase);
@@ -21,7 +31,7 @@ export function useTray() {
     }
 
     if (typeof window !== "undefined" && window.__TAURI_INTERNALS__) {
-      import("@tauri-apps/api/core").then(({ invoke }) => {
+      getInvoke().then((invoke) => {
         invoke("plugin:tray|set_tooltip", { tooltip: label }).catch(() => {});
       });
     }

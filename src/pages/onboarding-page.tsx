@@ -7,50 +7,45 @@ import {
   Clock,
   Star,
 } from "lucide-react";
-import type { Route } from "@/app/router";
+import type { PageProps } from "@/app/router";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/cn";
 
-interface OnboardingPageProps {
-  onNavigate: (route: Route) => void;
-}
+const STEP_ICON_COLOR = "bg-sahara-primary-light text-sahara-primary";
 
-export function OnboardingPage({ onNavigate }: OnboardingPageProps) {
+const steps = [
+  {
+    title: "Welcome to Deep Work",
+    subtitle: "A sanctuary for your focus.",
+    description:
+      "Kairos is designed to help you reclaim your attention and achieve flow state through intentional focus sessions.",
+    icon: Star,
+  },
+  {
+    title: "The Focus Rhythm",
+    subtitle: "25 minutes of pure intent.",
+    description:
+      "We use a refined pomodoro technique. Focus for 25 minutes, then take a 5 minute breath. Every 4 sessions, enjoy a longer rest.",
+    icon: Zap,
+  },
+  {
+    title: "Curate Your Day",
+    subtitle: "Tasks with purpose.",
+    description:
+      "Link your focus sessions directly to tasks. Track your progress and see your productivity grow over time.",
+    icon: Target,
+  },
+  {
+    title: "Insights & Growth",
+    subtitle: "Data that empowers.",
+    description:
+      "Visualize your focus distribution and build a streak. Consistency is the key to mastering deep work.",
+    icon: Clock,
+  },
+];
+
+export function OnboardingPage({ onNavigate }: PageProps) {
   const [step, setStep] = useState(0);
-
-  const steps = [
-    {
-      title: "Welcome to Deep Work",
-      subtitle: "A sanctuary for your focus.",
-      description:
-        "Kairos is designed to help you reclaim your attention and achieve flow state through intentional focus sessions.",
-      icon: Star,
-      color: "bg-sahara-primary-light text-sahara-primary",
-    },
-    {
-      title: "The Focus Rhythm",
-      subtitle: "25 minutes of pure intent.",
-      description:
-        "We use a refined pomodoro technique. Focus for 25 minutes, then take a 5 minute breath. Every 4 sessions, enjoy a longer rest.",
-      icon: Zap,
-      color: "bg-sahara-primary-light text-sahara-primary",
-    },
-    {
-      title: "Curate Your Day",
-      subtitle: "Tasks with purpose.",
-      description:
-        "Link your focus sessions directly to tasks. Track your progress and see your productivity grow over time.",
-      icon: Target,
-      color: "bg-sahara-primary-light text-sahara-primary",
-    },
-    {
-      title: "Insights & Growth",
-      subtitle: "Data that empowers.",
-      description:
-        "Visualize your focus distribution and build a streak. Consistency is the key to mastering deep work.",
-      icon: Clock,
-      color: "bg-sahara-primary-light text-sahara-primary",
-    },
-  ];
 
   const currentStep = steps[step];
 
@@ -86,7 +81,9 @@ export function OnboardingPage({ onNavigate }: OnboardingPageProps) {
                 key={i}
                 className={cn(
                   "h-1 rounded-full transition-all duration-300",
-                  i === step ? "w-8 bg-sahara-surface" : "w-2 bg-sahara-surface/30",
+                  i === step
+                    ? "w-8 bg-sahara-surface"
+                    : "w-2 bg-sahara-surface/30",
                 )}
               />
             ))}
@@ -96,19 +93,22 @@ export function OnboardingPage({ onNavigate }: OnboardingPageProps) {
         {/* Right Side: Content & Actions */}
         <div className="p-16 flex flex-col justify-between">
           <div className="flex justify-end">
-            <button
+            <Button
+              variant="link"
+              intent="default"
+              size="xs"
+              className="text-[10px] tracking-widest uppercase"
               onClick={() => onNavigate("timer")}
-              className="text-[10px] font-bold tracking-widest text-sahara-text-muted hover:text-sahara-primary transition-colors uppercase"
             >
               Skip to App
-            </button>
+            </Button>
           </div>
 
           <div className="space-y-8">
             <div
               className={cn(
                 "w-20 h-20 rounded-3xl flex items-center justify-center shadow-lg shadow-sahara-primary/10",
-                currentStep.color,
+                STEP_ICON_COLOR,
               )}
             >
               <currentStep.icon className="w-10 h-10" />
@@ -125,37 +125,46 @@ export function OnboardingPage({ onNavigate }: OnboardingPageProps) {
           </div>
 
           <div className="flex items-center justify-between pt-8 border-t border-sahara-border/10">
-            <button
+            <Button
+              variant="ghost"
+              size="sm"
+              intent="default"
               onClick={() => setStep((s) => Math.max(0, s - 1))}
-              className={cn(
-                "flex items-center gap-2 font-bold text-xs tracking-widest transition-colors",
-                step === 0
-                  ? "text-sahara-border cursor-not-allowed"
-                  : "text-sahara-text-muted hover:text-sahara-text",
-              )}
               disabled={step === 0}
+              className={cn(
+                "gap-2 text-xs tracking-widest",
+                step === 0 && "text-sahara-border",
+              )}
             >
               <ChevronLeft className="w-4 h-4" />
               BACK
-            </button>
+            </Button>
 
             {step === steps.length - 1 ? (
-              <button
+              <Button
+                variant="solid"
+                intent="sahara"
+                size="xl"
+                shape="rounded-2xl"
                 onClick={() => onNavigate("timer")}
-                className="bg-sahara-primary text-white px-10 py-4 rounded-2xl font-bold text-xs tracking-[0.2em] hover:bg-sahara-primary/90 transition-all shadow-xl shadow-sahara-primary/20 hover:scale-[1.02] active:scale-[0.98]"
+                className="hover:scale-[1.02] active:scale-[0.98] shadow-xl"
               >
                 GET STARTED
-              </button>
+              </Button>
             ) : (
-              <button
+              <Button
+                variant="solid"
+                intent="sahara"
+                size="lg"
+                shape="rounded-2xl"
                 onClick={() =>
                   setStep((s) => Math.min(steps.length - 1, s + 1))
                 }
-                className="flex items-center gap-2 bg-sahara-primary text-white px-8 py-4 rounded-2xl font-bold text-xs tracking-[0.2em] hover:bg-sahara-primary/90 transition-all shadow-xl shadow-sahara-primary/20 group"
+                className="gap-2 shadow-xl group"
               >
                 CONTINUE
                 <ChevronRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
-              </button>
+              </Button>
             )}
           </div>
         </div>

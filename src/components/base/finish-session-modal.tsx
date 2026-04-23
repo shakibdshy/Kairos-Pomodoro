@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { X, ArrowRight } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/cn";
 import type { Category } from "@/lib/db";
+import { formatTimeAmPm } from "@/lib/time";
 
 export type SessionMood = "distracted" | "neutral" | "focused";
 
@@ -28,14 +30,7 @@ interface FinishSessionModalProps {
 function formatTimeRange(durationMin: number): string {
   const now = new Date();
   const start = new Date(now.getTime() - durationMin * 60000);
-  const fmt = (d: Date) => {
-    let h = d.getHours();
-    const m = d.getMinutes();
-    const ampm = h >= 12 ? "PM" : "AM";
-    h = h % 12 || 12;
-    return `${h}:${m.toString().padStart(2, "0")}${ampm}`;
-  };
-  return `${fmt(start)} ${String.fromCharCode(2192)} ${fmt(now)}`;
+  return `${formatTimeAmPm(start)} ${String.fromCharCode(2192)} ${formatTimeAmPm(now)}`;
 }
 
 export function FinishSessionModal({
@@ -63,12 +58,16 @@ export function FinishSessionModal({
         onClick={onClose}
       />
       <div className="relative bg-sahara-surface rounded-3xl border border-sahara-border/20 shadow-2xl w-full max-w-lg mx-4 animate-in fade-in zoom-in-95 duration-200 overflow-hidden">
-        <button
+        <Button
+          variant="ghost"
+          size="icon-lg"
+          intent="default"
+          shape="rounded-lg"
           onClick={onClose}
-          className="absolute top-4 right-4 w-8 h-8 rounded-lg flex items-center justify-center text-sahara-text-muted hover:text-sahara-text hover:bg-sahara-bg transition-colors z-10"
+          className="absolute top-4 right-4 z-10 text-sahara-text-muted hover:text-sahara-text hover:bg-sahara-bg"
         >
           <X className="w-4 h-4" />
-        </button>
+        </Button>
 
         <div className="px-8 pt-8 pb-6 space-y-7">
           {/* Header */}
@@ -84,14 +83,19 @@ export function FinishSessionModal({
           {/* Mood Picker */}
           <div className="flex justify-center gap-4 pt-1">
             {MOOD_OPTIONS.map((opt) => (
-              <button
+              <Button
                 key={opt.id}
+                variant="outline"
+                intent="default"
+                size="md"
+                shape="rounded-2xl"
+                active={mood === opt.id}
                 onClick={() => setMood(opt.id)}
                 className={cn(
-                  "flex flex-col items-center gap-2 px-5 py-4 rounded-2xl transition-all border",
+                  "flex-col gap-2 px-5 py-4",
                   mood === opt.id
-                    ? "bg-sahara-bg border-sahara-border shadow-sm scale-105"
-                    : "bg-sahara-surface border-transparent hover:bg-sahara-card/50",
+                    ? "scale-105"
+                    : "border-transparent hover:bg-sahara-card/50",
                 )}
               >
                 <span className="text-3xl">{opt.emoji}</span>
@@ -112,7 +116,7 @@ export function FinishSessionModal({
                     <span className="text-[10px]">↑</span>
                   )}
                 </span>
-              </button>
+              </Button>
             ))}
           </div>
 
@@ -186,12 +190,15 @@ export function FinishSessionModal({
           </div>
 
           {/* Submit Button */}
-          <button
+          <Button
+            variant="solid"
+            intent="green"
+            fullWidth
+            shape="rounded-2xl"
             onClick={handleSubmit}
-            className="w-full py-3.5 rounded-2xl bg-green-500 text-white font-bold text-xs tracking-widest uppercase hover:bg-green-500/90 transition-colors shadow-lg shadow-green-500/20"
           >
             Submit Session
-          </button>
+          </Button>
         </div>
       </div>
     </div>

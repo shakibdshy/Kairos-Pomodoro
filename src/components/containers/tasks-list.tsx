@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { Plus, Target } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
 import { useTaskStore } from "@/features/tasks/use-task-store";
 import { useTimerStore } from "@/features/timer/use-timer-store";
@@ -103,13 +104,16 @@ export function TasksList() {
             Curate your tasks for maximum deep work.
           </p>
         </div>
-        <button
+        <Button
+          variant="solid"
+          intent="sahara"
+          size="md"
           onClick={() => setShowAddModal(true)}
-          className="flex items-center gap-2 bg-sahara-primary text-white px-6 py-3 rounded-xl font-bold text-xs tracking-widest hover:bg-sahara-primary/90 transition-colors shadow-lg shadow-sahara-primary/20"
+          className="gap-2"
         >
           <Plus className="w-4 h-4" />
           NEW TASK
-        </button>
+        </Button>
       </header>
 
       {loading && (

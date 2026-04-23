@@ -32,7 +32,7 @@ export function SliderField({
         step={step}
         value={value}
         onChange={(e) => onChange(Number(e.target.value))}
-        className="w-full h-1.5 rounded-full appearance-none bg-neutral-200 dark:bg-neutral-700 accent-neutral-900 dark:accent-neutral-100 cursor-pointer"
+        className="w-full h-1.5 rounded-full appearance-none bg-sahara-border/30 accent-sahara-primary cursor-pointer"
       />
     </div>
   );

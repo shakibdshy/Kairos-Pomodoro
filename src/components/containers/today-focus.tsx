@@ -7,11 +7,12 @@ import {
   getCategoryBreakdown,
   getTaskTimeToday,
 } from "@/lib/db";
-import type { Session } from "@/lib/session-utils";
+import type { Session } from "@/lib/db";
 import type { CategoryBreakdown as CategoryBreakdownType } from "@/lib/db";
 import { FocusSummaryBar } from "@/components/base/focus-summary-bar";
 import { CategoryBreakdown as CategoryBars } from "@/components/base/category-breakdown";
 import { ActiveTaskCard } from "@/components/base/active-task-card";
+import { DEFAULT_CATEGORY_COLOR } from "@/lib/constants";
 
 export function TodayFocus() {
   const [sessions, setSessions] = useState<Session[]>([]);
@@ -25,14 +26,14 @@ export function TodayFocus() {
 
   const refreshData = useCallback(async () => {
     const [todaySessions, categoryData] = await Promise.all([
-      getTodaySessions(),
-      getCategoryBreakdown(),
+      getTodaySessions().catch(() => []),
+      getCategoryBreakdown().catch(() => []),
     ]);
     setSessions(todaySessions);
     setBreakdowns(categoryData);
 
     if (activeTaskId) {
-      const time = await getTaskTimeToday(activeTaskId);
+      const time = await getTaskTimeToday(activeTaskId).catch(() => 0);
       setTaskTimeToday(time);
     } else {
       setTaskTimeToday(0);
@@ -47,13 +48,16 @@ export function TodayFocus() {
 
   const workSessions = sessions.filter((s) => s.phase === "work");
   const topCategoryEntry = (() => {
-    const counts: Record<string, { name: string; color: string; count: number }> = {};
+    const counts: Record<
+      string,
+      { name: string; color: string; count: number }
+    > = {};
     workSessions.forEach((s) => {
       if (s.intention) {
         if (!counts[s.intention]) {
           counts[s.intention] = {
             name: s.intention,
-            color: "#C17767",
+            color: DEFAULT_CATEGORY_COLOR,
             count: 0,
           };
         }
@@ -71,21 +75,18 @@ export function TodayFocus() {
       <FocusSummaryBar sessions={sessions} topCategory={topCategoryEntry} />
 
       {hasAnyData && (
-        <>
-          <div className="bg-sahara-surface rounded-xl border border-sahara-border/15 p-5">
-            <Text variant="body" className="text-xs font-bold text-sahara-text-muted uppercase tracking-wider mb-3">
-              Time by Category
-            </Text>
-            <CategoryBars breakdowns={breakdowns} />
-          </div>
-
-          <ActiveTaskCard task={activeTask} taskTimeToday={taskTimeToday} />
-        </>
+        <div className="bg-sahara-surface rounded-xl border border-sahara-border/15 p-5">
+          <Text
+            variant="body"
+            className="text-xs font-bold text-sahara-text-muted uppercase tracking-wider mb-3"
+          >
+            Time by Category
+          </Text>
+          <CategoryBars breakdowns={breakdowns} />
+        </div>
       )}
 
-      {!hasAnyData && (
-        <ActiveTaskCard task={activeTask} taskTimeToday={taskTimeToday} />
-      )}
+      <ActiveTaskCard task={activeTask} taskTimeToday={taskTimeToday} />
     </div>
   );
 }

@@ -23,11 +23,15 @@ export function Providers({ children }: ProvidersProps) {
   );
 
   useEffect(() => {
-    initDb().then(() => {
-      loadSettings();
-      loadTasks();
-      checkNotificationPermission();
-    });
+    initDb()
+      .then(() => {
+        loadSettings();
+        loadTasks();
+        checkNotificationPermission();
+      })
+      .catch((err) => {
+        console.error("[Providers] Failed to initialize database:", err);
+      });
   }, [loadSettings, loadTasks, checkNotificationPermission]);
 
   useEffect(() => {

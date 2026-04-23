@@ -1,3 +1,4 @@
+import { useMemo, useState, useEffect } from "react";
 import { cn } from "@/lib/cn";
 import type { WeekSession } from "@/lib/db";
 import { CalendarSessionBlock } from "./calendar-session-block";
@@ -23,15 +24,20 @@ function isToday(date: Date): boolean {
   );
 }
 
-function getDaySessions(
+function toDateString(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+function buildSessionsByDay(
   sessions: WeekSession[],
-  dateStr: string,
-): WeekSession[] {
-  return sessions.filter((s) => {
-    const d = new Date(s.started_at);
-    const ds = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-    return ds === dateStr;
-  });
+): Map<string, WeekSession[]> {
+  const map = new Map<string, WeekSession[]>();
+  for (const s of sessions) {
+    const key = toDateString(new Date(s.started_at));
+    if (!map.has(key)) map.set(key, []);
+    map.get(key)!.push(s);
+  }
+  return map;
 }
 
 interface PositionedSession {
@@ -96,15 +102,19 @@ function computeDayLayout(
       .pop();
 
     const expandedHeight = lastInHour
-      ? Math.max(lastInHour.topPx + lastInHour.heightPx - hourTopPx[h], BASE_HOUR_HEIGHT)
+      ? Math.max(
+          lastInHour.topPx + lastInHour.heightPx - hourTopPx[h],
+          BASE_HOUR_HEIGHT,
+        )
       : BASE_HOUR_HEIGHT;
 
     hourTopPx.push(hourTopPx[hourTopPx.length - 1] + expandedHeight);
   }
 
-  const totalContentBottom = positioned.length > 0
-    ? Math.max(...positioned.map((p) => p.topPx + p.heightPx))
-    : 0;
+  const totalContentBottom =
+    positioned.length > 0
+      ? Math.max(...positioned.map((p) => p.topPx + p.heightPx))
+      : 0;
 
   return {
     positioned,
@@ -128,11 +138,13 @@ export function CalendarGrid({
     return `${String(h).padStart(2, "0")}:00`;
   }
 
-  function toDateString(d: Date): string {
-    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-  }
+  const [now, setNow] = useState(new Date());
+  useEffect(() => {
+    const id = setInterval(() => setNow(new Date()), 60000);
+    return () => clearInterval(id);
+  }, []);
 
-  const now = new Date();
+  const sessionsByDay = useMemo(() => buildSessionsByDay(sessions), [sessions]);
 
   function getCurrentTimePosition(): number | null {
     const currentMinutes = now.getHours() * 60 + now.getMinutes();
@@ -148,7 +160,11 @@ export function CalendarGrid({
   }
 
   const dayLayouts = weekDays.map((day) =>
-    computeDayLayout(getDaySessions(sessions, toDateString(day)), startHour, endHour),
+    computeDayLayout(
+      sessionsByDay.get(toDateString(day)) ?? [],
+      startHour,
+      endHour,
+    ),
   );
 
   const gridTotalHeight = Math.max(...dayLayouts.map((l) => l.totalHeight));
@@ -167,8 +183,7 @@ export function CalendarGrid({
       >
         <div className="p-4 border-r border-sahara-border/20" />
         {weekDays.map((day, idx) => {
-          const dayIdx =
-            day.getDay() === 0 ? 6 : day.getDay() - 1;
+          const dayIdx = day.getDay() === 0 ? 6 : day.getDay() - 1;
           const today = isToday(day);
 
           return (
@@ -189,9 +204,7 @@ export function CalendarGrid({
               <p
                 className={cn(
                   "font-serif text-2xl leading-none",
-                  today
-                    ? "text-sahara-primary font-bold"
-                    : "text-sahara-text",
+                  today ? "text-sahara-primary font-bold" : "text-sahara-text",
                 )}
               >
                 {day.getDate()}
@@ -217,7 +230,9 @@ export function CalendarGrid({
           <div className="border-r border-sahara-border/20 bg-sahara-bg/30 relative">
             {hours.map((hour, hIdx) => {
               const maxH = Math.max(
-                ...dayLayouts.map((l) => l.hourTopPx[hIdx + 1] - l.hourTopPx[hIdx]),
+                ...dayLayouts.map(
+                  (l) => l.hourTopPx[hIdx + 1] - l.hourTopPx[hIdx],
+                ),
                 BASE_HOUR_HEIGHT,
               );
 
@@ -251,8 +266,7 @@ export function CalendarGrid({
               >
                 {/* Hour row backgrounds */}
                 {hours.map((_, hIdx) => {
-                  const h =
-                    layout.hourTopPx[hIdx + 1] - layout.hourTopPx[hIdx];
+                  const h = layout.hourTopPx[hIdx + 1] - layout.hourTopPx[hIdx];
                   return (
                     <div
                       key={hIdx}

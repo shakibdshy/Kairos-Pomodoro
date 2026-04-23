@@ -1,13 +1,8 @@
 import { MainLayout } from "@/components/template/main-layout";
-import type { Route } from "@/app/router";
+import type { PageProps } from "@/app/router";
 import { CalendarDashboard } from "@/components/containers/calendar";
 
-interface CalendarPageProps {
-  onNavigate: (route: Route) => void;
-  currentRoute: Route;
-}
-
-export function CalendarPage({ onNavigate, currentRoute }: CalendarPageProps) {
+export function CalendarPage({ onNavigate, currentRoute }: PageProps) {
   return (
     <MainLayout onNavigate={onNavigate} currentRoute={currentRoute}>
       <CalendarDashboard />

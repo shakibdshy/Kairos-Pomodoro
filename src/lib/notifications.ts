@@ -19,9 +19,13 @@ function getSettings() {
   return useSettingsStore.getState().settings;
 }
 
+let audioCtx: AudioContext | null = null;
+
 export async function playChime(): Promise<void> {
   try {
-    const ctx = new AudioContext();
+    if (!audioCtx) audioCtx = new AudioContext();
+    if (audioCtx.state === "suspended") await audioCtx.resume();
+    const ctx = audioCtx;
     const now = ctx.currentTime;
 
     const frequencies = [523.25, 659.25, 783.99];
@@ -43,8 +47,6 @@ export async function playChime(): Promise<void> {
       osc.start(now + durations.slice(0, i).reduce((a, b) => a + b, 0));
       osc.stop(now + durations.slice(0, i + 1).reduce((a, b) => a + b, 0));
     });
-
-    setTimeout(() => ctx.close(), 1000);
   } catch (e) {
     console.error("[Notification] Audio chime failed:", e);
   }

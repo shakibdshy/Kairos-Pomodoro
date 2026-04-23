@@ -1,4 +1,5 @@
 import { MainLayout } from "@/components/template/main-layout";
+import { Button } from "@/components/ui/button";
 import {
   Bell,
   Moon,
@@ -14,7 +15,7 @@ import {
   Loader2,
   ExternalLink,
 } from "lucide-react";
-import type { Route } from "@/app/router";
+import type { PageProps } from "@/app/router";
 import { cn } from "@/lib/cn";
 import { useState, useEffect } from "react";
 import { useSettingsStore } from "@/features/settings/use-settings-store";
@@ -22,18 +23,34 @@ import { useNotificationStore } from "@/features/settings/use-notification-store
 import { sendNotification } from "@/lib/notifications";
 import type { ThemeMode } from "@/features/settings/settings-types";
 
-interface SettingsPageProps {
-  onNavigate: (route: Route) => void;
-  currentRoute: Route;
-}
-
 const THEME_OPTIONS: { id: ThemeMode; label: string; icon: typeof Sun }[] = [
   { id: "light", label: "Light", icon: Sun },
   { id: "dark", label: "Dark", icon: Moon },
   { id: "system", label: "System", icon: Monitor },
 ];
 
-export function SettingsPage({ onNavigate, currentRoute }: SettingsPageProps) {
+const DURATION_CONFIGS = [
+  {
+    key: "workMin" as const,
+    label: "Focus Duration",
+    desc: "Recommended length for deep work sessions.",
+    max: 120,
+  },
+  {
+    key: "shortBreakMin" as const,
+    label: "Short Break",
+    desc: "Quick pause to refresh your mind.",
+    max: 30,
+  },
+  {
+    key: "longBreakMin" as const,
+    label: "Long Break",
+    desc: "Extended rest after 4 focus sessions.",
+    max: 60,
+  },
+];
+
+export function SettingsPage({ onNavigate, currentRoute }: PageProps) {
   const [activeTab, setActiveTab] = useState("general");
 
   const settings = useSettingsStore((s) => s.settings);
@@ -51,6 +68,12 @@ export function SettingsPage({ onNavigate, currentRoute }: SettingsPageProps) {
   const [shortBreakMin, setShortBreakMin] = useState(5);
   const [longBreakMin, setLongBreakMin] = useState(15);
   const [testing, setTesting] = useState(false);
+
+  const setters = {
+    workMin: setWorkMin,
+    shortBreakMin: setShortBreakMin,
+    longBreakMin: setLongBreakMin,
+  };
 
   useEffect(() => {
     if (loaded) {
@@ -71,16 +94,15 @@ export function SettingsPage({ onNavigate, currentRoute }: SettingsPageProps) {
     updateSetting("longBreakDuration", longBreakMin * 60);
   };
 
-  const handleRequestPermission = async () => {
-    await requestNotifPermission();
-  };
-
   const openSystemPreferences = () => {
-    // Open macOS System Preferences → Notifications
-    window.open(
-      "x-apple.systempreferences:com.apple.preference.notifications",
-      "_blank",
-    );
+    try {
+      window.open(
+        "x-apple.systempreferences:com.apple.preference.notifications",
+        "_blank",
+      );
+    } catch {
+      // Silently ignore on non-macOS platforms
+    }
   };
 
   const handleTestNotification = async () => {
@@ -103,6 +125,8 @@ export function SettingsPage({ onNavigate, currentRoute }: SettingsPageProps) {
     { id: "privacy", label: "Privacy & Data", icon: Shield },
   ];
 
+  const durationValues = { workMin, shortBreakMin, longBreakMin };
+
   return (
     <MainLayout onNavigate={onNavigate} currentRoute={currentRoute}>
       <div className="px-12 py-12 max-w-5xl mx-auto h-full flex flex-col">
@@ -117,13 +141,17 @@ export function SettingsPage({ onNavigate, currentRoute }: SettingsPageProps) {
           {/* Sidebar Tabs */}
           <aside className="w-64 space-y-2 shrink-0">
             {tabs.map((tab) => (
-              <button
+              <Button
                 key={tab.id}
+                variant="nav"
+                intent="default"
+                shape="rounded-2xl"
+                active={activeTab === tab.id}
                 onClick={() => setActiveTab(tab.id)}
                 className={cn(
-                  "w-full flex items-center gap-4 px-6 py-4 rounded-2xl transition-all duration-200 group",
+                  "gap-4 px-6 py-4",
                   activeTab === tab.id
-                    ? "bg-sahara-primary-light text-sahara-primary font-bold shadow-sm shadow-sahara-primary/5"
+                    ? ""
                     : "text-sahara-text-muted hover:bg-sahara-card hover:text-sahara-text",
                 )}
               >
@@ -138,7 +166,7 @@ export function SettingsPage({ onNavigate, currentRoute }: SettingsPageProps) {
                 <span className="text-xs tracking-widest font-bold uppercase">
                   {tab.label}
                 </span>
-              </button>
+              </Button>
             ))}
           </aside>
 
@@ -151,99 +179,56 @@ export function SettingsPage({ onNavigate, currentRoute }: SettingsPageProps) {
                   <h3 className="font-serif text-2xl text-sahara-text">
                     Focus Rhythm
                   </h3>
-                  <button
+                  <Button
+                    variant="link"
+                    intent="sahara"
+                    size="xs"
                     onClick={handleSaveDurations}
-                    className="flex items-center gap-2 text-sahara-primary hover:text-sahara-primary/80 transition-colors"
+                    className="gap-2"
                   >
                     <Save className="w-4 h-4" />
                     <span className="text-[10px] font-bold tracking-widest uppercase">
                       Save Changes
                     </span>
-                  </button>
+                  </Button>
                 </div>
 
                 <div className="space-y-8">
-                  <div className="flex items-center justify-between group">
-                    <div>
-                      <h4 className="font-bold text-sahara-text-secondary text-sm">
-                        Focus Duration
-                      </h4>
-                      <p className="text-xs text-sahara-text-muted mt-1">
-                        Recommended length for deep work sessions.
-                      </p>
+                  {DURATION_CONFIGS.map(({ key, label, desc, max }) => (
+                    <div
+                      key={key}
+                      className="flex items-center justify-between group"
+                    >
+                      <div>
+                        <h4 className="font-bold text-sahara-text-secondary text-sm">
+                          {label}
+                        </h4>
+                        <p className="text-xs text-sahara-text-muted mt-1">
+                          {desc}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-4">
+                        <input
+                          type="number"
+                          min={1}
+                          max={max}
+                          value={durationValues[key]}
+                          onChange={(e) =>
+                            setters[key](
+                              Math.min(
+                                max,
+                                Math.max(1, parseInt(e.target.value, 10) || 1),
+                              ),
+                            )
+                          }
+                          className="w-20 bg-sahara-card border border-sahara-border/20 rounded-xl px-4 py-2 text-center text-sm font-bold text-sahara-primary outline-none focus:border-sahara-primary/40 transition-colors"
+                        />
+                        <span className="text-[10px] font-bold text-sahara-text-muted uppercase tracking-widest">
+                          Minutes
+                        </span>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-4">
-                      <input
-                        type="number"
-                        min={1}
-                        max={120}
-                        value={workMin}
-                        onChange={(e) =>
-                          setWorkMin(Math.max(1, parseInt(e.target.value) || 1))
-                        }
-                        className="w-20 bg-sahara-card border border-sahara-border/20 rounded-xl px-4 py-2 text-center text-sm font-bold text-sahara-primary outline-none focus:border-sahara-primary/40 transition-colors"
-                      />
-                      <span className="text-[10px] font-bold text-sahara-text-muted uppercase tracking-widest">
-                        Minutes
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center justify-between group">
-                    <div>
-                      <h4 className="font-bold text-sahara-text-secondary text-sm">
-                        Short Break
-                      </h4>
-                      <p className="text-xs text-sahara-text-muted mt-1">
-                        Quick pause to refresh your mind.
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-4">
-                      <input
-                        type="number"
-                        min={1}
-                        max={30}
-                        value={shortBreakMin}
-                        onChange={(e) =>
-                          setShortBreakMin(
-                            Math.max(1, parseInt(e.target.value) || 1),
-                          )
-                        }
-                        className="w-20 bg-sahara-card border border-sahara-border/20 rounded-xl px-4 py-2 text-center text-sm font-bold text-sahara-primary outline-none focus:border-sahara-primary/40 transition-colors"
-                      />
-                      <span className="text-[10px] font-bold text-sahara-text-muted uppercase tracking-widest">
-                        Minutes
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center justify-between group">
-                    <div>
-                      <h4 className="font-bold text-sahara-text-secondary text-sm">
-                        Long Break
-                      </h4>
-                      <p className="text-xs text-sahara-text-muted mt-1">
-                        Extended rest after 4 focus sessions.
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-4">
-                      <input
-                        type="number"
-                        min={1}
-                        max={60}
-                        value={longBreakMin}
-                        onChange={(e) =>
-                          setLongBreakMin(
-                            Math.max(1, parseInt(e.target.value) || 1),
-                          )
-                        }
-                        className="w-20 bg-sahara-card border border-sahara-border/20 rounded-xl px-4 py-2 text-center text-sm font-bold text-sahara-primary outline-none focus:border-sahara-primary/40 transition-colors"
-                      />
-                      <span className="text-[10px] font-bold text-sahara-text-muted uppercase tracking-widest">
-                        Minutes
-                      </span>
-                    </div>
-                  </div>
+                  ))}
                 </div>
               </section>
 
@@ -254,13 +239,18 @@ export function SettingsPage({ onNavigate, currentRoute }: SettingsPageProps) {
                 </h3>
                 <div className="grid grid-cols-3 gap-4">
                   {THEME_OPTIONS.map((theme) => (
-                    <button
+                    <Button
                       key={theme.id}
+                      variant="outline"
+                      intent="sahara"
+                      size="md"
+                      shape="rounded-2xl"
+                      active={settings.theme === theme.id}
                       onClick={() => updateSetting("theme", theme.id)}
                       className={cn(
-                        "flex flex-col items-center gap-3 p-6 rounded-2xl border transition-all hover:shadow-md",
+                        "flex-col gap-3 p-6",
                         settings.theme === theme.id
-                          ? "bg-sahara-primary-light border-sahara-primary/30 text-sahara-primary shadow-sm"
+                          ? ""
                           : "bg-sahara-surface border-sahara-border/20 text-sahara-text-muted hover:border-sahara-primary/30",
                       )}
                     >
@@ -268,7 +258,7 @@ export function SettingsPage({ onNavigate, currentRoute }: SettingsPageProps) {
                       <span className="text-[10px] font-bold tracking-widest uppercase">
                         {theme.label}
                       </span>
-                    </button>
+                    </Button>
                   ))}
                 </div>
               </section>
@@ -333,19 +323,25 @@ export function SettingsPage({ onNavigate, currentRoute }: SettingsPageProps) {
 
                   {notifStatus === "unavailable" && (
                     <div className="mb-3 px-4 py-3 rounded-xl bg-amber-50 border border-amber-200/40 text-amber-700 text-[11px] leading-relaxed">
-                      Notifications require the Tauri desktop app.
-                      You&apos;re currently running in browser dev mode.
-                      Run <code className="font-mono bg-amber-100 px-1.5 py-0.5 rounded text-[10px]">npm run tauri dev</code> to enable
-                      native macOS notifications.
+                      Notifications require the Tauri desktop app. You&apos;re
+                      currently running in browser dev mode. Run{" "}
+                      <code className="font-mono bg-amber-100 px-1.5 py-0.5 rounded text-[10px]">
+                        npm run tauri dev
+                      </code>{" "}
+                      to enable native macOS notifications.
                     </div>
                   )}
 
                   <div className="flex flex-wrap items-center gap-3">
-                    {(notifStatus === "denied" || notifStatus === "unknown") && (
-                      <button
-                        onClick={handleRequestPermission}
+                    {(notifStatus === "denied" ||
+                      notifStatus === "unknown") && (
+                      <Button
+                        variant="solid"
+                        intent="sahara"
+                        size="sm"
+                        onClick={() => requestNotifPermission()}
                         disabled={notifChecking}
-                        className="flex items-center gap-2 px-4 py-2 rounded-xl bg-sahara-primary text-white text-[11px] font-bold tracking-wider uppercase hover:bg-sahara-primary/90 transition-colors disabled:opacity-50 cursor-pointer"
+                        className="gap-2 text-[11px] tracking-wider"
                       >
                         {notifChecking ? (
                           <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -355,33 +351,35 @@ export function SettingsPage({ onNavigate, currentRoute }: SettingsPageProps) {
                         {notifChecking
                           ? "Requesting..."
                           : "Enable Notifications"}
-                      </button>
+                      </Button>
                     )}
 
-                    <button
-                      onClick={handleTestNotification}
+                    <Button
+                      variant="outline"
+                      intent={testing ? "green" : "default"}
+                      size="sm"
                       disabled={testing || notifStatus !== "granted"}
+                      onClick={handleTestNotification}
                       className={cn(
-                        "flex items-center gap-2 px-4 py-2 rounded-xl border text-[11px] font-bold tracking-wider uppercase transition-all cursor-pointer",
-                        testing
-                          ? "border-green-500/30 text-green-600 bg-green-50"
-                          : notifStatus === "granted"
-                            ? "border-sahara-border/30 text-sahara-text-secondary hover:bg-sahara-card hover:text-sahara-primary"
-                            : "border-sahara-border/15 text-sahara-text-muted opacity-40 cursor-not-allowed",
+                        "gap-2 text-[11px] tracking-wider",
+                        !testing && notifStatus !== "granted" && "opacity-40",
                       )}
                     >
                       <Volume2 className="w-3.5 h-3.5" />
                       {testing ? "Sent!" : "Test Notification"}
-                    </button>
+                    </Button>
 
                     {notifStatus === "denied" && !notifChecking && (
-                      <button
+                      <Button
+                        variant="outline"
+                        intent="sahara"
+                        size="xs"
                         onClick={openSystemPreferences}
-                        className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-sahara-border/20 text-[11px] font-medium text-sahara-primary hover:bg-sahara-primary-light transition-colors cursor-pointer"
+                        className="gap-1.5 text-[11px] font-medium"
                       >
                         <ExternalLink className="w-3 h-3" />
                         Open Settings
-                      </button>
+                      </Button>
                     )}
                   </div>
 
