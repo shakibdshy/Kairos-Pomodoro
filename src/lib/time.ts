@@ -6,9 +6,6 @@ export function formatSeconds(totalSeconds: number): string {
   return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
 }
 
-/** @deprecated Use formatSeconds instead */
-export const formatOvertime = formatSeconds;
-
 const PHASE_CONFIG = {
   work:        { color: "text-sahara-primary",       bg: "bg-sahara-primary", label: "Focus" },
   short_break: { color: "text-sahara-text-secondary", bg: "bg-sahara-card",   label: "Short Break" },

@@ -1,16 +1,8 @@
 import { useEffect } from "react";
+import { invoke } from "@tauri-apps/api/core";
 import { useTimerStore } from "@/features/timer/use-timer-store";
-import { formatSeconds, formatOvertime } from "@/lib/time";
-
-let cachedInvoke: ((cmd: string, args?: Record<string, unknown>) => Promise<unknown>) | null = null;
-
-async function getInvoke() {
-  if (!cachedInvoke) {
-    const { invoke } = await import("@tauri-apps/api/core");
-    cachedInvoke = invoke;
-  }
-  return cachedInvoke;
-}
+import { formatSeconds } from "@/lib/time";
+import { isTauri } from "@/lib/tauri";
 
 export function useTray() {
   const secondsRemaining = useTimerStore((s) => s.secondsRemaining);
@@ -25,15 +17,13 @@ export function useTray() {
     let label: string;
     if (status === "focus_complete" || overtimeSeconds > 0) {
       const cumulative = totalSeconds + overtimeSeconds;
-      label = `+${formatOvertime(cumulative)} OT ${phase === "work" ? "🍅" : "☕"}`;
+      label = `+${formatSeconds(cumulative)} OT ${phase === "work" ? "\u{1F351}" : "\u2615"}`;
     } else {
-      label = `${formatSeconds(secondsRemaining)} ${phase === "work" ? "🍅" : "☕"}`;
+      label = `${formatSeconds(secondsRemaining)} ${phase === "work" ? "\u{1F351}" : "\u2615"}`;
     }
 
-    if (typeof window !== "undefined" && window.__TAURI_INTERNALS__) {
-      getInvoke().then((invoke) => {
-        invoke("plugin:tray|set_tooltip", { tooltip: label }).catch(() => {});
-      });
+    if (isTauri()) {
+      invoke("plugin:tray|set_tooltip", { tooltip: label }).catch(() => {});
     }
   }, [secondsRemaining, phase, status, overtimeSeconds, totalSeconds]);
 }

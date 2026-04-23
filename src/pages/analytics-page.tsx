@@ -1,12 +1,11 @@
 import { MainLayout } from "@/components/template/main-layout";
 import { Button } from "@/components/ui/button";
 import { Download } from "lucide-react";
-import type { PageProps } from "@/app/router";
 import { AnalyticsDashboard } from "@/components/containers/analytics";
 
-export function AnalyticsPage({ onNavigate, currentRoute }: PageProps) {
+export function AnalyticsPage() {
   return (
-    <MainLayout onNavigate={onNavigate} currentRoute={currentRoute}>
+    <MainLayout>
       <div className="px-12 py-12 max-w-6xl mx-auto">
         <header className="flex items-center justify-between mb-12">
           <div>

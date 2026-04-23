@@ -65,15 +65,13 @@ export async function sendNotification(
     } catch {}
   }
 
-  const tauri = await isTauri();
-  if (tauri) {
+  if (isTauri()) {
     try {
       const { sendNotification, isPermissionGranted, requestPermission } =
         await import("@tauri-apps/plugin-notification");
 
       let granted = await isPermissionGranted();
       if (!granted) {
-        console.log("[Notification] Requesting permission...");
         const permission = await requestPermission();
         granted = permission === "granted";
 
@@ -89,7 +87,6 @@ export async function sendNotification(
           title: NOTIFICATION_TITLES[type],
           body: body || "",
         });
-        console.log("[Notification] Sent:", NOTIFICATION_TITLES[type]);
       } else {
         console.warn(
           "[Notification] Permission denied, notification not sent.",

@@ -35,7 +35,7 @@ export function TimerDisplay({
           cy={CENTER}
           r={RADIUS}
           fill="none"
-          stroke="#f0e8df"
+          className="stroke-sahara-ring-track"
           strokeWidth="1"
         />
         <circle
@@ -43,20 +43,20 @@ export function TimerDisplay({
           cy={CENTER}
           r={RADIUS}
           fill="none"
-          stroke={isComplete ? "#c17767" : "#c2652a"}
+          className={isComplete ? "stroke-sahara-ring-complete" : "stroke-sahara-primary"}
           strokeWidth="4"
           strokeDasharray={circumference}
           strokeDashoffset={offset}
           strokeLinecap="round"
-          className="transition-[stroke-dashoffset] duration-300"
+          style={{ transition: "stroke-dashoffset 300ms ease" }}
         />
         {progress > 0 && progress < 100 && (
           <circle
             cx={CENTER + RADIUS * Math.cos((progress / 100) * 2 * Math.PI)}
             cy={CENTER + RADIUS * Math.sin((progress / 100) * 2 * Math.PI)}
             r="6"
-            fill="#c2652a"
-            className="transition-all duration-300"
+            className="fill-sahara-primary"
+            style={{ transition: "all 300ms ease" }}
           />
         )}
       </svg>

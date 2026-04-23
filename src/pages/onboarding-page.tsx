@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   ChevronRight,
   ChevronLeft,
@@ -7,7 +8,6 @@ import {
   Clock,
   Star,
 } from "lucide-react";
-import type { PageProps } from "@/app/router";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/cn";
 
@@ -44,8 +44,9 @@ const steps = [
   },
 ];
 
-export function OnboardingPage({ onNavigate }: PageProps) {
+export function OnboardingPage() {
   const [step, setStep] = useState(0);
+  const navigate = useNavigate();
 
   const currentStep = steps[step];
 
@@ -98,7 +99,7 @@ export function OnboardingPage({ onNavigate }: PageProps) {
               intent="default"
               size="xs"
               className="text-[10px] tracking-widest uppercase"
-              onClick={() => onNavigate("timer")}
+              onClick={() => navigate("/")}
             >
               Skip to App
             </Button>
@@ -146,7 +147,7 @@ export function OnboardingPage({ onNavigate }: PageProps) {
                 intent="sahara"
                 size="xl"
                 shape="rounded-2xl"
-                onClick={() => onNavigate("timer")}
+                onClick={() => navigate("/")}
                 className="hover:scale-[1.02] active:scale-[0.98] shadow-xl"
               >
                 GET STARTED

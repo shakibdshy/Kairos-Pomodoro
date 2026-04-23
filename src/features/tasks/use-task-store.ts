@@ -2,9 +2,9 @@ import { create } from "zustand";
 import type { Task } from "@/features/tasks/task-types";
 import {
   getTasks,
-  addTask,
-  updateTask,
-  deleteTask,
+  addTask as dbAddTask,
+  updateTask as dbUpdateTask,
+  deleteTask as dbDeleteTask,
   toggleTaskArchived,
   incrementTaskPomos,
 } from "@/lib/db";
@@ -12,6 +12,7 @@ import {
 interface TaskStore {
   tasks: Task[];
   loading: boolean;
+  error: string | null;
   loadTasks: () => Promise<void>;
   addTask: (
     name: string,
@@ -36,45 +37,79 @@ interface TaskStore {
 export const useTaskStore = create<TaskStore>((set) => ({
   tasks: [],
   loading: false,
+  error: null,
 
   loadTasks: async () => {
-    set({ loading: true });
-    const tasks = await getTasks();
-    set({ tasks, loading: false });
+    set({ loading: true, error: null });
+    try {
+      const tasks = await getTasks();
+      set({ tasks, loading: false });
+    } catch (err) {
+      console.error("[TaskStore] Failed to load tasks:", err);
+      set({ loading: false, error: String(err) });
+    }
   },
 
   addTask: async (name, estimatedPomos, project, priority, categoryId) => {
-    await addTask(name, estimatedPomos, project, priority, categoryId);
-    const tasks = await getTasks();
-    set({ tasks });
+    try {
+      await dbAddTask(name, estimatedPomos, project, priority, categoryId);
+      const tasks = await getTasks();
+      set({ tasks, error: null });
+    } catch (err) {
+      console.error("[TaskStore] Failed to add task:", err);
+      set({ error: String(err) });
+    }
   },
 
   updateTask: async (id, name, estimatedPomos, project, priority, categoryId) => {
-    await updateTask(id, name, estimatedPomos, project, priority, categoryId);
-    const tasks = await getTasks();
-    set({ tasks });
+    try {
+      await dbUpdateTask(id, name, estimatedPomos, project, priority, categoryId);
+      const tasks = await getTasks();
+      set({ tasks, error: null });
+    } catch (err) {
+      console.error("[TaskStore] Failed to update task:", err);
+      set({ error: String(err) });
+    }
   },
 
   deleteTask: async (id) => {
-    await deleteTask(id);
-    set((state) => ({
-      tasks: state.tasks.filter((t) => t.id !== id),
-    }));
+    try {
+      await dbDeleteTask(id);
+      set((state) => ({
+        tasks: state.tasks.filter((t) => t.id !== id),
+        error: null,
+      }));
+    } catch (err) {
+      console.error("[TaskStore] Failed to delete task:", err);
+      set({ error: String(err) });
+    }
   },
 
   archiveTask: async (id) => {
-    await toggleTaskArchived(id, true);
-    set((state) => ({
-      tasks: state.tasks.filter((t) => t.id !== id),
-    }));
+    try {
+      await toggleTaskArchived(id, true);
+      set((state) => ({
+        tasks: state.tasks.filter((t) => t.id !== id),
+        error: null,
+      }));
+    } catch (err) {
+      console.error("[TaskStore] Failed to archive task:", err);
+      set({ error: String(err) });
+    }
   },
 
   incrementPomos: async (id) => {
-    await incrementTaskPomos(id);
-    set((state) => ({
-      tasks: state.tasks.map((t) =>
-        t.id === id ? { ...t, completed_pomos: t.completed_pomos + 1 } : t,
-      ),
-    }));
+    try {
+      await incrementTaskPomos(id);
+      set((state) => ({
+        tasks: state.tasks.map((t) =>
+          t.id === id ? { ...t, completed_pomos: t.completed_pomos + 1 } : t,
+        ),
+        error: null,
+      }));
+    } catch (err) {
+      console.error("[TaskStore] Failed to increment pomos:", err);
+      set({ error: String(err) });
+    }
   },
 }));

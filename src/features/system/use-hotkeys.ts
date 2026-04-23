@@ -1,16 +1,20 @@
 import { useEffect } from "react";
 import { listen } from "@tauri-apps/api/event";
 import { useTimerStore } from "@/features/timer/use-timer-store";
-import { invokeHotkey, invokeUnregisterHotkey } from "@/lib/tauri";
+import { useSettingsStore } from "@/features/settings/use-settings-store";
+import { invokeHotkey, invokeUnregisterHotkey, isTauri } from "@/lib/tauri";
 
 export function useHotkeys() {
   const status = useTimerStore((s) => s.status);
   const start = useTimerStore((s) => s.start);
   const pause = useTimerStore((s) => s.pause);
   const resume = useTimerStore((s) => s.resume);
+  const hotkey = useSettingsStore((s) => s.settings.hotkey);
 
   useEffect(() => {
-    invokeHotkey("CommandOrControl+Alt+S").catch(() => {});
+    if (!isTauri()) return;
+
+    invokeHotkey(hotkey).catch(() => {});
 
     const unlisten = listen("hotkey:toggle-timer", () => {
       if (status === "idle") start();
@@ -21,7 +25,7 @@ export function useHotkeys() {
 
     return () => {
       unlisten.then((fn) => fn()).catch(() => {});
-      invokeUnregisterHotkey("CommandOrControl+Alt+S").catch(() => {});
+      invokeUnregisterHotkey(hotkey).catch(() => {});
     };
-  }, [status, start, pause, resume]);
+  }, [status, start, pause, resume, hotkey]);
 }

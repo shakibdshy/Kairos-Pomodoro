@@ -14,6 +14,8 @@
   --color-sahara-border: #d8d0c8;
   --color-sahara-card: #f6f0e8;
   --color-sahara-surface: #ffffff;
+  --color-sahara-ring-track: #f0e8df;
+  --color-sahara-ring-complete: #c17767;
 }
 
 @custom-variant dark (&:where(.dark, .dark *));
@@ -27,6 +29,8 @@
   --color-sahara-border: #3a3530;
   --color-sahara-card: #242019;
   --color-sahara-surface: #201c17;
+  --color-sahara-ring-track: #2e2820;
+  --color-sahara-ring-complete: #c17767;
 }
 
 @font-face {

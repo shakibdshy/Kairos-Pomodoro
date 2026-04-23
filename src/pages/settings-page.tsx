@@ -15,7 +15,6 @@ import {
   Loader2,
   ExternalLink,
 } from "lucide-react";
-import type { PageProps } from "@/app/router";
 import { cn } from "@/lib/cn";
 import { useState, useEffect } from "react";
 import { useSettingsStore } from "@/features/settings/use-settings-store";
@@ -50,7 +49,7 @@ const DURATION_CONFIGS = [
   },
 ];
 
-export function SettingsPage({ onNavigate, currentRoute }: PageProps) {
+export function SettingsPage() {
   const [activeTab, setActiveTab] = useState("general");
 
   const settings = useSettingsStore((s) => s.settings);
@@ -128,7 +127,7 @@ export function SettingsPage({ onNavigate, currentRoute }: PageProps) {
   const durationValues = { workMin, shortBreakMin, longBreakMin };
 
   return (
-    <MainLayout onNavigate={onNavigate} currentRoute={currentRoute}>
+    <MainLayout>
       <div className="px-12 py-12 max-w-5xl mx-auto h-full flex flex-col">
         <header className="mb-12">
           <h1 className="font-serif text-4xl text-sahara-text uppercase tracking-widest text-[12px] font-bold mb-2">

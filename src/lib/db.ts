@@ -65,28 +65,55 @@ export async function initDb(): Promise<void> {
     )
   `);
 
-  // Migrations for columns added after initial schema
-  const migrations = [
-    { table: "tasks", column: "project", type: "TEXT" },
-    { table: "tasks", column: "priority", type: "TEXT" },
-    { table: "tasks", column: "category_id", type: "INTEGER" },
-    { table: "sessions", column: "category_id", type: "INTEGER" },
-    { table: "sessions", column: "intention", type: "TEXT" },
-    { table: "sessions", column: "mood", type: "TEXT" },
-    { table: "sessions", column: "notes", type: "TEXT" },
-  ];
+  await database.execute(`
+    CREATE TABLE IF NOT EXISTS _schema_meta (
+      key TEXT PRIMARY KEY,
+      value TEXT NOT NULL
+    )
+  `);
 
-  for (const { table, column, type } of migrations) {
-    try {
-      await database.execute(
-        `ALTER TABLE ${table} ADD COLUMN ${column} ${type}`,
-      );
-    } catch (e) {
-      const msg = (e as Error)?.message ?? "";
-      if (!msg.includes("duplicate column")) {
-        console.warn(`[DB] Migration warning (${table}.${column}):`, msg);
+  // Versioned migrations
+  let currentVersion = 0;
+  try {
+    const rows = await database.select<{ value: string }[]>(
+      "SELECT value FROM _schema_meta WHERE key = 'version'",
+    );
+    if (rows.length > 0) currentVersion = Number(rows[0].value);
+  } catch {
+    // Fresh database
+  }
+
+  const migrations: Record<number, string[]> = {
+    1: [
+      "ALTER TABLE tasks ADD COLUMN project TEXT",
+      "ALTER TABLE tasks ADD COLUMN priority TEXT",
+      "ALTER TABLE tasks ADD COLUMN category_id INTEGER",
+      "ALTER TABLE sessions ADD COLUMN category_id INTEGER",
+      "ALTER TABLE sessions ADD COLUMN intention TEXT",
+      "ALTER TABLE sessions ADD COLUMN mood TEXT",
+      "ALTER TABLE sessions ADD COLUMN notes TEXT",
+    ],
+  };
+
+  const targetVersion = 1;
+
+  for (let v = currentVersion + 1; v <= targetVersion; v++) {
+    const statements = migrations[v];
+    if (!statements) continue;
+    for (const sql of statements) {
+      try {
+        await database.execute(sql);
+      } catch (e) {
+        const msg = (e as Error)?.message ?? "";
+        if (!msg.includes("duplicate column")) {
+          console.warn(`[DB] Migration v${v} warning:`, msg);
+        }
       }
     }
+    await database.execute(
+      "INSERT OR REPLACE INTO _schema_meta (key, value) VALUES ('version', $1)",
+      [String(v)],
+    );
   }
 }
 
@@ -259,7 +286,7 @@ export async function finishSession(
       `
       UPDATE sessions
       SET ended_at = datetime('now', 'localtime'),
-          duration_sec = CAST((julianday(datetime('now', 'localtime')) - julianday(started_at)) * 86400 AS INTEGER),
+          duration_sec = CAST(strftime('%s', 'now', 'localtime') - strftime('%s', started_at) AS INTEGER),
           completed = 1,
           mood = $2,
           notes = $3
@@ -467,100 +494,53 @@ export async function getAllTimeStats(): Promise<{
 
 export async function getCurrentStreak(): Promise<number> {
   const database = await getDb();
-  try {
-    const rows = await database.select<{ streak: number }[]>(`
-      WITH RECURSIVE countdown(d) AS (
-        SELECT date('now', 'localtime')
-        UNION ALL
-        SELECT date(d, '-1 day') FROM countdown WHERE d > date('now', 'localtime', '-365 days')
-      )
-      SELECT COUNT(*) as streak FROM countdown c
-      WHERE EXISTS (
-        SELECT 1 FROM sessions
-        WHERE date(started_at) = c.d AND completed = 1
-      )
-      AND c.d <= (
-        SELECT COALESCE(MIN(date(started_at)), date('now', 'localtime'))
-        FROM countdown c2
-        WHERE NOT EXISTS (
-          SELECT 1 FROM sessions
-          WHERE date(started_at) = c2.d AND completed = 1
-        ) AND c2.d < date('now', 'localtime')
-      )
-    `);
-    return rows[0]?.streak ?? 0;
-  } catch {
-    const rows = await database.select<{ days: string }[]>(
-      "SELECT DISTINCT date(started_at) as days FROM sessions WHERE completed = 1 ORDER BY days DESC",
+  const rows = await database.select<{ days: string }[]>(
+    "SELECT DISTINCT date(started_at) as days FROM sessions WHERE completed = 1 ORDER BY days DESC",
+  );
+  if (rows.length === 0) return 0;
+  const today = new Date().toISOString().split("T")[0];
+  let streak = 0;
+  for (const row of rows) {
+    const [ay, am, ad] = today.split("-").map(Number);
+    const [by, bm, bd] = row.days.split("-").map(Number);
+    const dateA = new Date(ay, am - 1, ad);
+    const dateB = new Date(by, bm - 1, bd);
+    const diffDays = Math.round(
+      (dateA.getTime() - dateB.getTime()) / 86400000,
     );
-    if (rows.length === 0) return 0;
-    const today = new Date().toISOString().split("T")[0];
-    let streak = 0;
-    for (const row of rows) {
-      const [ay, am, ad] = today.split("-").map(Number);
-      const [by, bm, bd] = row.days.split("-").map(Number);
-      const dateA = new Date(ay, am - 1, ad);
-      const dateB = new Date(by, bm - 1, bd);
-      const diffDays = Math.round(
-        (dateA.getTime() - dateB.getTime()) / 86400000,
-      );
-      if (diffDays === streak) {
-        streak++;
-      } else {
-        break;
-      }
+    if (diffDays === streak) {
+      streak++;
+    } else {
+      break;
     }
-    return streak;
   }
+  return streak;
 }
 
 export async function getBestStreak(): Promise<number> {
   const database = await getDb();
-  try {
-    const rows = await database.select<{ best_streak: number }[]>(`
-      WITH RECURSIVE dates(d) AS (
-        SELECT MIN(date(started_at)) FROM sessions WHERE completed = 1
-        UNION ALL
-        SELECT date(d, '+1 day') FROM dates WHERE d < date('now', 'localtime')
-      ),
-      has_session(d, s) AS (
-        SELECT d, CASE WHEN EXISTS (
-          SELECT 1 FROM sessions WHERE date(started_at) = d AND completed = 1 LIMIT 1
-        ) THEN 1 ELSE 0 END FROM dates
-      ),
-      groups(d, s, g) AS (
-        SELECT d, s, CASE WHEN s = 1 THEN 0 ELSE 1 END FROM has_session
-        UNION ALL
-        SELECT hs.d, hs.s, g.g + CASE WHEN hs.s = 1 THEN 0 ELSE 1 END
-        FROM has_session hs JOIN groups g ON hs.d = date(g.d, '+1 day')
-      )
-      SELECT MAX(g) as best_streak FROM groups WHERE s = 1
-    `);
-    return rows[0]?.best_streak ?? 0;
-  } catch {
-    const rows = await database.select<{ days: string }[]>(
-      "SELECT DISTINCT date(started_at) as days FROM sessions WHERE completed = 1 ORDER BY days ASC",
+  const rows = await database.select<{ days: string }[]>(
+    "SELECT DISTINCT date(started_at) as days FROM sessions WHERE completed = 1 ORDER BY days ASC",
+  );
+  if (rows.length === 0) return 0;
+  let bestStreak = 1;
+  let currentStreak = 1;
+  for (let i = 1; i < rows.length; i++) {
+    const [ay, am, ad] = rows[i - 1].days.split("-").map(Number);
+    const [by, bm, bd] = rows[i].days.split("-").map(Number);
+    const dateA = new Date(ay, am - 1, ad);
+    const dateB = new Date(by, bm - 1, bd);
+    const diffDays = Math.round(
+      (dateB.getTime() - dateA.getTime()) / 86400000,
     );
-    if (rows.length === 0) return 0;
-    let bestStreak = 1;
-    let currentStreak = 1;
-    for (let i = 1; i < rows.length; i++) {
-      const [ay, am, ad] = rows[i - 1].days.split("-").map(Number);
-      const [by, bm, bd] = rows[i].days.split("-").map(Number);
-      const dateA = new Date(ay, am - 1, ad);
-      const dateB = new Date(by, bm - 1, bd);
-      const diffDays = Math.round(
-        (dateB.getTime() - dateA.getTime()) / 86400000,
-      );
-      if (diffDays === 1) {
-        currentStreak++;
-        bestStreak = Math.max(bestStreak, currentStreak);
-      } else {
-        currentStreak = 1;
-      }
+    if (diffDays === 1) {
+      currentStreak++;
+      bestStreak = Math.max(bestStreak, currentStreak);
+    } else {
+      currentStreak = 1;
     }
-    return bestStreak;
   }
+  return bestStreak;
 }
 
 export async function getAllCategoryBreakdown(): Promise<CategoryBreakdown[]> {

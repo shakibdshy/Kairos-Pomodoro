@@ -1,15 +1,13 @@
 import { useState, type ReactNode } from "react";
-import type { Route } from "@/app/router";
+import { useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
   Timer,
   CheckSquare,
   BarChart2,
-  Library,
-  HelpCircle,
   Settings,
   Calendar,
-  StickyNote,
+  HelpCircle,
   PanelLeftClose,
   PanelLeftOpen,
   Play,
@@ -18,25 +16,19 @@ import { cn } from "@/lib/cn";
 
 interface MainLayoutProps {
   children: ReactNode;
-  onNavigate?: (route: Route) => void;
-  currentRoute?: Route;
 }
 
-export function MainLayout({
-  children,
-  onNavigate,
-  currentRoute,
-}: MainLayoutProps) {
-  const [isCollapsed, setIsCollapsed] = useState(false);
+const NAV_ITEMS = [
+  { path: "/", label: "TIMER", icon: Timer },
+  { path: "/tasks", label: "TASKS", icon: CheckSquare },
+  { path: "/calendar", label: "CALENDAR", icon: Calendar },
+  { path: "/analytics", label: "ANALYTICS", icon: BarChart2 },
+] as const;
 
-  const navItems = [
-    { id: "timer", label: "TIMER", icon: Timer },
-    { id: "tasks", label: "TASKS", icon: CheckSquare },
-    { id: "calendar", label: "CALENDAR", icon: Calendar },
-    { id: "analytics", label: "ANALYTICS", icon: BarChart2 },
-    { id: "notes", label: "NOTES", icon: StickyNote },
-    { id: "library", label: "LIBRARY", icon: Library },
-  ];
+export function MainLayout({ children }: MainLayoutProps) {
+  const [isCollapsed, setIsCollapsed] = useState(false);
+  const location = useLocation();
+  const navigate = useNavigate();
 
   return (
     <div className="flex h-screen bg-sahara-bg text-sahara-text font-sans overflow-hidden">
@@ -88,18 +80,18 @@ export function MainLayout({
 
         {/* Navigation */}
         <nav className="flex-1 px-3 space-y-1">
-          {navItems.map((item) => {
+          {NAV_ITEMS.map((item) => {
             const Icon = item.icon;
-            const isActive = currentRoute === item.id;
+            const isActive = location.pathname === item.path;
             return (
               <Button
-                key={item.id}
+                key={item.path}
                 variant="nav"
                 active={isActive}
-                onClick={() => onNavigate?.(item.id as Route)}
+                onClick={() => navigate(item.path)}
                 title={isCollapsed ? item.label : undefined}
                 className={cn(
-                  "overflow-hidden",
+                  "overflow-hidden justify-start",
                   isCollapsed ? "justify-center p-3" : "gap-4 px-4 py-3",
                   isActive
                     ? ""
@@ -130,7 +122,7 @@ export function MainLayout({
             variant="solid"
             intent="sahara"
             fullWidth
-            onClick={() => onNavigate?.("timer")}
+            onClick={() => navigate("/")}
             title={isCollapsed ? "START SESSION" : undefined}
             className={cn(
               "tracking-[0.15em]",
@@ -149,13 +141,11 @@ export function MainLayout({
           <Button
             variant="nav"
             intent="default"
-            onClick={() => onNavigate?.("onboarding")}
+            onClick={() => navigate("/onboarding")}
             title={isCollapsed ? "HELP" : undefined}
             className={cn(
               "rounded-none",
-              isCollapsed
-                ? "justify-center p-3"
-                : "gap-4 px-4 py-3",
+              isCollapsed ? "justify-center p-3" : "gap-4 px-4 py-3",
             )}
           >
             <HelpCircle
@@ -172,12 +162,12 @@ export function MainLayout({
           </Button>
           <Button
             variant="nav"
-            active={currentRoute === "settings"}
-            onClick={() => onNavigate?.("settings")}
+            active={location.pathname === "/settings"}
+            onClick={() => navigate("/settings")}
             title={isCollapsed ? "SETTINGS" : undefined}
             className={cn(
               isCollapsed ? "justify-center p-3" : "gap-4 px-4 py-3",
-              currentRoute === "settings"
+              location.pathname === "/settings"
                 ? ""
                 : "text-sahara-text-muted hover:text-sahara-text-secondary",
             )}
@@ -185,7 +175,7 @@ export function MainLayout({
             <Settings
               className={cn(
                 "w-5 h-5 shrink-0",
-                currentRoute === "settings"
+                location.pathname === "/settings"
                   ? "text-sahara-primary"
                   : "text-sahara-text-muted group-hover:text-sahara-text-secondary",
               )}
