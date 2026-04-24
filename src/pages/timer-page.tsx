@@ -7,10 +7,13 @@ import { Text } from "@/components/ui/text";
 export function TimerPage() {
   return (
     <MainLayout>
-      <div className="flex flex-col items-center gap-8 px-12 py-6 max-w-4xl mx-auto">
+      <div className="flex flex-col items-center gap-6 md:gap-8 px-4 sm:px-6 md:px-12 py-4 md:py-6 max-w-4xl mx-auto">
         <TimerControls />
-        <div className="w-full border-t border-sahara-border/30 pt-8">
-          <Text variant="h3" className="mb-4 font-serif text-2xl">
+        <div className="w-full border-t border-sahara-border/30 pt-6 md:pt-8">
+          <Text
+            variant="h3"
+            className="mb-3 md:mb-4 font-serif text-xl md:text-2xl"
+          >
             Today's Focus
           </Text>
           <TodayFocus />

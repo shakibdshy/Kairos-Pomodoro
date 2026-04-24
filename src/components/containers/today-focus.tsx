@@ -71,14 +71,14 @@ export function TodayFocus() {
   const hasAnyData = sessions.length > 0 || breakdowns.length > 0;
 
   return (
-    <div className="w-full space-y-5">
+    <div className="w-full space-y-4 md:space-y-5">
       <FocusSummaryBar sessions={sessions} topCategory={topCategoryEntry} />
 
       {hasAnyData && (
-        <div className="bg-sahara-surface rounded-xl border border-sahara-border/15 p-5">
+        <div className="bg-sahara-surface rounded-xl border border-sahara-border/15 p-3.5 md:p-5">
           <Text
             variant="body"
-            className="text-xs font-bold text-sahara-text-muted uppercase tracking-wider mb-3"
+            className="text-[10px] md:text-xs font-bold text-sahara-text-muted uppercase tracking-wider mb-2.5 md:mb-3"
           >
             Time by Category
           </Text>

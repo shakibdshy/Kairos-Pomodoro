@@ -61,28 +61,28 @@ export function SessionStatsCards({ sessions }: SessionStatsCardsProps) {
   ];
 
   return (
-    <div className="grid grid-cols-4 gap-3 mb-6">
+    <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 lg:gap-3 mb-6">
       {stats.map((stat) => {
         const Icon = stat.icon;
         return (
           <div
             key={stat.label}
             className={cn(
-              "flex flex-col items-center p-4 rounded-xl border border-sahara-border/15 bg-sahara-surface",
+              "flex flex-col items-center p-3 md:p-4 lg:p-3 rounded-xl border border-sahara-border/15 bg-sahara-surface",
             )}
           >
             <div
               className={cn(
-                "w-9 h-9 rounded-full flex items-center justify-center mb-2",
+                "w-8 h-8 md:w-9 md:h-9 lg:w-9 lg:h-9 rounded-full flex items-center justify-center mb-1.5 md:mb-2 lg:mb-1.5",
                 stat.bg,
               )}
             >
-              <Icon className={cn("w-4.5 h-4.5", stat.color)} />
+              <Icon className={cn("w-3.5 h-3.5 md:w-4.5 md:h-4.5 lg:w-4.5 lg:h-4.5", stat.color)} />
             </div>
-            <p className={cn("text-lg font-bold tabular-nums", stat.color)}>
+            <p className={cn("text-base md:text-lg lg:text-base font-bold tabular-nums", stat.color)}>
               {stat.value}
             </p>
-            <p className="text-[10px] font-medium text-sahara-text-muted uppercase tracking-wider mt-0.5">
+            <p className="text-[9px] md:text-[10px] lg:text-[10px] font-medium text-sahara-text-muted uppercase tracking-wider mt-0.5">
               {stat.label}
             </p>
           </div>

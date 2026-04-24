@@ -19,41 +19,41 @@ export function FocusSummaryBar({
   const sessionCount = workSessions.length;
 
   return (
-    <div className="grid grid-cols-4 gap-4">
-      <div className="bg-sahara-surface rounded-xl border border-sahara-border/15 p-4 flex items-center gap-3">
-        <div className="w-10 h-10 rounded-lg bg-sahara-primary-light/60 flex items-center justify-center shrink-0">
-          <Clock className="w-5 h-5 text-sahara-primary" />
+    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
+      <div className="bg-sahara-surface rounded-xl border border-sahara-border/15 p-3 md:p-4 lg:p-3.5 flex items-center gap-2.5 md:gap-3 lg:gap-2.5">
+        <div className="w-9 h-9 md:w-10 md:h-10 lg:w-9 lg:h-9 rounded-lg bg-sahara-primary-light/60 flex items-center justify-center shrink-0">
+          <Clock className="w-4 h-4 md:w-5 md:h-5 lg:w-4.5 lg:h-4.5 text-sahara-primary" />
         </div>
         <div>
-          <p className="text-xs font-bold text-sahara-text-muted uppercase tracking-wider">
+          <p className="text-[10px] md:text-xs lg:text-[10px] font-bold text-sahara-text-muted uppercase tracking-wider">
             Focus Time
           </p>
-          <p className="text-lg font-bold text-sahara-text tabular-nums">
+          <p className="text-base md:text-lg lg:text-base font-bold text-sahara-text tabular-nums">
             {formatTotalTime(totalFocusSec)}
           </p>
         </div>
       </div>
 
-      <div className="bg-sahara-surface rounded-xl border border-sahara-border/15 p-4 flex items-center gap-3">
-        <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center shrink-0">
-          <Target className="w-5 h-5 text-blue-500" />
+      <div className="bg-sahara-surface rounded-xl border border-sahara-border/15 p-3 md:p-4 lg:p-3.5 flex items-center gap-2.5 md:gap-3 lg:gap-2.5">
+        <div className="w-9 h-9 md:w-10 md:h-10 lg:w-9 lg:h-9 rounded-lg bg-blue-50 flex items-center justify-center shrink-0">
+          <Target className="w-4 h-4 md:w-5 md:h-5 lg:w-4.5 lg:h-4.5 text-blue-500" />
         </div>
         <div>
-          <p className="text-xs font-bold text-sahara-text-muted uppercase tracking-wider">
+          <p className="text-[10px] md:text-xs lg:text-[10px] font-bold text-sahara-text-muted uppercase tracking-wider">
             Sessions
           </p>
-          <p className="text-lg font-bold text-sahara-text tabular-nums">
+          <p className="text-base md:text-lg lg:text-base font-bold text-sahara-text tabular-nums">
             {sessionCount}
           </p>
         </div>
       </div>
 
-      <div className="bg-sahara-surface rounded-xl border border-sahara-border/15 p-4 flex items-center gap-3">
-        <div className="w-10 h-10 rounded-lg bg-orange-50 flex items-center justify-center shrink-0">
-          <Flame className="w-5 h-5 text-orange-500" />
+      <div className="bg-sahara-surface rounded-xl border border-sahara-border/15 p-3 md:p-4 lg:p-3.5 flex items-center gap-2.5 md:gap-3 lg:gap-2.5">
+        <div className="w-9 h-9 md:w-10 md:h-10 lg:w-9 lg:h-9 rounded-lg bg-orange-50 flex items-center justify-center shrink-0">
+          <Flame className="w-4 h-4 md:w-5 md:h-5 lg:w-4.5 lg:h-4.5 text-orange-500" />
         </div>
         <div>
-          <p className="text-xs font-bold text-sahara-text-muted uppercase tracking-wider">
+          <p className="text-[10px] md:text-xs lg:text-[10px] font-bold text-sahara-text-muted uppercase tracking-wider">
             Top Category
           </p>
           {topCategory ? (
@@ -62,28 +62,35 @@ export function FocusSummaryBar({
                 className="w-2 h-2 rounded-full shrink-0"
                 style={{ backgroundColor: topCategory.color }}
               />
-              <span className="text-sm font-bold text-sahara-text truncate max-w-25">
+              <span className="text-sm md:text-base lg:text-sm font-bold text-sahara-text truncate max-w-16 md:max-w-none lg:max-w-20">
                 {topCategory.name}
+              </span>
+              <span className="text-[10px] text-sahara-text-muted tabular-nums">
+                ×{topCategory.count}
               </span>
             </div>
           ) : (
-            <p className="text-sm font-bold text-sahara-text-muted">—</p>
+            <p className="text-sm md:text-base lg:text-sm font-bold text-sahara-text-muted mt-0.5">
+              —
+            </p>
           )}
         </div>
       </div>
 
-      <div className="bg-sahara-surface rounded-xl border border-sahara-border/15 p-4 flex items-center gap-3">
-        <div className="w-10 h-10 rounded-lg bg-green-50 flex items-center justify-center shrink-0">
-          <Timer className="w-5 h-5 text-green-500" />
+      <div className="bg-sahara-surface rounded-xl border border-sahara-border/15 p-3 md:p-4 lg:p-3.5 flex items-center gap-2.5 md:gap-3 lg:gap-2.5">
+        <div className="w-9 h-9 md:w-10 md:h-10 lg:w-9 lg:h-9 rounded-lg bg-purple-50 flex items-center justify-center shrink-0">
+          <Timer className="w-4 h-4 md:w-5 md:h-5 lg:w-4.5 lg:h-4.5 text-purple-500" />
         </div>
         <div>
-          <p className="text-xs font-bold text-sahara-text-muted uppercase tracking-wider">
-            Avg Length
+          <p className="text-[10px] md:text-xs lg:text-[10px] font-bold text-sahara-text-muted uppercase tracking-wider">
+            Avg Focus
           </p>
-          <p className="text-lg font-bold text-sahara-text tabular-nums">
+          <p className="text-base md:text-lg lg:text-base font-bold text-sahara-text tabular-nums">
             {sessionCount > 0
-              ? formatTotalTime(Math.round(totalFocusSec / sessionCount))
-              : "—"}
+              ? formatTotalTime(
+                  Math.round(totalFocusSec / sessionCount),
+                )
+              : "0m"}
           </p>
         </div>
       </div>

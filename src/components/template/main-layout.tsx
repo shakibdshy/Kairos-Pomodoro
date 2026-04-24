@@ -19,10 +19,10 @@ interface MainLayoutProps {
 }
 
 const NAV_ITEMS = [
-  { path: "/", label: "TIMER", icon: Timer },
-  { path: "/tasks", label: "TASKS", icon: CheckSquare },
-  { path: "/calendar", label: "CALENDAR", icon: Calendar },
-  { path: "/analytics", label: "ANALYTICS", icon: BarChart2 },
+  { path: "/", label: "Timer", icon: Timer },
+  { path: "/tasks", label: "Tasks", icon: CheckSquare },
+  { path: "/calendar", label: "Calendar", icon: Calendar },
+  { path: "/analytics", label: "Analytics", icon: BarChart2 },
 ] as const;
 
 export function MainLayout({ children }: MainLayoutProps) {
@@ -32,10 +32,10 @@ export function MainLayout({ children }: MainLayoutProps) {
 
   return (
     <div className="flex h-screen bg-sahara-bg text-sahara-text font-sans overflow-hidden">
-      {/* Sidebar */}
+      {/* Desktop Sidebar — hidden on mobile */}
       <aside
         className={cn(
-          "border-r border-sahara-border/30 flex flex-col py-8 bg-sahara-bg/50 backdrop-blur-sm transition-all duration-300 ease-in-out relative z-10",
+          "hidden md:flex border-r border-sahara-border/30 flex-col py-8 bg-sahara-bg/50 backdrop-blur-sm transition-all duration-300 ease-in-out relative z-10",
           isCollapsed ? "w-20" : "w-64",
         )}
       >
@@ -189,18 +189,82 @@ export function MainLayout({ children }: MainLayoutProps) {
         </div>
       </aside>
 
-      {/* Main Content */}
-      <main className="flex-1 flex flex-col relative overflow-hidden">
+      {/* Main Content Area */}
+      <div className="flex-1 flex flex-col relative overflow-hidden min-w-0">
         {/* macOS overlay titlebar spacer */}
         <div
-          className="h-8 flex items-center justify-between pl-8 pr-4"
+          className="h-8 flex items-center justify-between pl-4 md:pl-8 pr-4 shrink-0"
           data-tauri-drag-region
-        >
-          {/* Empty spacer for traffic lights */}
+        />
+
+        {/* Scrollable content — with bottom padding for mobile nav */}
+        <div className="flex-1 overflow-y-auto scroll-smooth pb-20 md:pb-0">
+          {children}
         </div>
 
-        <div className="flex-1 overflow-y-auto scroll-smooth">{children}</div>
-      </main>
+        {/* Mobile Bottom Navigation — visible only below md breakpoint */}
+        <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-sahara-surface/95 backdrop-blur-lg border-t border-sahara-border/30 px-2 pb-[env(safe-area-inset-bottom)]">
+          <div className="flex items-center justify-around max-w-lg mx-auto">
+            {NAV_ITEMS.map((item) => {
+              const Icon = item.icon;
+              const isActive = location.pathname === item.path;
+              return (
+                <button
+                  key={item.path}
+                  onClick={() => navigate(item.path)}
+                  className={cn(
+                    "relative flex flex-col items-center gap-0.5 py-2 px-3 min-w-14 transition-colors duration-200 cursor-pointer",
+                    isActive
+                      ? "text-sahara-primary"
+                      : "text-sahara-text-muted hover:text-sahara-text-secondary",
+                  )}
+                >
+                  {isActive && (
+                    <div className="absolute -top-0.5 left-1/2 -translate-x-1/2 w-6 h-0.5 rounded-full bg-sahara-primary" />
+                  )}
+                  <Icon
+                    className={cn(
+                      "w-5 h-5 transition-colors",
+                      isActive && "stroke-[2.5px]",
+                    )}
+                  />
+                  <span
+                    className={cn(
+                      "text-[9px] font-bold tracking-wider uppercase",
+                      isActive && "font-extrabold",
+                    )}
+                  >
+                    {item.label}
+                  </span>
+                </button>
+              );
+            })}
+
+            {/* Settings & Help as icon-only on far right */}
+            <div className="flex items-center gap-1 pl-2 border-l border-sahara-border/20">
+              <button
+                onClick={() => navigate("/onboarding")}
+                className="flex items-center justify-center p-2 text-sahara-text-muted hover:text-sahara-text-secondary transition-colors cursor-pointer"
+                title="Help"
+              >
+                <HelpCircle className="w-4.5 h-4.5" />
+              </button>
+              <button
+                onClick={() => navigate("/settings")}
+                className={cn(
+                  "flex items-center justify-center p-2 transition-colors cursor-pointer",
+                  location.pathname === "/settings"
+                    ? "text-sahara-primary"
+                    : "text-sahara-text-muted hover:text-sahara-text-secondary",
+                )}
+                title="Settings"
+              >
+                <Settings className="w-4.5 h-4.5" />
+              </button>
+            </div>
+          </div>
+        </nav>
+      </div>
     </div>
   );
 }
