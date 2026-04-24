@@ -7,6 +7,13 @@ interface FocusSummaryBarProps {
   topCategory: { name: string; color: string; count: number } | null;
 }
 
+const ICON_STYLES = {
+  clock: "bg-[#c2652a]/15 text-[#c2652a]",
+  target: "bg-[#6b9080]/15 text-[#6b9080]",
+  flame: "bg-[#c4956a]/15 text-[#c4956a]",
+  timer: "bg-[#c45c4a]/15 text-[#c45c4a]",
+} as const;
+
 export function FocusSummaryBar({
   sessions,
   topCategory,
@@ -20,9 +27,10 @@ export function FocusSummaryBar({
 
   return (
     <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
+      {/* Focus Time */}
       <div className="bg-sahara-surface rounded-xl border border-sahara-border/15 p-3 md:p-4 lg:p-3.5 flex items-center gap-2.5 md:gap-3 lg:gap-2.5">
-        <div className="w-9 h-9 md:w-10 md:h-10 lg:w-9 lg:h-9 rounded-lg bg-sahara-primary-light/60 flex items-center justify-center shrink-0">
-          <Clock className="w-4 h-4 md:w-5 md:h-5 lg:w-4.5 lg:h-4.5 text-sahara-primary" />
+        <div className={`w-9 h-9 md:w-10 md:h-10 lg:w-9 lg:h-9 rounded-lg flex items-center justify-center shrink-0 ${ICON_STYLES.clock}`}>
+          <Clock className="w-4 h-4 md:w-5 md:h-5 lg:w-4.5 lg:h-4.5" />
         </div>
         <div>
           <p className="text-[10px] md:text-xs lg:text-[10px] font-bold text-sahara-text-muted uppercase tracking-wider">
@@ -34,9 +42,10 @@ export function FocusSummaryBar({
         </div>
       </div>
 
+      {/* Sessions */}
       <div className="bg-sahara-surface rounded-xl border border-sahara-border/15 p-3 md:p-4 lg:p-3.5 flex items-center gap-2.5 md:gap-3 lg:gap-2.5">
-        <div className="w-9 h-9 md:w-10 md:h-10 lg:w-9 lg:h-9 rounded-lg bg-blue-50 flex items-center justify-center shrink-0">
-          <Target className="w-4 h-4 md:w-5 md:h-5 lg:w-4.5 lg:h-4.5 text-blue-500" />
+        <div className={`w-9 h-9 md:w-10 md:h-10 lg:w-9 lg:h-9 rounded-lg flex items-center justify-center shrink-0 ${ICON_STYLES.target}`}>
+          <Target className="w-4 h-4 md:w-5 md:h-5 lg:w-4.5 lg:h-4.5" />
         </div>
         <div>
           <p className="text-[10px] md:text-xs lg:text-[10px] font-bold text-sahara-text-muted uppercase tracking-wider">
@@ -48,9 +57,10 @@ export function FocusSummaryBar({
         </div>
       </div>
 
+      {/* Top Category */}
       <div className="bg-sahara-surface rounded-xl border border-sahara-border/15 p-3 md:p-4 lg:p-3.5 flex items-center gap-2.5 md:gap-3 lg:gap-2.5">
-        <div className="w-9 h-9 md:w-10 md:h-10 lg:w-9 lg:h-9 rounded-lg bg-orange-50 flex items-center justify-center shrink-0">
-          <Flame className="w-4 h-4 md:w-5 md:h-5 lg:w-4.5 lg:h-4.5 text-orange-500" />
+        <div className={`w-9 h-9 md:w-10 md:h-10 lg:w-9 lg:h-9 rounded-lg flex items-center justify-center shrink-0 ${ICON_STYLES.flame}`}>
+          <Flame className="w-4 h-4 md:w-5 md:h-5 lg:w-4.5 lg:h-4.5" />
         </div>
         <div>
           <p className="text-[10px] md:text-xs lg:text-[10px] font-bold text-sahara-text-muted uppercase tracking-wider">
@@ -77,9 +87,10 @@ export function FocusSummaryBar({
         </div>
       </div>
 
+      {/* Avg Focus */}
       <div className="bg-sahara-surface rounded-xl border border-sahara-border/15 p-3 md:p-4 lg:p-3.5 flex items-center gap-2.5 md:gap-3 lg:gap-2.5">
-        <div className="w-9 h-9 md:w-10 md:h-10 lg:w-9 lg:h-9 rounded-lg bg-purple-50 flex items-center justify-center shrink-0">
-          <Timer className="w-4 h-4 md:w-5 md:h-5 lg:w-4.5 lg:h-4.5 text-purple-500" />
+        <div className={`w-9 h-9 md:w-10 md:h-10 lg:w-9 lg:h-9 rounded-lg flex items-center justify-center shrink-0 ${ICON_STYLES.timer}`}>
+          <Timer className="w-4 h-4 md:w-5 md:h-5 lg:w-4.5 lg:h-4.5" />
         </div>
         <div>
           <p className="text-[10px] md:text-xs lg:text-[10px] font-bold text-sahara-text-muted uppercase tracking-wider">

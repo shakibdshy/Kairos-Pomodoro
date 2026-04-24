@@ -34,29 +34,29 @@ export function SessionStatsCards({ sessions }: SessionStatsCardsProps) {
       label: "Focus Time",
       value: formatTotalTime(totalFocusSec),
       icon: Target,
-      color: "text-sahara-primary",
-      bg: "bg-sahara-primary/10",
+      color: "text-[#c2652a]",
+      bg: "bg-[#c2652a]/15",
     },
     {
       label: "Sessions",
       value: String(workSessions.length),
       icon: CheckCircle2,
-      color: "text-green-600",
-      bg: "bg-green-50",
+      color: "text-[#6b9080]",
+      bg: "bg-[#6b9080]/15",
     },
     {
       label: "Avg Length",
       value: formatDuration(avgSessionLength),
       icon: TrendingUp,
-      color: "text-blue-500",
-      bg: "bg-blue-50",
+      color: "text-[#c4956a]",
+      bg: "bg-[#c4956a]/15",
     },
     {
       label: "Break Time",
       value: formatTotalTime(totalBreakSec),
       icon: Zap,
-      color: "text-purple-500",
-      bg: "bg-purple-50",
+      color: "text-[#c45c4a]",
+      bg: "bg-[#c45c4a]/15",
     },
   ];
 
@@ -79,7 +79,7 @@ export function SessionStatsCards({ sessions }: SessionStatsCardsProps) {
             >
               <Icon className={cn("w-3.5 h-3.5 md:w-4.5 md:h-4.5 lg:w-4.5 lg:h-4.5", stat.color)} />
             </div>
-            <p className={cn("text-base md:text-lg lg:text-base font-bold tabular-nums", stat.color)}>
+            <p className="text-base md:text-lg lg:text-base font-bold tabular-nums text-sahara-text">
               {stat.value}
             </p>
             <p className="text-[9px] md:text-[10px] lg:text-[10px] font-medium text-sahara-text-muted uppercase tracking-wider mt-0.5">
