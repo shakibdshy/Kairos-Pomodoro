@@ -2,6 +2,7 @@ import { useMemo, useState, useEffect } from "react";
 import { cn } from "@/lib/cn";
 import type { WeekSession } from "@/lib/db";
 import { CalendarSessionBlock } from "./calendar-session-block";
+import { CalendarDayPill } from "./calendar-day-pill";
 
 interface CalendarGridProps {
   sessions: WeekSession[];
@@ -11,7 +12,7 @@ interface CalendarGridProps {
   hourHeight: number;
 }
 
-const DAY_LABELS = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"];
+const DAY_LABELS_FULL = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"];
 
 const BASE_HOUR_HEIGHT = 64;
 
@@ -70,7 +71,7 @@ function computeDayLayout(
     const startMin =
       (startTime.getHours() - startHour) * 60 + startTime.getMinutes();
 
-    let topPx = (startMin / 60) * BASE_HOUR_HEIGHT;
+    let topPx = Math.max((startMin / 60) * BASE_HOUR_HEIGHT, 0);
 
     for (const existing of positioned) {
       const existingEnd = existing.topPx + existing.heightPx;
@@ -79,7 +80,7 @@ function computeDayLayout(
       }
     }
 
-    const heightPx = Math.max((durationMin / 60) * BASE_HOUR_HEIGHT, 52);
+    const heightPx = Math.max((durationMin / 60) * BASE_HOUR_HEIGHT, 100);
 
     positioned.push({ session, topPx, heightPx });
   }
@@ -146,174 +147,299 @@ export function CalendarGrid({
 
   const sessionsByDay = useMemo(() => buildSessionsByDay(sessions), [sessions]);
 
+  const todayIdx = weekDays.findIndex(isToday);
+
+  const [selectedMobileDay, setSelectedMobileDay] = useState(
+    todayIdx >= 0 ? todayIdx : 0,
+  );
+
+  useEffect(() => {
+    if (todayIdx >= 0) setSelectedMobileDay(todayIdx);
+  }, [todayIdx]);
+
+  const allDayLayouts = useMemo(
+    () =>
+      weekDays.map((day) =>
+        computeDayLayout(
+          sessionsByDay.get(toDateString(day)) ?? [],
+          startHour,
+          endHour,
+        ),
+      ),
+    [sessionsByDay, weekDays, startHour, endHour],
+  );
+
   function getCurrentTimePosition(): number | null {
     const currentMinutes = now.getHours() * 60 + now.getMinutes();
     const startMinutes = startHour * 60;
     if (currentMinutes < startMinutes || currentMinutes > (endHour + 1) * 60)
       return null;
 
-    const todayIdx = weekDays.findIndex(isToday);
-    if (todayIdx < 0) return null;
-
     const offsetMin = currentMinutes - startMinutes;
     return (offsetMin / 60) * BASE_HOUR_HEIGHT;
   }
 
-  const dayLayouts = weekDays.map((day) =>
-    computeDayLayout(
-      sessionsByDay.get(toDateString(day)) ?? [],
-      startHour,
-      endHour,
-    ),
-  );
-
-  const gridTotalHeight = Math.max(...dayLayouts.map((l) => l.totalHeight));
-
   const currentTimePos = getCurrentTimePosition();
-  const currentDayIndex = weekDays.findIndex(isToday);
+
+  const desktopGridTotalHeight = Math.max(
+    ...allDayLayouts.map((l) => l.totalHeight),
+  );
 
   return (
     <div className="bg-sahara-surface rounded-2xl overflow-hidden shadow-sm border border-sahara-border/40 flex flex-col">
-      {/* Day Headers */}
-      <div
-        className="grid border-b border-sahara-border/30"
-        style={{
-          gridTemplateColumns: `64px repeat(${weekDays.length}, 1fr)`,
-        }}
-      >
-        <div className="p-4 border-r border-sahara-border/20" />
-        {weekDays.map((day, idx) => {
-          const dayIdx = day.getDay() === 0 ? 6 : day.getDay() - 1;
-          const today = isToday(day);
+      {/* ===== MOBILE VIEW: Day Strip + Single-Day Grid ===== */}
+      <div className="md:hidden flex flex-col">
+        {/* Date strip — evenly distributed across full width */}
+        <div className="grid grid-cols-7 border-b border-sahara-border/30 px-1">
+          {weekDays.map((day, idx) => (
+            <CalendarDayPill
+              key={idx}
+              date={day}
+              isSelected={idx === selectedMobileDay}
+              isToday={isToday(day)}
+              onClick={() => setSelectedMobileDay(idx)}
+            />
+          ))}
+        </div>
+
+        {/* Single-day time grid */}
+        {(() => {
+          const layout = allDayLayouts[selectedMobileDay];
+          const dayDate = weekDays[selectedMobileDay];
+          const today = isToday(dayDate);
 
           return (
-            <div
-              key={idx}
-              className={cn(
-                "px-2 pt-3 pb-2 text-center border-r last:border-r-0 border-sahara-border/20 relative",
-              )}
-            >
-              <span
-                className={cn(
-                  "text-[10px] font-medium tracking-[0.15em] block mb-0.5",
-                  today ? "text-sahara-primary" : "text-sahara-text-muted",
-                )}
-              >
-                {DAY_LABELS[dayIdx]}
-              </span>
-              <p
-                className={cn(
-                  "font-serif text-2xl leading-none",
-                  today ? "text-sahara-primary font-bold" : "text-sahara-text",
-                )}
-              >
-                {day.getDate()}
-              </p>
-              {today && (
-                <div className="absolute bottom-0 left-4 right-4 h-0.5 bg-sahara-primary rounded-full" />
+            <div className="flex-1 overflow-y-auto relative pt-8">
+              <div className="flex" style={{ minHeight: layout.totalHeight }}>
+                {/* Time labels */}
+                <div className="w-12 shrink-0 border-r border-sahara-border/15 bg-sahara-bg/20 relative">
+                  {hours.map((hour, hIdx) => {
+                    const maxH = Math.max(
+                      layout.hourTopPx[hIdx + 1] - layout.hourTopPx[hIdx],
+                      BASE_HOUR_HEIGHT,
+                    );
+
+                    return (
+                      <div
+                        key={hour}
+                        className="pr-2 text-right border-b border-sahara-border/10"
+                        style={{ height: maxH }}
+                      >
+                        <span className="text-[10px] font-medium text-sahara-text-muted tabular-nums leading-none inline-block mt-2">
+                          {formatHour(hour)}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Day content area — full width for sessions */}
+                <div
+                  className={cn(
+                    "flex-1 relative",
+                    today && "bg-sahara-primary-light/10",
+                  )}
+                  style={{ minHeight: layout.totalHeight }}
+                >
+                  {/* Hour backgrounds */}
+                  {hours.map((_, hIdx) => (
+                    <div
+                      key={hIdx}
+                      className="border-b border-sahara-border/8"
+                      style={{
+                        height:
+                          layout.hourTopPx[hIdx + 1] - layout.hourTopPx[hIdx],
+                      }}
+                    />
+                  ))}
+
+                  {/* Session blocks — full width mobile version */}
+                  {layout.positioned.map(({ session, topPx, heightPx }) => (
+                    <CalendarSessionBlock
+                      key={session.id}
+                      session={session}
+                      topPx={topPx}
+                      heightPx={heightPx}
+                    />
+                  ))}
+
+                  {/* Current time line */}
+                  {currentTimePos !== null && today && (
+                    <div
+                      className="absolute left-0 right-0 z-30 pointer-events-none flex items-center"
+                      style={{ top: currentTimePos }}
+                    >
+                      <div className="w-1.5 h-1.5 rounded-full bg-sahara-primary -ml-1 shadow-sm" />
+                      <div className="flex-1 border-t border-sahara-primary/50" />
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Empty state */}
+              {sessions.length === 0 && (
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                  <div className="text-center opacity-30">
+                    <p className="text-xs font-semibold text-sahara-text-muted uppercase tracking-wider">
+                      No sessions this day
+                    </p>
+                    <p className="text-[11px] text-sahara-text-muted mt-1">
+                      Completed sessions will appear here
+                    </p>
+                  </div>
+                </div>
               )}
             </div>
           );
-        })}
+        })()}
       </div>
 
-      {/* Time Grid */}
-      <div className="flex-1 overflow-y-auto relative">
+      {/* ===== DESKTOP VIEW: 7-Column Week Grid ===== */}
+      <div className="hidden md:flex flex-col flex-1 min-h-0">
+        {/* Day Headers Row */}
         <div
-          className="grid"
+          className="grid border-b border-sahara-border/30"
           style={{
             gridTemplateColumns: `64px repeat(${weekDays.length}, 1fr)`,
-            minHeight: gridTotalHeight,
           }}
         >
-          {/* Time labels column */}
-          <div className="border-r border-sahara-border/20 bg-sahara-bg/30 relative">
-            {hours.map((hour, hIdx) => {
-              const maxH = Math.max(
-                ...dayLayouts.map(
-                  (l) => l.hourTopPx[hIdx + 1] - l.hourTopPx[hIdx],
-                ),
-                BASE_HOUR_HEIGHT,
-              );
-
-              return (
-                <div
-                  key={hour}
-                  className="pr-3 text-right border-b border-sahara-border/15"
-                  style={{ height: maxH }}
-                >
-                  <span className="text-[11px] font-medium text-sahara-text-muted tabular-nums leading-none inline-block mt-2">
-                    {formatHour(hour)}
-                  </span>
-                </div>
-              );
-            })}
-          </div>
-
-          {/* Day columns */}
+          <div className="p-4 border-r border-sahara-border/20" />
           {weekDays.map((day, idx) => {
-            const layout = dayLayouts[idx];
+            const dayIdx = day.getDay() === 0 ? 6 : day.getDay() - 1;
             const today = isToday(day);
 
             return (
               <div
                 key={idx}
                 className={cn(
-                  "relative border-r last:border-r-0 border-sahara-border/15",
-                  today && "bg-sahara-primary-light/30",
+                  "px-2 pt-3 pb-2 text-center border-r last:border-r-0 border-sahara-border/20 relative",
+                  today && "bg-sahara-primary-light/20",
                 )}
-                style={{ minHeight: layout.totalHeight }}
               >
-                {/* Hour row backgrounds */}
-                {hours.map((_, hIdx) => {
-                  const h = layout.hourTopPx[hIdx + 1] - layout.hourTopPx[hIdx];
-                  return (
-                    <div
-                      key={hIdx}
-                      className="border-b border-sahara-border/10"
-                      style={{ height: h }}
-                    />
-                  );
-                })}
-
-                {/* Session blocks — full width, vertically stacked */}
-                {layout.positioned.map(({ session, topPx, heightPx }) => (
-                  <CalendarSessionBlock
-                    key={session.id}
-                    session={session}
-                    topPx={topPx}
-                    heightPx={heightPx}
-                  />
-                ))}
-
-                {/* Current time line */}
-                {currentTimePos !== null && idx === currentDayIndex && (
-                  <div
-                    className="absolute left-0 right-0 z-30 pointer-events-none flex items-center"
-                    style={{ top: currentTimePos }}
-                  >
-                    <div className="w-1.5 h-1.5 rounded-full bg-sahara-primary -ml-1 shadow-sm" />
-                    <div className="flex-1 border-t border-sahara-primary/40" />
-                  </div>
+                <span
+                  className={cn(
+                    "text-[10px] font-medium tracking-[0.15em] block mb-0.5",
+                    today ? "text-sahara-primary" : "text-sahara-text-muted",
+                  )}
+                >
+                  {DAY_LABELS_FULL[dayIdx]}
+                </span>
+                <p
+                  className={cn(
+                    "font-serif text-2xl leading-none",
+                    today
+                      ? "text-sahara-primary font-bold"
+                      : "text-sahara-text",
+                  )}
+                >
+                  {day.getDate()}
+                </p>
+                {today && (
+                  <div className="absolute bottom-0 left-4 right-4 h-0.5 bg-sahara-primary rounded-full" />
                 )}
               </div>
             );
           })}
         </div>
 
-        {/* Empty state overlay */}
-        {sessions.length === 0 && (
-          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <div className="text-center opacity-30">
-              <p className="text-xs font-semibold text-sahara-text-muted uppercase tracking-wider">
-                No sessions this week
-              </p>
-              <p className="text-[11px] text-sahara-text-muted mt-1">
-                Completed sessions will appear here
-              </p>
+        {/* Time Grid Body */}
+        <div className="flex-1 overflow-y-auto relative">
+          <div
+            className="grid"
+            style={{
+              gridTemplateColumns: `64px repeat(${weekDays.length}, 1fr)`,
+              minHeight: desktopGridTotalHeight,
+            }}
+          >
+            {/* Time labels column */}
+            <div className="border-r border-sahara-border/20 bg-sahara-bg/30 relative shrink-0 w-16">
+              {hours.map((hour, hIdx) => {
+                const maxH = Math.max(
+                  ...allDayLayouts.map(
+                    (l) => l.hourTopPx[hIdx + 1] - l.hourTopPx[hIdx],
+                  ),
+                  BASE_HOUR_HEIGHT,
+                );
+
+                return (
+                  <div
+                    key={hour}
+                    className="pr-3 text-right border-b border-sahara-border/15"
+                    style={{ height: maxH }}
+                  >
+                    <span className="text-[11px] font-medium text-sahara-text-muted tabular-nums leading-none inline-block mt-2">
+                      {formatHour(hour)}
+                    </span>
+                  </div>
+                );
+              })}
             </div>
+
+            {/* Day columns */}
+            {weekDays.map((day, idx) => {
+              const layout = allDayLayouts[idx];
+              const today = isToday(day);
+
+              return (
+                <div
+                  key={idx}
+                  className={cn(
+                    "relative border-r last:border-r-0 border-sahara-border/15",
+                    today && "bg-sahara-primary-light/30",
+                  )}
+                  style={{ minHeight: layout.totalHeight }}
+                >
+                  {/* Hour row backgrounds */}
+                  {hours.map((_, hIdx) => (
+                    <div
+                      key={hIdx}
+                      className="border-b border-sahara-border/10"
+                      style={{
+                        height:
+                          layout.hourTopPx[hIdx + 1] - layout.hourTopPx[hIdx],
+                      }}
+                    />
+                  ))}
+
+                  {/* Session blocks */}
+                  {layout.positioned.map(({ session, topPx, heightPx }) => (
+                    <CalendarSessionBlock
+                      key={session.id}
+                      session={session}
+                      topPx={topPx}
+                      heightPx={heightPx}
+                    />
+                  ))}
+
+                  {/* Current time line */}
+                  {currentTimePos !== null && idx === todayIdx && (
+                    <div
+                      className="absolute left-0 right-0 z-30 pointer-events-none flex items-center"
+                      style={{ top: currentTimePos }}
+                    >
+                      <div className="w-1.5 h-1.5 rounded-full bg-sahara-primary -ml-1 shadow-sm" />
+                      <div className="flex-1 border-t border-sahara-primary/40" />
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
-        )}
+
+          {/* Empty state overlay */}
+          {sessions.length === 0 && (
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+              <div className="text-center opacity-30">
+                <p className="text-xs font-semibold text-sahara-text-muted uppercase tracking-wider">
+                  No sessions this week
+                </p>
+                <p className="text-[11px] text-sahara-text-muted mt-1">
+                  Completed sessions will appear here
+                </p>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

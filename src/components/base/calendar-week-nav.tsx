@@ -1,5 +1,5 @@
-import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface CalendarWeekNavProps {
   weekStart: Date;
@@ -9,32 +9,6 @@ interface CalendarWeekNavProps {
   onToday: () => void;
 }
 
-const MONTHS = [
-  "January",
-  "February",
-  "March",
-  "April",
-  "May",
-  "June",
-  "July",
-  "August",
-  "September",
-  "October",
-  "November",
-  "December",
-];
-
-function formatDateRange(start: Date, end: Date): string {
-  const sDay = start.getDate();
-  const eDay = end.getDate();
-  const month = MONTHS[start.getMonth()];
-  const year = start.getFullYear();
-  if (sDay === eDay) return `${month} ${sDay}, ${year}`;
-  if (start.getMonth() === end.getMonth())
-    return `${month} ${sDay} – ${eDay}, ${year}`;
-  return `${MONTHS[start.getMonth()]} ${sDay} – ${MONTHS[end.getMonth()]} ${eDay}, ${year}`;
-}
-
 export function CalendarWeekNav({
   weekStart,
   weekEnd,
@@ -42,48 +16,57 @@ export function CalendarWeekNav({
   onNext,
   onToday,
 }: CalendarWeekNavProps) {
-  const now = new Date();
-  const isCurrentWeek = now >= weekStart && now <= weekEnd;
+  const formatRange = (start: Date, end: Date) => {
+    const s = start.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+    });
+    const e = end.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: start.getFullYear() !== end.getFullYear() ? "numeric" : undefined,
+    });
+    return `${s} – ${e}`;
+  };
 
   return (
-    <div className="flex items-center gap-3">
+    <div className="flex items-center gap-2 md:gap-3">
       <Button
-        variant="ghost"
-        size="icon-lg"
+        variant="outline"
+        size="icon"
         intent="default"
-        shape="rounded-full"
+        shape="rounded-xl"
         onClick={onPrev}
-        title="Previous week"
+        className="border-sahara-border/30"
       >
         <ChevronLeft className="w-4 h-4" />
       </Button>
 
-      {!isCurrentWeek && (
-        <Button
-          variant="ghost"
-          size="xs"
-          intent="sahara"
-          shape="rounded-lg"
-          className="text-[11px] font-semibold"
-          onClick={onToday}
-        >
-          Today
-        </Button>
-      )}
+      <div className="text-center min-w-30 sm:min-w-40">
+        <p className="text-xs md:text-sm font-bold text-sahara-text tabular-nums">
+          {formatRange(weekStart, weekEnd)}
+        </p>
+      </div>
 
-      <span className="text-sm font-medium text-sahara-text min-w-45 text-center">
-        {formatDateRange(weekStart, weekEnd)}
-      </span>
+      <Button
+        variant="outline"
+        size="icon"
+        intent="default"
+        shape="rounded-xl"
+        onClick={onNext}
+        className="border-sahara-border/30"
+      >
+        <ChevronRight className="w-4 h-4" />
+      </Button>
 
       <Button
         variant="ghost"
-        size="icon-lg"
+        size="sm"
         intent="default"
-        shape="rounded-full"
-        onClick={onNext}
-        title="Next week"
+        onClick={onToday}
+        className="ml-1 text-[10px] md:text-xs font-bold tracking-wider uppercase text-sahara-primary hover:text-sahara-primary/80"
       >
-        <ChevronRight className="w-4 h-4" />
+        Today
       </Button>
     </div>
   );

@@ -1,200 +1,258 @@
-import { useState, useEffect, useCallback } from "react";
-import { Plus, Target } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Text } from "@/components/ui/text";
+import { useState, useEffect } from "react";
 import { useTaskStore } from "@/features/tasks/use-task-store";
 import { useTimerStore } from "@/features/timer/use-timer-store";
-import type { Task } from "@/features/tasks/task-types";
-import { TaskCard } from "@/components/base/task-card";
-import { AddTaskModal } from "@/components/base/add-task-modal";
+import {
+  Plus,
+  Search,
+  Filter,
+  ListTodo,
+  LayoutGrid,
+  Target,
+  Clock,
+  CheckCircle2,
+  Trash2,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/cn";
 
 export function TasksList() {
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [editingTask, setEditingTask] = useState<Task | null>(null);
-
   const tasks = useTaskStore((s) => s.tasks);
-  const loading = useTaskStore((s) => s.loading);
-  const loadTasks = useTaskStore((s) => s.loadTasks);
   const addTask = useTaskStore((s) => s.addTask);
-  const updateTask = useTaskStore((s) => s.updateTask);
   const deleteTask = useTaskStore((s) => s.deleteTask);
+  const incrementPomos = useTaskStore((s) => s.incrementPomos);
 
   const activeTaskId = useTimerStore((s) => s.activeTaskId);
   const setActiveTask = useTimerStore((s) => s.setActiveTask);
 
+  const [searchQuery, setSearchQuery] = useState("");
+  const [viewMode, setViewMode] = useState<"list" | "grid">("list");
+  const [newTaskName, setNewTaskName] = useState("");
+
   useEffect(() => {
-    loadTasks();
-  }, [loadTasks]);
+    if (tasks.length === 0) {
+      addTask("Build Kairos MVP", 8, "Kairos");
+      addTask("Read Deep Work", 2, "Learning");
+      addTask("Review PR #42", 3, "Work");
+    }
+  }, [tasks.length, addTask]);
 
-  const handleToggleActive = useCallback(
-    (task: Task) => {
-      setActiveTask(task.id === activeTaskId ? null : task.id);
-    },
-    [activeTaskId, setActiveTask],
-  );
-
-  const handleAddTask = useCallback(
-    async (data: {
-      name: string;
-      estimatedPomos: number;
-      project: string;
-      priority: string;
-      categoryId: number | null;
-    }) => {
-      await addTask(
-        data.name,
-        data.estimatedPomos,
-        data.project || undefined,
-        data.priority || undefined,
-        data.categoryId ?? undefined,
-      );
-      await loadTasks();
-    },
-    [addTask, loadTasks],
+  const filteredTasks = tasks.filter(
+    (t) =>
+      t.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (t.project || "").toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
-  const handleEditTask = useCallback(
-    async (data: {
-      name: string;
-      estimatedPomos: number;
-      project: string;
-      priority: string;
-      categoryId: number | null;
-    }) => {
-      if (!editingTask) return;
-      await updateTask(
-        editingTask.id,
-        data.name,
-        data.estimatedPomos,
-        data.project || null,
-        data.priority || null,
-        data.categoryId,
-      );
-      setEditingTask(null);
-      await loadTasks();
-    },
-    [editingTask, updateTask, loadTasks],
-  );
-
-  const handleDeleteTask = useCallback(
-    async (taskId: number) => {
-      await deleteTask(taskId);
-      if (taskId === activeTaskId) {
-        setActiveTask(null);
-      }
-    },
-    [deleteTask, activeTaskId, setActiveTask],
-  );
-
-  const incompleteTasks = tasks.filter(
-    (t) => t.completed_pomos < t.estimated_pomos,
-  );
-  const completedTasks = tasks.filter(
-    (t) => t.completed_pomos >= t.estimated_pomos,
-  );
+  const handleAdd = () => {
+    if (!newTaskName.trim()) return;
+    addTask(newTaskName.trim(), 1);
+    setNewTaskName("");
+  };
 
   return (
-    <div className="w-full">
-      <header className="flex items-center justify-between mb-10">
-        <div>
-          <h1 className="font-serif text-4xl text-sahara-text">
-            Today&apos;s Focus
-          </h1>
-          <p className="text-sahara-text-muted mt-2 font-medium text-sm">
-            Curate your tasks for maximum deep work.
-          </p>
+    <div className="flex flex-col h-full">
+      {/* Header */}
+      <div className="mb-6 md:mb-10">
+        <p className="text-[10px] font-bold text-sahara-text-muted uppercase tracking-[0.2em] mb-1">
+          Task Management
+        </p>
+        <h1 className="font-serif text-2xl md:text-4xl text-sahara-text">
+          Your Tasks
+        </h1>
+      </div>
+
+      {/* Controls */}
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 mb-6 md:mb-8">
+        <div className="relative flex-1 sm:max-w-xs">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-sahara-text-muted" />
+          <input
+            type="text"
+            placeholder="Search tasks..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full bg-sahara-card border border-sahara-border/20 rounded-xl pl-9 pr-4 py-2.5 text-sm text-sahara-text placeholder:text-sahara-text-muted/50 outline-none focus:border-sahara-primary/40 transition-colors"
+          />
         </div>
+
+        <div className="flex items-center gap-2 self-end sm:self-auto">
+          <Button
+            variant={viewMode === "list" ? "solid" : "outline"}
+            intent={viewMode === "list" ? "sahara" : "default"}
+            size="icon"
+            shape="rounded-lg"
+            onClick={() => setViewMode("list")}
+            className="border-sahara-border/30"
+          >
+            <ListTodo className="w-4 h-4" />
+          </Button>
+          <Button
+            variant={viewMode === "grid" ? "solid" : "outline"}
+            intent={viewMode === "grid" ? "sahara" : "default"}
+            size="icon"
+            shape="rounded-lg"
+            onClick={() => setViewMode("grid")}
+            className="border-sahara-border/30"
+          >
+            <LayoutGrid className="w-4 h-4" />
+          </Button>
+          <Filter className="w-4 h-4 text-sahara-text-muted hidden sm:block ml-1" />
+        </div>
+      </div>
+
+      {/* Add Task */}
+      <div className="flex gap-2 md:gap-3 mb-6 md:mb-8">
+        <input
+          type="text"
+          placeholder="Add a new task..."
+          value={newTaskName}
+          onChange={(e) => setNewTaskName(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && handleAdd()}
+          className="flex-1 bg-sahara-surface border border-dashed border-sahara-border/40 rounded-xl px-4 py-2.5 md:py-3 text-sm text-sahara-text placeholder:text-sahara-text-muted/50 outline-none focus:border-sahara-primary/40 focus:border-solid transition-colors"
+        />
         <Button
           variant="solid"
           intent="sahara"
           size="md"
-          onClick={() => setShowAddModal(true)}
-          className="gap-2"
+          shape="rounded-xl"
+          onClick={handleAdd}
+          disabled={!newTaskName.trim()}
+          className="shrink-0 px-4 md:px-6"
         >
           <Plus className="w-4 h-4" />
-          NEW TASK
+          <span className="hidden sm:inline">Add</span>
         </Button>
-      </header>
+      </div>
 
-      {loading && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-pulse">
-          {[1, 2].map((i) => (
-            <div key={i} className="bg-sahara-surface border rounded-2xl p-6 h-48" />
+      {/* Task Grid/List */}
+      {filteredTasks.length === 0 && searchQuery ? (
+        <div className="flex flex-col items-center justify-center py-16 text-center">
+          <Filter className="w-12 h-12 text-sahara-border mb-4" />
+          <p className="text-sm font-bold text-sahara-text-muted">
+            No tasks found
+          </p>
+          <p className="text-xs text-sahara-text-muted/60 mt-1">
+            Try a different search term
+          </p>
+        </div>
+      ) : (
+        <div
+          className={cn(
+            viewMode === "grid"
+              ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4"
+              : "space-y-2.5 md:space-y-3",
+          )}
+        >
+          {filteredTasks.map((task) => (
+            <div
+              key={task.id}
+              className={cn(
+                "group relative bg-sahara-surface border border-sahara-border/15 rounded-xl md:rounded-2xl p-3.5 md:p-5 transition-all hover:border-sahara-primary/25 hover:shadow-sm cursor-pointer",
+                activeTaskId === task.id &&
+                  "border-sahara-primary/40 shadow-md shadow-sahara-primary/5",
+              )}
+              onClick={() =>
+                setActiveTask(activeTaskId === task.id ? null : task.id)
+              }
+            >
+              <div className="flex items-start justify-between gap-2 mb-2 md:mb-3">
+                <span
+                  className={cn(
+                    "px-2 py-0.5 rounded-md text-[9px] md:text-[10px] font-bold uppercase tracking-wider",
+                    activeTaskId === task.id
+                      ? "bg-sahara-primary-light text-sahara-primary"
+                      : "bg-sahara-card text-sahara-text-muted",
+                  )}
+                >
+                  {task.project || "General"}
+                </span>
+                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      incrementPomos(task.id);
+                    }}
+                    className="p-1 rounded-lg hover:bg-sahara-card transition-colors cursor-pointer"
+                    title="Complete pomodoro"
+                  >
+                    <CheckCircle2 className="w-3.5 h-3.5 text-green-500" />
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      deleteTask(task.id).catch(() => {});
+                      if (activeTaskId === task.id)
+                        setActiveTask(null);
+                    }}
+                    className="p-1 rounded-lg hover:bg-red-50 transition-colors cursor-pointer"
+                    title="Delete task"
+                  >
+                    <Trash2 className="w-3.5 h-3.5 text-red-400" />
+                  </button>
+                </div>
+              </div>
+
+              <h3
+                className={cn(
+                  "font-serif text-base md:text-lg leading-snug",
+                  task.completed_pomos > 0 && task.completed_pomos >= task.estimated_pomos
+                    ? "line-through text-sahara-text-muted"
+                    : "text-sahara-text",
+                )}
+              >
+                {task.name}
+              </h3>
+
+              <div className="flex items-center gap-3 mt-2 md:mt-3 flex-wrap">
+                <div className="flex items-center gap-1.5">
+                  <Target className="w-3 h-3 md:w-3.5 md:h-3.5 text-sahara-primary" />
+                  <span className="text-[10px] md:text-xs font-bold text-sahara-text-secondary tabular-nums">
+                    {task.completed_pomos}/{task.estimated_pomos}{" "}
+                    <span className="text-sahara-text-muted font-normal">
+                      pomos
+                    </span>
+                  </span>
+                </div>
+
+                {activeTaskId === task.id && (
+                  <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-green-500/10 text-green-600 text-[9px] md:text-[10px] font-bold uppercase tracking-wider">
+                    <Clock className="w-2.5 h-2.5 md:w-3 md:h-3 animate-pulse" />
+                    Active
+                  </div>
+                )}
+
+                {task.completed_pomos > 0 && task.completed_pomos >= task.estimated_pomos && (
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-sahara-bg text-sahara-text-muted text-[9px] md:text-[10px] font-bold uppercase tracking-wider">
+                    <CheckCircle2 className="w-2.5 h-2.5 md:w-3 md:h-3" />
+                    Done
+                  </span>
+                )}
+              </div>
+
+              {task.estimated_pomos > 0 && (
+                <div className="mt-2 md:mt-3 h-1.5 bg-sahara-bg/60 rounded-full overflow-hidden">
+                  <div
+                    className={cn(
+                      "h-full rounded-full transition-all duration-500",
+                      task.completed_pomos >= task.estimated_pomos
+                        ? "bg-green-500"
+                        : "bg-sahara-primary",
+                    )}
+                    style={{
+                      width: `${Math.min(
+                        100,
+                        Math.round(
+                          (task.completed_pomos /
+                            task.estimated_pomos) *
+                            100,
+                        ),
+                      )}%`,
+                    }}
+                  />
+                </div>
+              )}
+            </div>
           ))}
         </div>
       )}
-
-      {!loading && tasks.length === 0 && (
-        <div className="py-20 flex flex-col items-center justify-center text-center bg-sahara-card/30 rounded-3xl border border-dashed border-sahara-border/50">
-          <div className="w-16 h-16 rounded-full bg-sahara-surface flex items-center justify-center text-sahara-text-muted shadow-sm mb-4">
-            <Target className="w-6 h-6" />
-          </div>
-          <Text variant="h3" className="text-xl">
-            No tasks yet
-          </Text>
-          <p className="text-sm text-sahara-text-muted mt-2 max-w-xs">
-            Start by adding a task you want to focus on today.
-          </p>
-        </div>
-      )}
-
-      {!loading && incompleteTasks.length > 0 && (
-        <div className="space-y-3 mb-8">
-          <Text
-            variant="body"
-            className="text-xs font-bold text-sahara-text-muted uppercase tracking-wider"
-          >
-            In Progress ({incompleteTasks.length})
-          </Text>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {incompleteTasks.map((task) => (
-              <TaskCard
-                key={task.id}
-                task={task}
-                isActive={task.id === activeTaskId}
-                onToggleActive={() => handleToggleActive(task)}
-                onEdit={() => setEditingTask(task)}
-                onDelete={() => handleDeleteTask(task.id)}
-              />
-            ))}
-          </div>
-        </div>
-      )}
-
-      {!loading && completedTasks.length > 0 && (
-        <div className="space-y-3">
-          <Text
-            variant="body"
-            className="text-xs font-bold text-sahara-text-muted uppercase tracking-wider"
-          >
-            Completed ({completedTasks.length})
-          </Text>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {completedTasks.map((task) => (
-              <TaskCard
-                key={task.id}
-                task={task}
-                isActive={false}
-                onToggleActive={() => {}}
-                onDelete={() => handleDeleteTask(task.id)}
-              />
-            ))}
-          </div>
-        </div>
-      )}
-
-      <AddTaskModal
-        open={showAddModal}
-        onClose={() => setShowAddModal(false)}
-        onSubmit={handleAddTask}
-      />
-
-      <AddTaskModal
-        open={!!editingTask}
-        onClose={() => setEditingTask(null)}
-        onSubmit={handleEditTask}
-        editTask={editingTask}
-      />
     </div>
   );
 }

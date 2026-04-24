@@ -125,14 +125,14 @@ export function CalendarDashboard() {
   }
 
   return (
-    <div className="px-10 py-8 max-w-7xl mx-auto h-full flex flex-col gap-5">
+    <div className="px-3 sm:px-6 md:px-10 py-6 md:py-8 max-w-7xl mx-auto h-full flex flex-col gap-5 md:gap-6">
       {/* Header */}
-      <div className="flex items-start justify-between gap-6">
+      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
         <div>
-          <p className="text-[10px] font-bold text-sahara-text-muted uppercase tracking-[0.2em] mb-1">
+          <p className="text-[9px] md:text-[10px] font-bold text-sahara-text-muted uppercase tracking-[0.15em] md:tracking-[0.2em] mb-1">
             Time Distribution
           </p>
-          <h1 className="font-serif text-3xl text-sahara-text">
+          <h1 className="font-serif text-xl md:text-3xl text-sahara-text">
             Your Weekly Timeline
           </h1>
         </div>
@@ -149,7 +149,7 @@ export function CalendarDashboard() {
       <CalendarWeekStats summary={summary} />
 
       {/* Calendar Grid */}
-      <div className="flex-1 min-h-0">
+      <div className="flex-1 min-h-0 overflow-auto">
         <CalendarGrid
           sessions={sessions}
           weekDays={weekDays}

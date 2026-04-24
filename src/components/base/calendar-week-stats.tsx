@@ -48,17 +48,17 @@ export function CalendarWeekStats({ summary }: CalendarWeekStatsProps) {
   ];
 
   return (
-    <div className="grid grid-cols-4 gap-3">
+    <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 lg:gap-3">
       {stats.map((stat) => {
         const Icon = stat.icon;
         return (
           <div
             key={stat.label}
-            className="bg-sahara-surface border border-sahara-border/30 rounded-xl p-3.5"
+            className="bg-sahara-surface border border-sahara-border/30 rounded-xl p-3"
           >
             <div
               className={cn(
-                "w-8 h-8 rounded-lg flex items-center justify-center mb-2.5",
+                "w-8 h-8 rounded-lg flex items-center justify-center mb-2",
                 stat.bg,
               )}
             >
@@ -69,7 +69,7 @@ export function CalendarWeekStats({ summary }: CalendarWeekStatsProps) {
             </p>
             <p
               className={cn(
-                "text-sm font-bold mt-1 leading-tight",
+                "text-xs md:text-sm font-bold mt-1 leading-tight",
                 stat.color,
               )}
             >

@@ -144,7 +144,7 @@ export function MainLayout({ children }: MainLayoutProps) {
             onClick={() => navigate("/onboarding")}
             title={isCollapsed ? "HELP" : undefined}
             className={cn(
-              "rounded-none",
+              "rounded-none justify-start",
               isCollapsed ? "justify-center p-3" : "gap-4 px-4 py-3",
             )}
           >
@@ -166,6 +166,7 @@ export function MainLayout({ children }: MainLayoutProps) {
             onClick={() => navigate("/settings")}
             title={isCollapsed ? "SETTINGS" : undefined}
             className={cn(
+              "justify-start",
               isCollapsed ? "justify-center p-3" : "gap-4 px-4 py-3",
               location.pathname === "/settings"
                 ? ""

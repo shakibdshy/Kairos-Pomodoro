@@ -1,206 +1,143 @@
-import { useState, useEffect, useCallback } from "react";
-import {
-  Clock,
-  Flame,
-  CheckCircle2,
-  Timer,
-  TrendingUp,
-  Coffee,
-} from "lucide-react";
+import { useState, useEffect } from "react";
+import { Loader2 } from "lucide-react";
 import {
   getWeeklyData,
-  getAllTimeStats,
-  getCurrentStreak,
-  getBestStreak,
-  getAllCategoryBreakdown,
+  type DayData,
 } from "@/lib/db";
-import type { DayData, CategoryBreakdown } from "@/lib/db";
-import { formatTotalTime, formatDuration } from "@/lib/session-utils";
 import { StatCard } from "@/components/base/stat-card";
 import { WeeklyChart } from "@/components/base/weekly-chart";
-import { BadgeCard, computeBadges } from "@/components/base/badge-card";
+import { BadgeCard } from "@/components/base/badge-card";
 import { AnalyticsCategoryBreakdown } from "@/components/base/analytics-category-breakdown";
 
-const EMPTY_STATS = {
-  total_focus_seconds: 0,
-  total_sessions: 0,
-  avg_session_seconds: 0,
-  longest_session_seconds: 0,
-  total_break_seconds: 0,
-  avg_break_seconds: 0,
-};
-
-export interface AnalyticsData {
-  weeklyData: DayData[];
-  stats: typeof EMPTY_STATS;
-  currentStreak: number;
-  bestStreak: number;
-  categoryBreakdown: CategoryBreakdown[];
-}
-
 export function AnalyticsDashboard() {
-  const [data, setData] = useState<AnalyticsData | null>(null);
+  const [weekData, setWeekData] = useState<DayData[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const loadData = useCallback(async () => {
-    try {
-      const [weeklyData, stats, currentStreak, bestStreak, categoryBreakdown] =
-        await Promise.all([
-          getWeeklyData().catch(() => []),
-          getAllTimeStats().catch(() => ({ ...EMPTY_STATS })),
-          getCurrentStreak().catch(() => 0),
-          getBestStreak().catch(() => 0),
-          getAllCategoryBreakdown().catch(() => []),
-        ]);
-      setData({
-        weeklyData: weeklyData ?? [],
-        stats: stats ?? { ...EMPTY_STATS },
-        currentStreak: currentStreak ?? 0,
-        bestStreak: bestStreak ?? 0,
-        categoryBreakdown: categoryBreakdown ?? [],
-      });
-    } catch (error) {
-      console.error("Failed to load analytics data:", error);
-      setData({
-        weeklyData: [],
-        stats: { ...EMPTY_STATS },
-        currentStreak: 0,
-        bestStreak: 0,
-        categoryBreakdown: [],
-      });
-    } finally {
-      setLoading(false);
-    }
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+
+    Promise.all([
+      getWeeklyData().catch(() => []),
+    ]).then(([wd]) => {
+      if (!cancelled) {
+        setWeekData(wd);
+        setLoading(false);
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
-  useEffect(() => {
-    loadData();
-  }, [loadData]);
+  const totalFocusSec = weekData.reduce((s, d) => s + d.total_seconds, 0);
+  const totalSessions = weekData.reduce((s, d) => s + d.session_count, 0);
+  const avgSessionSec =
+    totalSessions > 0 ? Math.round(totalFocusSec / totalSessions) : 0;
+  const avgDailySec = weekData.length > 0
+    ? Math.round(totalFocusSec / weekData.length)
+    : 0;
 
-  if (loading) {
+  if (loading && weekData.length === 0) {
     return (
-      <div className="space-y-8 animate-pulse">
-        <div className="grid grid-cols-2 gap-8">
-          {[1, 2].map((i) => (
-            <div key={i} className="bg-sahara-surface border rounded-3xl p-8 h-48" />
-          ))}
-        </div>
-        <div className="bg-sahara-surface border rounded-3xl p-8 h-96" />
+      <div className="flex flex-col items-center justify-center h-64 gap-4">
+        <Loader2 className="w-8 h-8 text-sahara-primary animate-spin" />
+        <p className="text-xs font-semibold text-sahara-text-muted uppercase tracking-wider">
+          Loading analytics...
+        </p>
       </div>
     );
   }
 
-  if (!data) return null;
-
-  const { weeklyData, stats, currentStreak, bestStreak, categoryBreakdown } =
-    data;
-
-  const focusHours = Math.floor(stats.total_focus_seconds / 3600);
-  const focusMins = Math.round((stats.total_focus_seconds % 3600) / 60);
-  const weekTotalSec = weeklyData.reduce((s, d) => s + d.total_seconds, 0);
-  const prevWeekChange =
-    weekTotalSec > 0 ? "+" + formatTotalTime(weekTotalSec) : undefined;
-
-  const badges = computeBadges(
-    stats.total_focus_seconds,
-    stats.total_sessions,
-    currentStreak,
-    bestStreak,
-    stats.avg_session_seconds,
-    stats.longest_session_seconds,
-    stats.total_break_seconds,
-    stats.avg_break_seconds,
-  );
-
   return (
-    <div className="grid grid-cols-12 gap-8">
-      {/* Left Column — Stats + Chart */}
-      <div className="col-span-8 space-y-8">
-        <div className="grid grid-cols-2 gap-8">
+    <div className="space-y-6 md:space-y-10">
+      {/* Overview Stats */}
+      <section>
+        <h2 className="font-serif text-lg md:text-xl text-sahara-text mb-4 md:mb-6">
+          Overview
+        </h2>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
           <StatCard
-            icon={Clock}
-            label="Total Focus Time"
-            value={`${focusHours}`}
-            unit="h"
-            subValue={focusMins > 0 ? `${focusMins}` : undefined}
-            subUnit={focusMins > 0 ? "m" : undefined}
-            change={prevWeekChange}
+            label="Total Focus"
+            value={formatHours(totalFocusSec)}
+            icon="clock"
           />
           <StatCard
-            icon={Flame}
-            label="Current Streak"
-            value={`${currentStreak}`}
-            unit="Days"
-            change={`Personal Best: ${bestStreak}`}
+            label="Sessions"
+            value={String(totalSessions)}
+            icon="target"
+          />
+          <StatCard
+            label="Avg Session"
+            value={avgSessionSec > 0 ? formatMinutes(avgSessionSec) : "0m"}
+            icon="trending"
+          />
+          <StatCard
+            label="Daily Avg"
+            value={avgDailySec > 0 ? formatMinutes(avgDailySec) : "0m"}
+            icon="flame"
           />
         </div>
+      </section>
 
-        <WeeklyChart data={weeklyData} />
-
-        <AnalyticsCategoryBreakdown
-          breakdowns={categoryBreakdown}
-          title="All-Time Category Breakdown"
-        />
-      </div>
-
-      {/* Right Column — Sessions + Badges */}
-      <div className="col-span-4 space-y-8">
-        <StatCard
-          icon={CheckCircle2}
-          label="Sessions Completed"
-          value={`${stats.total_sessions}`}
-          variant="compact"
-        />
-
-        <div className="bg-sahara-surface border border-sahara-border/20 rounded-3xl p-8 shadow-sm shadow-sahara-primary/5 space-y-6">
-          <h3 className="font-serif text-2xl text-sahara-text">Achievements</h3>
-          {badges.map((badge) => (
-            <BadgeCard key={badge.id} badge={badge} />
-          ))}
+      {/* Weekly Chart */}
+      <section>
+        <h2 className="font-serif text-lg md:text-xl text-sahara-text mb-4 md:mb-6">
+          This Week
+        </h2>
+        <div className="bg-sahara-surface border border-sahara-border/20 rounded-xl md:rounded-2xl p-3.5 md:p-5">
+          <WeeklyChart data={weekData.map(d => ({
+            day_name: d.day_name || "",
+            focus_seconds: d.total_seconds,
+          }))} />
         </div>
+      </section>
 
-        <div className="bg-sahara-surface border border-sahara-border/20 rounded-3xl p-8 shadow-sm shadow-sahara-primary/5 space-y-4">
-          <h3 className="font-serif text-xl text-sahara-text mb-4">
-            Quick Stats
-          </h3>
-          <div className="flex items-center gap-3">
-            <Timer className="w-5 h-5 text-blue-500 shrink-0" />
-            <span className="text-xs font-bold text-sahara-text-muted uppercase tracking-wider">
-              Avg Focus
-            </span>
-            <span className="text-sm font-bold text-sahara-text ml-auto tabular-nums">
-              {formatDuration(Math.round(stats.avg_session_seconds))}
-            </span>
-          </div>
-          <div className="flex items-center gap-3">
-            <TrendingUp className="w-5 h-5 text-green-500 shrink-0" />
-            <span className="text-xs font-bold text-sahara-text-muted uppercase tracking-wider">
-              Longest Session
-            </span>
-            <span className="text-sm font-bold text-sahara-text ml-auto tabular-nums">
-              {formatDuration(stats.longest_session_seconds)}
-            </span>
-          </div>
-          <div className="flex items-center gap-3">
-            <Clock className="w-5 h-5 text-orange-500 shrink-0" />
-            <span className="text-xs font-bold text-sahara-text-muted uppercase tracking-wider">
-              Total Break
-            </span>
-            <span className="text-sm font-bold text-sahara-text ml-auto tabular-nums">
-              {formatTotalTime(stats.total_break_seconds)}
-            </span>
-          </div>
-          <div className="flex items-center gap-3">
-            <Coffee className="w-5 h-5 text-purple-500 shrink-0" />
-            <span className="text-xs font-bold text-sahara-text-muted uppercase tracking-wider">
-              Avg Break
-            </span>
-            <span className="text-sm font-bold text-sahara-text ml-auto tabular-nums">
-              {formatDuration(Math.round(stats.avg_break_seconds))}
-            </span>
-          </div>
+      {/* Badges */}
+      <section>
+        <h2 className="font-serif text-lg md:text-xl text-sahara-text mb-4 md:mb-6">
+          Achievements
+        </h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
+          <BadgeCard
+            title="Early Bird"
+            description="Complete a focus session before 7 AM"
+            earned={false}
+          />
+          <BadgeCard
+            title="Marathon Runner"
+            description="Complete 4+ focus sessions in one day"
+            earned={false}
+          />
+          <BadgeCard
+            title="Consistency King"
+            description="Maintain a 7-day streak"
+            earned={false}
+          />
         </div>
-      </div>
+      </section>
+
+      {/* Category Breakdown */}
+      <section>
+        <h2 className="font-serif text-lg md:text-xl text-sahara-text mb-4 md:mb-6">
+          Category Breakdown
+        </h2>
+        <AnalyticsCategoryBreakdown />
+      </section>
     </div>
   );
+}
+
+function formatHours(sec: number): string {
+  if (!sec) return "0h";
+  const h = Math.floor(sec / 3600);
+  const m = Math.round((sec % 3600) / 60);
+  return m > 0 ? `${h}h ${m}m` : `${h}h`;
+}
+
+function formatMinutes(sec: number): string {
+  if (!sec) return "0m";
+  const m = Math.round(sec / 60);
+  return `${m}m`;
 }

@@ -60,13 +60,11 @@ export function ActiveTaskCard({ task, taskTimeToday }: ActiveTaskCardProps) {
         <div className="mt-1.5 md:mt-2.5 flex items-center gap-2 md:gap-3">
           {task.estimated_pomos > 0 && (
             <>
-              <div className="flex-1 h-1.5 md:h-2 bg-sahara-bg/60 rounded-full overflow-hidden max-w-[120px] md:max-w-none">
+              <div className="flex-1 h-1.5 md:h-2 bg-sahara-bg/60 rounded-full overflow-hidden max-w-30 md:max-w-none">
                 <div
                   className={cn(
                     "h-full rounded-full transition-all duration-500",
-                    progressPct >= 100
-                      ? "bg-green-500"
-                      : "bg-sahara-primary",
+                    progressPct >= 100 ? "bg-green-500" : "bg-sahara-primary",
                   )}
                   style={{ width: `${progressPct}%` }}
                 />
