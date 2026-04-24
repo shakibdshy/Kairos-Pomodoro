@@ -29,8 +29,9 @@ export const useNotificationStore = create<NotificationStore>((set) => ({
       const { isPermissionGranted } =
         await import("@tauri-apps/plugin-notification");
       const granted = await isPermissionGranted();
+      const newStatus: NotificationStatus = granted ? "granted" : "denied";
       set({
-        status: granted ? "granted" : "denied",
+        status: newStatus,
         checking: false,
       });
     } catch (e) {

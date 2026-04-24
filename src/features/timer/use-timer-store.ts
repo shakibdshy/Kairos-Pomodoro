@@ -57,7 +57,10 @@ interface TimerStore {
   endWithoutBreak: () => Promise<void>;
 }
 
-function getPhaseDuration(phase: TimerPhase, durations: TimerDurations): number {
+function getPhaseDuration(
+  phase: TimerPhase,
+  durations: TimerDurations,
+): number {
   return durations[
     phase === "work" ? "work" : phase === "short_break" ? "short" : "long"
   ];
@@ -86,12 +89,20 @@ function clearOvertimeNotif(store: TimerStore) {
   }
 }
 
-function terminateWorker(store: { worker: Worker | null }) {
+function terminateWorker(store: {
+  worker: Worker | null;
+  overtimeNotifInterval: ReturnType<typeof setInterval> | null;
+}) {
   store.worker?.terminate();
+  if (store.overtimeNotifInterval) {
+    clearInterval(store.overtimeNotifInterval);
+  }
 }
 
 function createWorkerHandler(
-  set: (partial: Partial<TimerStore> | ((s: TimerStore) => Partial<TimerStore>)) => void,
+  set: (
+    partial: Partial<TimerStore> | ((s: TimerStore) => Partial<TimerStore>),
+  ) => void,
   onDone?: () => void,
 ) {
   return (e: MessageEvent) => {
@@ -252,12 +263,16 @@ export const useTimerStore = create<TimerStore>((set, get) => ({
       try {
         const tasks = await getTasks();
         const task = tasks.find((t) => t.id === taskId);
-        if (task?.category_id) {
+        if (task?.category_id && task?.id) {
           const category = await getCategory(task.category_id);
           if (category) set({ selectedCategory: category });
         }
       } catch (err) {
-        console.error("[TimerStore] Failed to load category for task:", taskId, err);
+        console.error(
+          "[TimerStore] Failed to load category for task:",
+          taskId,
+          err,
+        );
       }
     }
   },
@@ -282,7 +297,11 @@ export const useTimerStore = create<TimerStore>((set, get) => ({
       const currentDuration = durations[key];
       const newDuration = Math.max(60, currentDuration + minutes * 60);
       const newDurations = { ...durations, [key]: newDuration };
-      set({ durations: newDurations, secondsRemaining: newDuration, totalSeconds: newDuration });
+      set({
+        durations: newDurations,
+        secondsRemaining: newDuration,
+        totalSeconds: newDuration,
+      });
     } else {
       const deltaSec = minutes * 60;
       set((s) => {
@@ -470,12 +489,10 @@ async function handleTimerDone() {
   terminateWorker(state);
 
   const overtimeWorker = createTimerWorker();
-  overtimeWorker.onmessage = (e: MessageEvent) => {
-    const { type, overtime } = e.data;
-    if (type === "overtime_tick") {
-      useTimerStore.setState({ overtimeSeconds: overtime });
-    }
-  };
+  overtimeWorker.onmessage = createWorkerHandler(
+    useTimerStore.setState,
+    handleTimerDone,
+  );
   overtimeWorker.postMessage({ command: "start_overtime", startFrom: 0 });
 
   const current = useTimerStore.getState();

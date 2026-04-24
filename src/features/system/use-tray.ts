@@ -25,5 +25,12 @@ export function useTray() {
     if (isTauri()) {
       invoke("plugin:tray|set_tooltip", { tooltip: label }).catch(() => {});
     }
+
+    // Cleanup: reset tray tooltip when component unmounts or timer stops
+    return () => {
+      if (isTauri()) {
+        invoke("plugin:tray|set_tooltip", { tooltip: "" }).catch(() => {});
+      }
+    };
   }, [secondsRemaining, phase, status, overtimeSeconds, totalSeconds]);
 }

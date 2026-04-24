@@ -64,6 +64,15 @@ const workerCode = `
       }
       self.postMessage({ type: "tick", remaining });
     }
+
+    if (e.data.command === "done") {
+      onDone?.();
+      set({ secondsRemaining: remaining });
+    }
+
+    if (e.data.command === "overtime_tick") {
+      onOvertimeTick?.(overtime);
+    }
   };
 `;
 
