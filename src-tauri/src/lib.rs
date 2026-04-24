@@ -1,5 +1,6 @@
 mod commands;
 
+use commands::menubar::{MenubarState, setup_menubar_tray};
 use tauri::{
     menu::{Menu, MenuItem, PredefinedMenuItem},
     tray::TrayIconBuilder,
@@ -22,7 +23,12 @@ pub fn run() {
             commands::hotkey::register_hotkey,
             commands::hotkey::unregister_hotkey,
             commands::dnd::set_dnd,
+            commands::menubar::menubar_show,
+            commands::menubar::menubar_hide,
+            commands::menubar::menubar_set_title,
+            commands::menubar::menubar_set_tooltip,
         ])
+        .manage(MenubarState::new())
         .setup(|app| {
             let show = MenuItem::with_id(app, "show", "Show Kairos", true, None::<&str>)?;
             let toggle = MenuItem::with_id(app, "toggle", "Start/Pause", true, None::<&str>)?;
@@ -59,6 +65,8 @@ pub fn run() {
                     }
                 })
                 .build(app)?;
+
+            setup_menubar_tray(app)?;
 
             Ok(())
         })

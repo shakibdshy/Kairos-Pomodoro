@@ -5,6 +5,7 @@ import { useTaskStore } from "@/features/tasks/use-task-store";
 import { useTimerStore } from "@/features/timer/use-timer-store";
 import { useTray } from "@/features/system/use-tray";
 import { useHotkeys } from "@/features/system/use-hotkeys";
+import { useMenubar } from "@/features/system/use-menubar";
 import { ThemeProvider } from "@/components/providers/theme-provider";
 import { useNotificationStore } from "@/features/settings/use-notification-store";
 
@@ -72,6 +73,7 @@ export function Providers({ children }: ProvidersProps) {
   useApplyTimerDurations();
   useTray();
   useHotkeys();
+  useMenubar();
 
   if (loading) {
     return (
