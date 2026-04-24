@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/cn";
+import { AddTaskModal } from "@/components/base/add-task-modal";
 
 export function TasksList() {
   const tasks = useTaskStore((s) => s.tasks);
@@ -26,7 +27,7 @@ export function TasksList() {
 
   const [searchQuery, setSearchQuery] = useState("");
   const [viewMode, setViewMode] = useState<"list" | "grid">("list");
-  const [newTaskName, setNewTaskName] = useState("");
+  const [showAddModal, setShowAddModal] = useState(false);
 
   useEffect(() => {
     if (tasks.length === 0) {
@@ -42,10 +43,15 @@ export function TasksList() {
       (t.project || "").toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
-  const handleAdd = () => {
-    if (!newTaskName.trim()) return;
-    addTask(newTaskName.trim(), 1);
-    setNewTaskName("");
+  const handleAddTask = async (data: {
+    name: string;
+    estimatedPomos: number;
+    project: string;
+    priority: string;
+    categoryId: number | null;
+  }) => {
+    await addTask(data.name, data.estimatedPomos);
+    setShowAddModal(false);
   };
 
   return (
@@ -73,7 +79,7 @@ export function TasksList() {
           />
         </div>
 
-        <div className="flex items-center gap-2 self-end sm:self-auto">
+        <div className="flex items-center gap-2 self-end sm:self-auto ml-auto">
           <Button
             variant={viewMode === "list" ? "solid" : "outline"}
             intent={viewMode === "list" ? "sahara" : "default"}
@@ -95,32 +101,25 @@ export function TasksList() {
             <LayoutGrid className="w-4 h-4" />
           </Button>
           <Filter className="w-4 h-4 text-sahara-text-muted hidden sm:block ml-1" />
+          <Button
+            variant="solid"
+            intent="sahara"
+            size="sm"
+            shape="rounded-xl"
+            onClick={() => setShowAddModal(true)}
+            className="gap-1.5 ml-1"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Add Task</span>
+          </Button>
         </div>
       </div>
 
-      {/* Add Task */}
-      <div className="flex gap-2 md:gap-3 mb-6 md:mb-8">
-        <input
-          type="text"
-          placeholder="Add a new task..."
-          value={newTaskName}
-          onChange={(e) => setNewTaskName(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && handleAdd()}
-          className="flex-1 bg-sahara-surface border border-dashed border-sahara-border/40 rounded-xl px-4 py-2.5 md:py-3 text-sm text-sahara-text placeholder:text-sahara-text-muted/50 outline-none focus:border-sahara-primary/40 focus:border-solid transition-colors"
-        />
-        <Button
-          variant="solid"
-          intent="sahara"
-          size="md"
-          shape="rounded-xl"
-          onClick={handleAdd}
-          disabled={!newTaskName.trim()}
-          className="shrink-0 px-4 md:px-6"
-        >
-          <Plus className="w-4 h-4" />
-          <span className="hidden sm:inline">Add</span>
-        </Button>
-      </div>
+      <AddTaskModal
+        open={showAddModal}
+        onClose={() => setShowAddModal(false)}
+        onSubmit={handleAddTask}
+      />
 
       {/* Task Grid/List */}
       {filteredTasks.length === 0 && searchQuery ? (
@@ -179,8 +178,7 @@ export function TasksList() {
                     onClick={(e) => {
                       e.stopPropagation();
                       deleteTask(task.id).catch(() => {});
-                      if (activeTaskId === task.id)
-                        setActiveTask(null);
+                      if (activeTaskId === task.id) setActiveTask(null);
                     }}
                     className="p-1 rounded-lg hover:bg-red-50 transition-colors cursor-pointer"
                     title="Delete task"
@@ -193,7 +191,8 @@ export function TasksList() {
               <h3
                 className={cn(
                   "font-serif text-base md:text-lg leading-snug",
-                  task.completed_pomos > 0 && task.completed_pomos >= task.estimated_pomos
+                  task.completed_pomos > 0 &&
+                    task.completed_pomos >= task.estimated_pomos
                     ? "line-through text-sahara-text-muted"
                     : "text-sahara-text",
                 )}
@@ -219,12 +218,13 @@ export function TasksList() {
                   </div>
                 )}
 
-                {task.completed_pomos > 0 && task.completed_pomos >= task.estimated_pomos && (
-                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-sahara-bg text-sahara-text-muted text-[9px] md:text-[10px] font-bold uppercase tracking-wider">
-                    <CheckCircle2 className="w-2.5 h-2.5 md:w-3 md:h-3" />
-                    Done
-                  </span>
-                )}
+                {task.completed_pomos > 0 &&
+                  task.completed_pomos >= task.estimated_pomos && (
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-sahara-bg text-sahara-text-muted text-[9px] md:text-[10px] font-bold uppercase tracking-wider">
+                      <CheckCircle2 className="w-2.5 h-2.5 md:w-3 md:h-3" />
+                      Done
+                    </span>
+                  )}
               </div>
 
               {task.estimated_pomos > 0 && (
@@ -240,9 +240,7 @@ export function TasksList() {
                       width: `${Math.min(
                         100,
                         Math.round(
-                          (task.completed_pomos /
-                            task.estimated_pomos) *
-                            100,
+                          (task.completed_pomos / task.estimated_pomos) * 100,
                         ),
                       )}%`,
                     }}
