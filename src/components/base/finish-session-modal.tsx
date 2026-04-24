@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { X, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/cn";
@@ -42,6 +42,13 @@ export function FinishSessionModal({
 }: FinishSessionModalProps) {
   const [mood, setMood] = useState<SessionMood>("neutral");
   const [notes, setNotes] = useState("");
+
+  useEffect(() => {
+    if (!open) return;
+    const handler = () => onClose();
+    window.addEventListener("app:escape", handler);
+    return () => window.removeEventListener("app:escape", handler);
+  }, [open, onClose]);
 
   if (!open) return null;
 

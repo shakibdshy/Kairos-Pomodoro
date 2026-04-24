@@ -49,6 +49,13 @@ export function IntentionSelector({
     }
   }, [isOpen, loadCategories]);
 
+  useEffect(() => {
+    if (!isOpen || isAddingNew) return;
+    const handler = () => setIsOpen(false);
+    window.addEventListener("app:escape", handler);
+    return () => window.removeEventListener("app:escape", handler);
+  }, [isOpen, isAddingNew]);
+
   const filteredCategories = categories.filter((c) =>
     c.name.toLowerCase().includes(searchQuery.toLowerCase()),
   );

@@ -65,6 +65,13 @@ export function AddTaskModal({
     }
   }, [editTask, open]);
 
+  useEffect(() => {
+    if (!open) return;
+    const handler = () => onClose();
+    window.addEventListener("app:escape", handler);
+    return () => window.removeEventListener("app:escape", handler);
+  }, [open, onClose]);
+
   if (!open) return null;
 
   const isEditing = !!editTask;

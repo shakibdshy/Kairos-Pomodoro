@@ -31,7 +31,9 @@ export function SettingsPage() {
   const notifStatus = useNotificationStore((s) => s.status);
   const notifChecking = useNotificationStore((s) => s.checking);
   const notifError = useNotificationStore((s) => s.error);
-  const requestNotifPermission = useNotificationStore((s) => s.requestPermission);
+  const requestNotifPermission = useNotificationStore(
+    (s) => s.requestPermission,
+  );
 
   const [workMin, setWorkMin] = useState(25);
   const [shortBreakMin, setShortBreakMin] = useState(5);
