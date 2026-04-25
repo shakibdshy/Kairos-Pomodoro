@@ -108,30 +108,38 @@ jobs:
         id: release_notes
         run: |
           TAG="${GITHUB_REF_NAME}"
-          echo "notes<<EOF" >> "$GITHUB_OUTPUT"
-          echo "## Kairos-Pomodoro ${TAG}" >> "$GITHUB_OUTPUT"
-          echo "" >> "$GITHUB_OUTPUT"
-          echo "### Downloads" >> "$GITHUB_OUTPUT"
-          echo "" >> "$GITHUB_OUTPUT"
-          echo "| Platform | File |" >> "$GITHUB_OUTPUT"
-          echo "|----------|------|" >> "$GITHUB_OUTPUT"
-          for f in dist/*.{dmg,exe,AppImage,zip}; do
-            if [ -f "$f" ]; then
-              filename=$(basename "$f")
-              size=$(du -h "$f" | cut -f1)
-              echo "| ${filename} | ${size} |" >> "$GITHUB_OUTPUT"
-            fi
-          done
-          echo "" >> "$GITHUB_OUTPUT"
-          echo "---" >> "$GITHUB_OUTPUT"
-          echo "" >> "$GITHUB_OUTPUT"
-          echo "**MIT Licensed. Built with Tauri + React + TypeScript.**" >> "$GITHUB_OUTPUT"
-          echo "" >> "$GITHUB_OUTPUT"
-          echo "### Verify" >> "$GITHUB_OUTPUT"
-          echo "\`\`\`sh" >> "$GITHUB_OUTPUT"
-          echo "sha256sum ${TAG}/*.dmg ${TAG}/*.exe ${TAG}/*.AppImage 2>/dev/null || true" >> "$GITHUB_OUTPUT"
-          echo "\`\`\`" >> "$GITHUB_OUTPUT"
-          echo "EOF"
+          NOTES_FILE="/tmp/release-notes.md"
+
+          {
+            echo "## Kairos-Pomodoro ${TAG}"
+            echo ""
+            echo "### Downloads"
+            echo ""
+            echo "| Platform | File |"
+            echo "|----------|------|"
+            for f in dist/*.{dmg,exe,AppImage,zip}; do
+              if [ -f "$f" ]; then
+                filename=$(basename "$f")
+                size=$(du -h "$f" | cut -f1)
+                echo "| \`${filename}\` | ${size} |"
+              fi
+            done
+            echo ""
+            echo "---"
+            echo ""
+            echo "**MIT Licensed. Built with Tauri + React + TypeScript.**"
+            echo ""
+            echo "### Verify Integrity"
+            echo '```sh'
+            echo "sha256sum *.dmg *.exe *.AppImage 2>/dev/null || true"
+            echo '```'
+          } > "${NOTES_FILE}"
+
+          {
+            echo "notes<<RELEASE_NOTES_EOF"
+            cat "${NOTES_FILE}"
+            echo "RELEASE_NOTES_EOF"
+          } >> "$GITHUB_OUTPUT"
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
