@@ -1,5 +1,9 @@
 # Kairos-Pomodoro
 
+<p align="center">
+  <img src="./kairos-banner.png" alt="Kairos-Pomodoro Banner" width="800" />
+</p>
+
 Kairos-Pomodoro is a desktop focus companion built with Tauri, React, TypeScript, and Bun.
 It combines a Pomodoro-style timer, task tracking, local analytics, calendar-style
 session history, desktop notifications, tray/menubar updates, and local SQLite
