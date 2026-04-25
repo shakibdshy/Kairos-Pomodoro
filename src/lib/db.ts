@@ -5,7 +5,7 @@ let db: Database | null = null;
 
 async function getDb(): Promise<Database> {
   if (!db) {
-    db = await Database.load("sqlite:Kairos.db");
+    db = await Database.load("sqlite:Kairos-Pomodoro.db");
   }
   return db;
 }

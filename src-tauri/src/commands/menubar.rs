@@ -68,7 +68,7 @@ pub fn setup_menubar_tray(
     };
 
     let show_item =
-        MenuItem::with_id(app, "menubar-show", "Show Kairos", true, None::<&str>)?;
+        MenuItem::with_id(app, "menubar-show", "Show Kairos-Pomodoro", true, None::<&str>)?;
     let toggle_item = MenuItem::with_id(
         app,
         "menubar-toggle",
@@ -78,7 +78,7 @@ pub fn setup_menubar_tray(
     )?;
     let separator = PredefinedMenuItem::separator(app)?;
     let quit_item =
-        MenuItem::with_id(app, "menubar-quit", "Quit Kairos", true, None::<&str>)?;
+        MenuItem::with_id(app, "menubar-quit", "Quit Kairos-Pomodoro", true, None::<&str>)?;
 
     let menu = Menu::with_items(app, &[&show_item, &toggle_item, &separator, &quit_item])?;
 
@@ -86,7 +86,7 @@ pub fn setup_menubar_tray(
         .icon(app.default_window_icon().cloned().unwrap())
         .icon_as_template(true)
         .menu(&menu)
-        .tooltip("Kairos")
+        .tooltip("Kairos-Pomodoro")
         .show_menu_on_left_click(false)
         .on_menu_event(|app, event| match event.id.as_ref() {
             "menubar-show" => {

@@ -174,11 +174,11 @@ export function SettingsNotifications({
 
         {status === "denied" && !checking && (
           <p className="mt-3 text-[10px] md:text-[11px] text-sahara-text-muted leading-relaxed">
-            Kairos needs permission to show notifications. Click{" "}
+            Kairos-Pomodoro needs permission to show notifications. Click{" "}
             <strong>"Enable Notifications"</strong> above to trigger the macOS
             permission dialog, or open{" "}
             <strong>System Preferences → Notifications</strong> manually and
-            find <em>Kairos</em> in the list.
+            find <em>Kairos-Pomodoro</em> in the list.
           </p>
         )}
       </div>

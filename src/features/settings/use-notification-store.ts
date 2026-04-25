@@ -69,7 +69,7 @@ export const useNotificationStore = create<NotificationStore>((set) => ({
 
         try {
           await sendNotification({
-            title: "Kairos",
+            title: "Kairos-Pomodoro",
             body:
               "Notifications enabled! You'll receive alerts when your timer ends.",
           });

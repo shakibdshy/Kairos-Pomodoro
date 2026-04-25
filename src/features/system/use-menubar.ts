@@ -59,8 +59,8 @@ export function useMenubar() {
 
     const tooltip =
       phase === "work"
-        ? `Kairos - Focus ${formatSeconds(secondsRemaining)}`
-        : `Kairos - Break ${formatSeconds(secondsRemaining)}`;
+        ? `Kairos-Pomodoro - Focus ${formatSeconds(secondsRemaining)}`
+        : `Kairos-Pomodoro - Break ${formatSeconds(secondsRemaining)}`;
     invoke("menubar_set_tooltip", { tooltip }).catch(() => {});
   }, [secondsRemaining, phase, status, overtimeSeconds, totalSeconds]);
 }

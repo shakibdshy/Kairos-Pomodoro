@@ -1,6 +1,6 @@
-# Kairos
+# Kairos-Pomodoro
 
-Kairos is a desktop focus companion built with Tauri, React, TypeScript, and Bun.
+Kairos-Pomodoro is a desktop focus companion built with Tauri, React, TypeScript, and Bun.
 It combines a Pomodoro-style timer, task tracking, local analytics, calendar-style
 session history, desktop notifications, tray/menubar updates, and local SQLite
 storage in one app.
@@ -12,9 +12,9 @@ This README is written for developers and contributors who want to:
 - build the desktop app
 - know where the important code lives
 
-## What Kairos Does
+## What Kairos-Pomodoro Does
 
-Kairos is designed around focused work sessions and local-first productivity
+Kairos-Pomodoro is designed around focused work sessions and local-first productivity
 tracking.
 
 Core features currently present in the codebase:
@@ -46,7 +46,7 @@ Core features currently present in the codebase:
 
 ## Prerequisites
 
-Before running Kairos, install the following:
+Before running Kairos-Pomodoro, install the following:
 
 1. `Bun`
 2. `Rust`
@@ -96,7 +96,7 @@ Common examples:
 
 ```bash
 git clone <your-repo-url>
-cd kairos-app
+cd Kairos-Pomodoro
 ```
 
 ### 2. Install dependencies
@@ -161,11 +161,11 @@ Current first-run note:
 
 ## Data Storage
 
-Kairos stores data locally using SQLite through Tauri's SQL plugin.
+Kairos-Pomodoro stores data locally using SQLite through Tauri's SQL plugin.
 
 Database details:
 
-- database file name: `Kairos.db`
+- database file name: `Kairos-Pomodoro.db`
 - storage model: local-only
 - backend: SQLite
 
@@ -182,7 +182,7 @@ No external backend or cloud service is configured in this codebase.
 ## Project Structure
 
 ```text
-kairos-app/
+Kairos-Pomodoro/
 ├── src/                 # React frontend
 │   ├── app/             # App shell, router, providers
 │   ├── components/      # UI, layouts, settings, task/timer/calendar pieces

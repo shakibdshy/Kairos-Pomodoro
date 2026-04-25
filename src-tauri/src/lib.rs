@@ -30,7 +30,7 @@ pub fn run() {
         ])
         .manage(MenubarState::new())
         .setup(|app| {
-            let show = MenuItem::with_id(app, "show", "Show Kairos", true, None::<&str>)?;
+            let show = MenuItem::with_id(app, "show", "Show Kairos-Pomodoro", true, None::<&str>)?;
             let toggle = MenuItem::with_id(app, "toggle", "Start/Pause", true, None::<&str>)?;
             let quit = MenuItem::with_id(app, "quit", "Quit", true, None::<&str>)?;
             let separator = PredefinedMenuItem::separator(app)?;
@@ -39,7 +39,7 @@ pub fn run() {
 
             let _tray = TrayIconBuilder::new()
                 .menu(&menu)
-                .tooltip("Kairos")
+                .tooltip("Kairos-Pomodoro")
                 .on_menu_event(|app, event| match event.id.as_ref() {
                     "show" => {
                         if let Some(window) = app.get_webview_window("main") {

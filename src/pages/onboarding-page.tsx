@@ -18,7 +18,7 @@ const steps = [
     title: "Welcome to Deep Work",
     subtitle: "A sanctuary for your focus.",
     description:
-      "Kairos is designed to help you reclaim your attention and achieve flow state through intentional focus sessions.",
+      "Kairos-Pomodoro is designed to help you reclaim your attention and achieve flow state through intentional focus sessions.",
     icon: Star,
   },
   {
@@ -62,7 +62,7 @@ export function OnboardingPage() {
 
           <div>
             <h1 className="font-serif text-2xl md:text-4xl tracking-tight mb-1 md:mb-2">
-              Kairos
+              Kairos-Pomodoro
             </h1>
             <p className="text-[9px] md:text-[10px] tracking-[0.2em] md:tracking-[0.3em] font-bold uppercase opacity-70">
               The Art of Focus

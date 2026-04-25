@@ -31,7 +31,7 @@ export function TasksList() {
 
   useEffect(() => {
     if (tasks.length === 0) {
-      addTask("Build Kairos MVP", 8, "Kairos");
+      addTask("Build Kairos-Pomodoro MVP", 8, "Kairos-Pomodoro");
       addTask("Read Deep Work", 2, "Learning");
       addTask("Review PR #42", 3, "Work");
     }
