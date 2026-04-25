@@ -83,6 +83,7 @@ jobs:
         run: bun run tauri build --bundles ${{ matrix.bundle }}
 
       - name: List build outputs
+        shell: bash
         run: |
           echo "=== DMG ===" && ls -la src-tauri/target/release/bundle/dmg/ 2>/dev/null || echo "No DMG"
           echo "=== EXE ===" && ls -la src-tauri/target/release/bundle/nsis/ 2>/dev/null || echo "No EXE"
