@@ -4,6 +4,18 @@
   <img src="./kairos-banner.png" alt="Kairos-Pomodoro Banner" width="800" />
 </p>
 
+<h3 align="center">
+  <a href="https://github.com/shakibdshy/Kairos-Pomodoro/releases/download/v1.0.1/Kairos-Pomodoro_aarch64_signed.dmg">🍎 macOS (Apple Silicon)</a> &nbsp;·&nbsp;
+  <a href="https://github.com/shakibdshy/Kairos-Pomodoro/releases/download/v1.0.1/Kairos-Pomodoro_1.0.1_x64-setup.exe">🪟 Windows</a> &nbsp;·&nbsp;
+  <a href="https://github.com/shakibdshy/Kairos-Pomodoro/releases/download/v1.0.1/Kairos-Pomodoro_1.0.1_amd64.AppImage">🐧 Linux</a>
+</h3>
+
+<p align="center">
+  <sup><strong>v1.0.0</strong> &nbsp;·&nbsp; MIT Licensed &nbsp;·&nbsp; <a href="#getting-started">Build from source →</a></sup>
+</p>
+
+<br />
+
 Kairos-Pomodoro is a desktop focus companion built with Tauri, React, TypeScript, and Bun.
 It combines a Pomodoro-style timer, task tracking, local analytics, calendar-style
 session history, desktop notifications, tray/menubar updates, and local SQLite
