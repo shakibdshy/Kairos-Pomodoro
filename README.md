@@ -25,7 +25,7 @@
 Download the `.dmg` file for macOS (Apple Silicon), open it, and drag **Kairos-Pomodoro** into your **Applications** folder.
 
 <p align="center">
-  <img src="./doc/install.png" alt="Step 1: Drag to Applications" width="520" />
+  <img src="./public/doc/install.png" alt="Step 1: Drag to Applications" width="520" />
 </p>
 
 ### Step 2: First Launch — Security Warning
@@ -33,7 +33,7 @@ Download the `.dmg` file for macOS (Apple Silicon), open it, and drag **Kairos-P
 When you try to open Kairos-Pomodoro for the first time, you may see this warning:
 
 <p align="center">
-  <img src="./doc/kairos-not-opend.png" alt="Step 2: Security warning dialog" width="480" />
+  <img src="./public/doc/kairos-not-opend.png" alt="Step 2: Security warning dialog" width="480" />
 </p>
 
 **Don't click "Move to Trash"!** This is normal for unsigned apps distributed outside the Mac App Store.
@@ -47,7 +47,7 @@ There are two ways to bypass this security check:
 Instead of double-clicking, **right-click** on Kairos-Pomodoro in your Applications folder and select **"Open"**. You'll see this dialog — click **"Open Anyway"**:
 
 <p align="center">
-  <img src="./doc/open-anyway.png" alt="Method A: Right-click Open Anyway" width="460" />
+  <img src="./public/doc/open-anyway.png" alt="Method A: Right-click Open Anyway" width="460" />
 </p>
 
 #### Method B: System Settings (If Method A doesn't work)
@@ -58,7 +58,7 @@ Instead of double-clicking, **right-click** on Kairos-Pomodoro in your Applicati
 4. Click **"Open Anyway"**
 
 <p align="center">
-  <img src="./doc/privary-and-security.png" alt="Method B: System Settings Open Anyway" width="560" />
+  <img src="./public/doc/privy-and-security.png" alt="Method B: System Settings Open Anyway" width="560" />
 </p>
 
 ### Step 4: Done!
