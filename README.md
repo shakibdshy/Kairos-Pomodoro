@@ -5,9 +5,9 @@
 </p>
 
 <h3 align="center">
-  <a href="https://github.com/shakibdshy/Kairos-Pomodoro/releases/download/v1.0.1/Kairos-Pomodoro_aarch64_signed.dmg">🍎 macOS (Apple Silicon)</a> &nbsp;·&nbsp;
-  <a href="https://github.com/shakibdshy/Kairos-Pomodoro/releases/download/v1.0.1/Kairos-Pomodoro_1.0.1_x64-setup.exe">🪟 Windows</a> &nbsp;·&nbsp;
-  <a href="https://github.com/shakibdshy/Kairos-Pomodoro/releases/download/v1.0.1/Kairos-Pomodoro_1.0.1_amd64.AppImage">🐧 Linux</a>
+  <a href="https://github.com/shakibdshy/Kairos-Pomodoro/releases/download/v1.0.0/Kairos-Pomodoro_1.0.0_aarch64.dmg">🍎 macOS (Apple Silicon)</a> &nbsp;·&nbsp;
+  <a href="https://github.com/shakibdshy/Kairos-Pomodoro/releases/download/v1.0.0/Kairos-Pomodoro_1.0.0_x64-setup.exe">🪟 Windows</a> &nbsp;·&nbsp;
+  <a href="https://github.com/shakibdshy/Kairos-Pomodoro/releases/download/v1.0.0/Kairos-Pomodoro_1.0.0_amd64.AppImage">🐧 Linux</a>
 </h3>
 
 <p align="center">
@@ -16,7 +16,62 @@
 
 <br />
 
-Kairos-Pomodoro is a desktop focus companion built with Tauri, React, TypeScript, and Bun.
+## 🍎 macOS Installation Guide
+
+> **Important:** Kairos-Pomodoro is not signed with an Apple Developer certificate (it's free & open source). macOS will show a security warning on first launch. Follow these steps to open the app:
+
+### Step 1: Download & Install
+
+Download the `.dmg` file for macOS (Apple Silicon), open it, and drag **Kairos-Pomodoro** into your **Applications** folder.
+
+<p align="center">
+  <img src="./doc/install.png" alt="Step 1: Drag to Applications" width="520" />
+</p>
+
+### Step 2: First Launch — Security Warning
+
+When you try to open Kairos-Pomodoro for the first time, you may see this warning:
+
+<p align="center">
+  <img src="./doc/kairos-not-opend.png" alt="Step 2: Security warning dialog" width="480" />
+</p>
+
+**Don't click "Move to Trash"!** This is normal for unsigned apps distributed outside the Mac App Store.
+
+### Step 3: Allow the App
+
+There are two ways to bypass this security check:
+
+#### Method A: Right-Click → Open (Easiest)
+
+Instead of double-clicking, **right-click** on Kairos-Pomodoro in your Applications folder and select **"Open"**. You'll see this dialog — click **"Open Anyway"**:
+
+<p align="center">
+  <img src="./doc/open-anyway.png" alt="Method A: Right-click Open Anyway" width="460" />
+</p>
+
+#### Method B: System Settings (If Method A doesn't work)
+
+1. Open **System Settings → Privacy & Security**
+2. Scroll down to the **Security** section
+3. You'll see a message about Kairos-Pomodoro being blocked
+4. Click **"Open Anyway"**
+
+<p align="center">
+  <img src="./doc/privary-and-security.png" alt="Method B: System Settings Open Anyway" width="560" />
+</p>
+
+### Step 4: Done!
+
+After clicking "Open Anyway" once, Kairos-Pomodoro will launch normally from now on. You won't see this warning again unless you update to a new version.
+
+> **Why does this happen?** Apple requires all apps to be code-signed by an Apple Developer ($99/year) or distributed through the Mac App Store. As a free open-source project, Kairos-Pomodoro uses ad-hoc signing which is safe but triggers Gatekeeper's initial warning. This is standard practice for most Tauri/Electron apps on GitHub.
+
+---
+
+## What Kairos-Pomodoro Does
+
+Kairos-Pomodoro is designed around focused work sessions and local-first productivity tracking.
 It combines a Pomodoro-style timer, task tracking, local analytics, calendar-style
 session history, desktop notifications, tray/menubar updates, and local SQLite
 storage in one app.
