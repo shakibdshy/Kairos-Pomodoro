@@ -86,29 +86,44 @@ jobs:
         if: matrix.platform == 'macos-latest'
         shell: bash
         run: |
-          APP_PATH=$(find src-tauri/target/release/bundle/macos -name "*.app" -type d | head -1)
+          DMG_FILE=$(ls src-tauri/target/release/bundle/dmg/*.dmg 2>/dev/null | head -1)
+          echo "Found DMG at: ${DMG_FILE}"
+          
+          MOUNT_DIR="/tmp/kairos-dmg-mount"
+          EXTRACT_DIR="src-tauri/target/release/bundle/macos-signed"
+          
+          hdiutil attach "${DMG_FILE}" -mountpoint "${MOUNT_DIR}" -nobrowse -quiet
+          
+          APP_PATH=$(find "${MOUNT_DIR}" -maxdepth 1 -name "*.app" -type d | head -1)
           echo "Found app at: ${APP_PATH}"
           
-          codesign --force --deep --sign - "${APP_PATH}"
-          codesign --verify --verbose "${APP_PATH}"
+          mkdir -p "${EXTRACT_DIR}"
+          cp -R "${APP_PATH}" "${EXTRACT_DIR}/"
+          
+          SIGNED_APP="${EXTRACT_DIR}/$(basename "${APP_PATH}")"
+          codesign --force --deep --sign - "${SIGNED_APP}"
+          codesign --verify --verbose "${SIGNED_APP}"
           echo "Ad-hoc signing complete"
+          
+          hdiutil detach "${MOUNT_DIR}" -quiet
 
       - name: Re-package signed DMG (macOS)
         if: matrix.platform == 'macos-latest'
         shell: bash
         run: |
-          APP_PATH=$(find src-tauri/target/release/bundle/macos -name "*.app" -type d | head -1)
-          APP_NAME=$(basename "${APP_PATH}" .app)
-          DMG_DIR="src-tauri/target/release/bundle/dmg/staging"
-          DMG_OUTPUT="src-tauri/target/release/bundle/dmg/${APP_NAME}_signed.dmg"
+          EXTRACT_DIR="src-tauri/target/release/bundle/macos-signed"
+          SIGNED_APP=$(find "${EXTRACT_DIR}" -name "*.app" -type d | head -1)
+          APP_NAME=$(basename "${SIGNED_APP}" .app)
+          DMG_STAGING="src-tauri/target/release/bundle/dmg/staging"
+          DMG_OUTPUT="src-tauri/target/release/bundle/dmg/${APP_NAME}_aarch64_signed.dmg"
           
-          rm -rf "${DMG_DIR}"
-          mkdir -p "${DMG_DIR}"
-          cp -R "${APP_PATH}" "${DMG_DIR}/"
-          ln -s /Applications "${DMG_DIR}/Applications"
+          rm -rf "${DMG_STAGING}"
+          mkdir -p "${DMG_STAGING}"
+          cp -R "${SIGNED_APP}" "${DMG_STAGING}/"
+          ln -s /Applications "${DMG_STAGING}/Applications"
           
           hdiutil create -volname "${APP_NAME}" \
-            -srcfolder "${DMG_DIR}" \
+            -srcfolder "${DMG_STAGING}" \
             -ov -format UDZO "${DMG_OUTPUT}"
           
           echo "Signed DMG created at: ${DMG_OUTPUT}"
