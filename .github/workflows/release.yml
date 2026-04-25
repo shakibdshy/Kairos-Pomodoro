@@ -76,6 +76,18 @@ jobs:
       - name: Install project dependencies
         run: bun install --frozen-lockfile
 
+      - name: Install NSIS (Windows)
+        if: matrix.platform == 'windows-latest'
+        shell: pwsh
+        run: |
+          winget install NSIS.NSIS --accept-source-agreements --accept-package-agreements 2>$null
+          $nsisPath = "C:\Program Files (x86)\NSIS"
+          if (!(Test-Path $nsisPath)) {
+            $nsisPath = "${env:LOCALAPPDATA}\Programs\NSIS"
+          }
+          echo "NSIS_PATH=$nsisPath" >> $env:GITHUB_ENV
+          echo "Found NSIS at: $nsisPath"
+
       - name: Build Kairos-Pomodoro
         env:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
