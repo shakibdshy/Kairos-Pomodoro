@@ -327,4 +327,7 @@ bun run build
 
 ## License
 
-Add your project license here if you plan to open-source or distribute the app.
+This project is licensed under the MIT License — see the [LICENSE](./LICENSE) file.
+
+You are free to use, modify, and distribute this software, including commercially.
+Premium support options may be offered separately in the future.

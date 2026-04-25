@@ -24,3 +24,8 @@ dist-ssr
 *.sw?
 
 .figma/
+
+# Tauri signing keys (NEVER commit these)
+*.key
+!.key.pub
+.tauri/

@@ -22,7 +22,8 @@ export function AnalyticsPage() {
               intent="default"
               size="sm"
               disabled
-              className="gap-2 text-xs"
+              className="gap-2 text-xs opacity-60 cursor-not-allowed"
+              title="Export coming in a future update"
             >
               <Download className="w-3.5 h-3.5" />
               EXPORT CSV
@@ -32,7 +33,8 @@ export function AnalyticsPage() {
               intent="sahara"
               size="sm"
               disabled
-              className="gap-2 bg-sahara-primary/50 text-xs"
+              className="gap-2 bg-sahara-primary/50 text-xs opacity-60 cursor-not-allowed"
+              title="Export coming in a future update"
             >
               <Download className="w-3.5 h-3.5" />
               EXPORT PDF
