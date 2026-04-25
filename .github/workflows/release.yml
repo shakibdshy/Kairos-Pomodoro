@@ -1,0 +1,62 @@
+name: Kairos-Pomodoro Release
+
+on:
+  push:
+    tags:
+      - "v*"   # Runs when you push a version tag like v1.0.0
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        platform: [macos-latest, windows-latest]
+
+    runs-on: ${{ matrix.platform }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install Bun
+        uses: oven-sh/setup-bun@v1
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Build Kairos-Pomodoro
+        run: |
+          if [[ "$RUNNER_OS" == "macOS" ]]; then
+            bun tauri build --bundles dmg
+          elif [[ "$RUNNER_OS" == "Windows" ]]; then
+            bun tauri build --bundles nsis
+          fi
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: Kairos-Pomodoro-${{ matrix.platform }}
+          path: src-tauri/target/release/bundle/**/*
+  
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: dist
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/**/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
