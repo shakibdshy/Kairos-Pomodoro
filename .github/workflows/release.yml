@@ -22,6 +22,10 @@ jobs:
             target: x86_64-pc-windows-msvc
             bundle: nsis
             arch: x64
+          - platform: windows-latest
+            target: x86_64-pc-windows-msvc
+            bundle: msix
+            arch: x64
           - platform: ubuntu-22.04
             target: x86_64-unknown-linux-gnu
             bundle: appimage
@@ -146,16 +150,18 @@ jobs:
         run: |
           echo "=== DMG ===" && ls -la src-tauri/target/release/bundle/dmg/ 2>/dev/null || echo "No DMG"
           echo "=== EXE ===" && ls -la src-tauri/target/release/bundle/nsis/ 2>/dev/null || echo "No EXE"
+          echo "=== MSIX ===" && ls -la src-tauri/target/release/bundle/msix/ 2>/dev/null || echo "No MSIX"
           echo "=== AppImage ===" && ls -la src-tauri/target/release/bundle/appimage/ 2>/dev/null || echo "No AppImage"
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: Kairos-Pomodoro-${{ matrix.platform }}-${{ matrix.arch }}
+          name: Kairos-Pomodoro-${{ matrix.platform }}-${{ matrix.arch }}${{ matrix.bundle == 'msix' && '-msix' || '' }}
           path: |
             src-tauri/target/release/bundle/dmg/*_signed.dmg
             src-tauri/target/release/bundle/dmg/*.dmg
             src-tauri/target/release/bundle/nsis/*.exe
+            src-tauri/target/release/bundle/msix/*.msix
             src-tauri/target/release/bundle/appimage/*.AppImage
           if-no-files-found: warn
 
@@ -173,7 +179,7 @@ jobs:
       - name: Flatten artifacts into single directory
         run: |
           mkdir -p release-files
-          find dist -type f \( -name "*.dmg" -o -name "*.exe" -o -name "*.AppImage" \) -exec cp {} release-files/ \;
+          find dist -type f \( -name "*.dmg" -o -name "*.exe" -o -name "*.AppImage" -o -name "*.msix" \) -exec cp {} release-files/ \;
           echo "=== Release files ==="
           ls -lh release-files/
 
@@ -190,7 +196,7 @@ jobs:
             echo ""
             echo "| Platform | File |"
             echo "|----------|------|"
-            for f in release-files/*.{dmg,exe,AppImage}; do
+            for f in release-files/*.{dmg,exe,AppImage,msix}; do
               if [ -f "$f" ]; then
                 filename=$(basename "$f")
                 size=$(du -h "$f" | cut -f1)
@@ -213,7 +219,7 @@ jobs:
             echo ""
             echo "### Verify Integrity"
             echo '```sh'
-            echo "sha256sum *.dmg *.exe *.AppImage 2>/dev/null || true"
+            echo "sha256sum *.dmg *.exe *.AppImage *.msix 2>/dev/null || true"
             echo '```'
           } > "${NOTES_FILE}"
 
