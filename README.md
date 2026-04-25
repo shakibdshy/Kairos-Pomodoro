@@ -58,7 +58,7 @@ Instead of double-clicking, **right-click** on Kairos-Pomodoro in your Applicati
 4. Click **"Open Anyway"**
 
 <p align="center">
-  <img src="./public/doc/privy-and-security.png" alt="Method B: System Settings Open Anyway" width="560" />
+  <img src="./public/doc/privary-and-security.png" alt="Method B: System Settings Open Anyway" width="560" />
 </p>
 
 ### Step 4: Done!
