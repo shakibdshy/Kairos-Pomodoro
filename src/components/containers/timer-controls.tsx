@@ -17,7 +17,6 @@ import {
   XCircle,
   ArrowRight,
   Coffee,
-  ClockPlus,
   Flag,
 } from "lucide-react";
 import { formatTimeAmPm } from "@/lib/time";
@@ -39,7 +38,6 @@ export function TimerControls() {
   const abandonSession = useTimerStore((s) => s.abandonSession);
   const selectedCategory = useTimerStore((s) => s.selectedCategory);
   const setSelectedCategory = useTimerStore((s) => s.setSelectedCategory);
-  const addFiveMinutes = useTimerStore((s) => s.addFiveMinutes);
   const confirmStartNextPhase = useTimerStore((s) => s.confirmStartNextPhase);
   const endWithoutBreak = useTimerStore((s) => s.endWithoutBreak);
 
