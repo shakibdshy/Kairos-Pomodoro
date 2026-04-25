@@ -100,7 +100,7 @@ export function IntentionSelector({
         onClick={() => !disabled && setIsOpen(true)}
         disabled={disabled}
         className={cn(
-          "text-left",
+          "text-left gap-1.5",
           !selectedCategory && "border-dashed border-sahara-border/40 hover:border-sahara-primary/30",
           selectedCategory && "hover:shadow-md",
         )}

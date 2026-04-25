@@ -167,7 +167,7 @@ export function TimerControls() {
               {isWorkPhase ? "Start Break" : "Back to Work"}
             </Button>
 
-            <Button
+            {/* <Button
               variant="solid"
               intent="amber"
               size="md"
@@ -177,7 +177,7 @@ export function TimerControls() {
             >
               <ClockPlus className="w-3.5 h-3.5 md:w-4 md:h-4" />
               Add 5 Min
-            </Button>
+            </Button> */}
 
             <Button
               variant="outline"
