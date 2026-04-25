@@ -82,6 +82,38 @@ jobs:
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         run: bun run tauri build --bundles ${{ matrix.bundle }}
 
+      - name: Ad-hoc code sign (macOS)
+        if: matrix.platform == 'macos-latest'
+        shell: bash
+        run: |
+          APP_PATH=$(find src-tauri/target/release/bundle/macos -name "*.app" -type d | head -1)
+          echo "Found app at: ${APP_PATH}"
+          
+          codesign --force --deep --sign - "${APP_PATH}"
+          codesign --verify --verbose "${APP_PATH}"
+          echo "Ad-hoc signing complete"
+
+      - name: Re-package signed DMG (macOS)
+        if: matrix.platform == 'macos-latest'
+        shell: bash
+        run: |
+          APP_PATH=$(find src-tauri/target/release/bundle/macos -name "*.app" -type d | head -1)
+          APP_NAME=$(basename "${APP_PATH}" .app)
+          DMG_DIR="src-tauri/target/release/bundle/dmg/staging"
+          DMG_OUTPUT="src-tauri/target/release/bundle/dmg/${APP_NAME}_signed.dmg"
+          
+          rm -rf "${DMG_DIR}"
+          mkdir -p "${DMG_DIR}"
+          cp -R "${APP_PATH}" "${DMG_DIR}/"
+          ln -s /Applications "${DMG_DIR}/Applications"
+          
+          hdiutil create -volname "${APP_NAME}" \
+            -srcfolder "${DMG_DIR}" \
+            -ov -format UDZO "${DMG_OUTPUT}"
+          
+          echo "Signed DMG created at: ${DMG_OUTPUT}"
+          ls -lh "${DMG_OUTPUT}"
+
       - name: List build outputs
         shell: bash
         run: |
@@ -94,6 +126,7 @@ jobs:
         with:
           name: Kairos-Pomodoro-${{ matrix.platform }}-${{ matrix.arch }}
           path: |
+            src-tauri/target/release/bundle/dmg/*_signed.dmg
             src-tauri/target/release/bundle/dmg/*.dmg
             src-tauri/target/release/bundle/nsis/*.exe
             src-tauri/target/release/bundle/appimage/*.AppImage
@@ -141,6 +174,15 @@ jobs:
             echo "---"
             echo ""
             echo "**MIT Licensed. Built with Tauri + React + TypeScript.**"
+            echo ""
+            echo "### macOS Users — First Launch"
+            echo ""
+            echo "If you see a security warning on first launch:"
+            echo '```sh'
+            echo "xattr -cr /Applications/Kairos-Pomodoro.app"
+            echo '```'
+            echo ""
+            echo "Or right-click the app → **Open** (instead of double-clicking)."
             echo ""
             echo "### Verify Integrity"
             echo '```sh'
