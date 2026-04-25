@@ -4,6 +4,8 @@
   <img src="./kairos-banner.png" alt="Kairos-Pomodoro Banner" width="800" />
 </p>
 
+<h1 align="center">Download</h1>
+
 <h3 align="center">
   <a href="https://github.com/shakibdshy/Kairos-Pomodoro/releases/download/v1.0.0/Kairos-Pomodoro_1.0.0_aarch64.dmg">🍎 macOS (Apple Silicon)</a> &nbsp;·&nbsp;
   <a href="https://github.com/shakibdshy/Kairos-Pomodoro/releases/download/v1.0.0/Kairos-Pomodoro_1.0.0_x64-setup.exe">🪟 Windows</a> &nbsp;·&nbsp;
