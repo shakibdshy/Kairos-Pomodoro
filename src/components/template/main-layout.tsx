@@ -13,6 +13,7 @@ import {
   Play,
 } from "lucide-react";
 import { cn } from "@/lib/cn";
+import { useTimerStore } from "@/features/timer/use-timer-store";
 
 interface MainLayoutProps {
   children: ReactNode;
@@ -29,6 +30,9 @@ export function MainLayout({ children }: MainLayoutProps) {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
+  const status = useTimerStore((s) => s.status);
+  const start = useTimerStore((s) => s.start);
+  const isRunning = status === "running";
 
   return (
     <div className="flex h-screen bg-sahara-bg text-sahara-text font-sans overflow-hidden">
@@ -122,17 +126,32 @@ export function MainLayout({ children }: MainLayoutProps) {
             variant="solid"
             intent="sahara"
             fullWidth
-            onClick={() => navigate("/")}
-            title={isCollapsed ? "START SESSION" : undefined}
+            disabled={isRunning}
+            onClick={() => {
+              if (location.pathname !== "/") {
+                navigate("/");
+              }
+              start();
+            }}
+            title={
+              isCollapsed
+                ? isRunning
+                  ? "SESSION ACTIVE"
+                  : "START SESSION"
+                : undefined
+            }
             className={cn(
               "tracking-[0.15em]",
               isCollapsed ? "h-12" : "py-4 gap-3",
+              isRunning && "opacity-50 cursor-not-allowed",
             )}
           >
             <Play
               className={cn("w-4 h-4 fill-current", !isCollapsed && "ml-1")}
             />
-            {!isCollapsed && <span>START SESSION</span>}
+            {!isCollapsed && (
+              <span>{isRunning ? "SESSION ACTIVE" : "START SESSION"}</span>
+            )}
           </Button>
         </div>
 
