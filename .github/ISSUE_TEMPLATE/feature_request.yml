@@ -1,0 +1,69 @@
+name: Feature Request
+description: Suggest an idea for this project
+title: "[Feature] "
+labels: ["enhancement"]
+assignees: []
+projects: []
+milestone: ""
+
+body:
+  - type: markdown
+    id: description
+    attributes:
+      value: |
+        ## Is your feature request related to a problem? Please describe
+        Please describe the problem you're trying to solve.
+  - type: textarea
+    id: describe-problem
+    attributes:
+      label: Describe the Problem
+      description: What problem does this feature solve?
+      placeholder: I'm always frustrated when...
+    validations:
+      required: true
+  - type: textarea
+    id: describe-solution
+    attributes:
+      label: Described Solution
+      description: How should this feature work?
+      placeholder: I would like to see...
+    validations:
+      required: true
+  - type: textarea
+    id: describe-alternatives
+    attributes:
+      label: Alternatives Considered
+      description: Any alternative solutions you've considered?
+      placeholder: I've also considered...
+    validations:
+      required: false
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: Additional Context
+      description: Any other context or mockups about the feature request?
+      placeholder: |
+        - UI Mockups: [link or description]
+        - References: [links to similar features]
+    validations:
+      required: false
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      description: How important is this feature?
+      options:
+        - Low
+        - Medium
+        - High
+        - Critical
+    validations:
+      required: false
+  - type: dropdown
+    id: help-wanted
+    attributes:
+      label: Would you like to help implement this?
+      options:
+        - Yes, I'm willing to implement this
+        - Yes, I can help with implementation
+        - No, just want to suggest this
