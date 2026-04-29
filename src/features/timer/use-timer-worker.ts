@@ -2,11 +2,16 @@ const workerCode = `
   let interval = null;
   let remaining = 0;
   let overtime = 0;
+  let targetEndTime = 0;
+
+  function computeRemaining() {
+    return Math.max(0, Math.ceil((targetEndTime - Date.now()) / 1000));
+  }
 
   function startCountdown() {
     clearInterval(interval);
     interval = setInterval(() => {
-      remaining -= 1;
+      remaining = computeRemaining();
       if (remaining <= 0) {
         clearInterval(interval);
         interval = null;
@@ -29,6 +34,7 @@ const workerCode = `
     if (e.data.command === "start") {
       remaining = e.data.seconds;
       overtime = 0;
+      targetEndTime = Date.now() + remaining * 1000;
       startCountdown();
     }
 
@@ -41,6 +47,7 @@ const workerCode = `
       if (overtime > 0) {
         startOvertime();
       } else {
+        targetEndTime = Date.now() + remaining * 1000;
         startCountdown();
       }
     }
@@ -50,6 +57,7 @@ const workerCode = `
       interval = null;
       remaining = 0;
       overtime = 0;
+      targetEndTime = 0;
     }
 
     if (e.data.command === "start_overtime") {
@@ -58,7 +66,8 @@ const workerCode = `
     }
 
     if (e.data.command === "add_time") {
-      remaining += e.data.seconds;
+      targetEndTime += e.data.seconds * 1000;
+      remaining = computeRemaining();
       if (!interval) {
         startCountdown();
       }
