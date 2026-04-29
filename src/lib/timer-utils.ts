@@ -9,14 +9,19 @@ export function sanitizeTimeInput(value: string): string {
   return hasColon ? `${minutes}:${seconds}` : minutes;
 }
 
+function safeInt(value: string): number {
+  const n = parseInt(value, 10);
+  return Number.isNaN(n) ? 0 : Math.max(0, n);
+}
+
 export function parseTimeInput(value: string): number {
   if (!value) return 0;
   if (!value.includes(":")) {
-    return Math.min(MAX_INPUT_SECONDS, Number(value) * 60);
+    return Math.min(MAX_INPUT_SECONDS, safeInt(value) * 60);
   }
   const [minutesPart = "0", secondsPart = "0"] = value.split(":");
-  const minutes = Number(minutesPart || "0");
-  const seconds = Number(secondsPart || "0");
+  const minutes = safeInt(minutesPart);
+  const seconds = safeInt(secondsPart);
   return Math.min(MAX_INPUT_SECONDS, minutes * 60 + seconds);
 }
 

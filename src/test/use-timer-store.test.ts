@@ -47,7 +47,7 @@ vi.mock("@/features/settings/use-settings-store", () => ({
   },
 }));
 
-beforeEach(async () => {
+beforeEach(() => {
   vi.clearAllMocks();
   useTimerStore.setState({
     phase: "work",

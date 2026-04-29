@@ -16,11 +16,19 @@ vi.mock("@/lib/db", () => {
       store[key] = value;
       return Promise.resolve();
     }),
+    __resetMockStore: () => {
+      for (const key of Object.keys(store)) {
+        delete store[key];
+      }
+    },
   };
 });
 
+const { __resetMockStore } = await import("@/lib/db") as any;
+
 beforeEach(() => {
   vi.clearAllMocks();
+  __resetMockStore();
   useSettingsStore.setState({
     settings: {
       workDuration: DEFAULT_WORK_SEC,

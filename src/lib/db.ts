@@ -60,7 +60,7 @@ export async function initDb(): Promise<void> {
     CREATE TABLE IF NOT EXISTS categories (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       name TEXT NOT NULL UNIQUE,
-      color TEXT NOT NULL DEFAULT '#C17767',
+      color TEXT NOT NULL DEFAULT '${DEFAULT_CATEGORY_COLOR}',
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )
   `);

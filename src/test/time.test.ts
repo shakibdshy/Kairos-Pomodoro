@@ -24,6 +24,10 @@ describe("formatSeconds", () => {
     expect(formatSeconds(1500)).toBe("25:00");
   });
 
+  it("formats mixed minutes and seconds", () => {
+    expect(formatSeconds(125)).toBe("02:05");
+  });
+
   it("formats large values", () => {
     expect(formatSeconds(3661)).toBe("61:01");
   });

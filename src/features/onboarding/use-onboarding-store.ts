@@ -13,12 +13,17 @@ export const useOnboardingStore = create<OnboardingStore>((set) => ({
   loaded: false,
 
   check: async () => {
-    const value = await getSetting("onboarding_complete");
-    set({ complete: value === "true", loaded: true });
+    try {
+      const value = await getSetting("onboarding_complete");
+      set({ complete: value === "true", loaded: true });
+    } catch (err) {
+      console.error("[OnboardingStore] Failed to check onboarding status:", err);
+      set({ complete: false, loaded: true });
+    }
   },
 
   markComplete: async () => {
     await setSetting("onboarding_complete", "true");
-    set({ complete: true });
+    set({ complete: true, loaded: true });
   },
 }));

@@ -49,10 +49,13 @@ export function SettingsFocusSection() {
     settings.longBreakDuration,
   ]);
 
-  const handleSave = () => {
-    updateSetting("workDuration", workMin * 60);
-    updateSetting("shortBreakDuration", shortBreakMin * 60);
-    updateSetting("longBreakDuration", longBreakMin * 60);
+  const handleSave = async () => {
+    if (!loaded) return;
+    await Promise.all([
+      updateSetting("workDuration", workMin * 60),
+      updateSetting("shortBreakDuration", shortBreakMin * 60),
+      updateSetting("longBreakDuration", longBreakMin * 60),
+    ]);
   };
 
   const setters = {

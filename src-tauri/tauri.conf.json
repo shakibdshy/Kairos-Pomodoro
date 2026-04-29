@@ -31,7 +31,7 @@
       "iconAsTemplate": true
     },
     "security": {
-      "csp": "default-src 'self'; script-src 'self' blob: 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' asset: https://asset.localhost data:; font-src 'self' https://fonts.gstatic.com; connect-src 'self' ipc: http://ipc.localhost https://github.com ws://localhost:*"
+      "csp": "default-src 'self'; script-src 'self' blob:; style-src 'self' 'unsafe-inline'; img-src 'self' asset: https://asset.localhost data:; font-src 'self' https://fonts.gstatic.com; connect-src 'self' ipc: http://ipc.localhost https://github.com"
     }
   },
   "bundle": {

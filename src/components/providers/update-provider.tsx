@@ -17,7 +17,7 @@ export function UpdateProvider({ children }: UpdateProviderProps) {
   const dismissedRef = useRef(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const checkForUpdate = useCallback(async () => {
+  const checkForUpdate = useCallback(async (): Promise<boolean> => {
     try {
       const { check } = await import("@tauri-apps/plugin-updater");
       const result = await check();
@@ -27,10 +27,12 @@ export function UpdateProvider({ children }: UpdateProviderProps) {
           clearInterval(intervalRef.current);
           intervalRef.current = null;
         }
+        return true;
       }
     } catch (err) {
       console.debug("[UpdateProvider] Check failed (expected in dev):", err);
     }
+    return false;
   }, []);
 
   useEffect(() => {
@@ -40,8 +42,8 @@ export function UpdateProvider({ children }: UpdateProviderProps) {
 
     const timer = setTimeout(async () => {
       if (cancelled) return;
-      await checkForUpdate();
-      if (!cancelled) {
+      const found = await checkForUpdate();
+      if (!cancelled && !found) {
         intervalRef.current = setInterval(checkForUpdate, RECHECK_INTERVAL_MS);
       }
     }, 5000);
@@ -112,6 +114,7 @@ export function UpdateProvider({ children }: UpdateProviderProps) {
             </div>
             <button
               onClick={handleDismiss}
+              aria-label="Dismiss update"
               className="p-1 rounded-lg text-sahara-text-muted hover:text-sahara-text hover:bg-sahara-card transition-colors cursor-pointer"
             >
               <X className="w-4 h-4" />

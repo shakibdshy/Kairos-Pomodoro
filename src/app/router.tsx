@@ -18,7 +18,13 @@ function OnboardingGuard() {
     if (!loaded) check();
   }, [loaded, check]);
 
-  if (!loaded) return null;
+  if (!loaded) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-sahara-bg">
+        <div className="w-6 h-6 border-2 border-sahara-primary border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
   if (!complete) return <Navigate to="/onboarding" replace />;
   return <Outlet />;
 }
