@@ -160,6 +160,31 @@ describe("useTimerStore", () => {
     });
   });
 
+  describe("setDurationForCurrentPhase", () => {
+    it("updates only the active phase duration when idle", () => {
+      useTimerStore.getState().setPhase("short_break");
+      useTimerStore.getState().setDurationForCurrentPhase(95);
+
+      const state = useTimerStore.getState();
+      expect(state.durations.work).toBe(DEFAULT_WORK_SEC);
+      expect(state.durations.short).toBe(95);
+      expect(state.durations.long).toBe(DEFAULT_LONG_BREAK_SEC);
+      expect(state.secondsRemaining).toBe(95);
+      expect(state.totalSeconds).toBe(95);
+    });
+
+    it("does not change duration during an active session", async () => {
+      await useTimerStore.getState().start();
+
+      useTimerStore.getState().setDurationForCurrentPhase(95);
+
+      const state = useTimerStore.getState();
+      expect(state.durations.work).toBe(DEFAULT_WORK_SEC);
+      expect(state.secondsRemaining).toBe(DEFAULT_WORK_SEC);
+      expect(state.totalSeconds).toBe(DEFAULT_WORK_SEC);
+    });
+  });
+
   describe("reset", () => {
     it("resets to idle with correct phase duration", async () => {
       useTimerStore.getState().setPhase("short_break");
