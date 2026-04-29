@@ -7,6 +7,8 @@ import {
   deleteTask as dbDeleteTask,
   toggleTaskArchived,
   incrementTaskPomos,
+  getSetting,
+  setSetting,
 } from "@/lib/db";
 
 interface TaskStore {
@@ -42,7 +44,19 @@ export const useTaskStore = create<TaskStore>((set) => ({
   loadTasks: async () => {
     set({ loading: true, error: null });
     try {
-      const tasks = await getTasks();
+      let tasks = await getTasks();
+
+      if (tasks.length === 0) {
+        const hasSeeded = await getSetting("has_seeded_tasks");
+        if (!hasSeeded) {
+          await dbAddTask("Plan your first project", 4, "Personal");
+          await dbAddTask("Review important documents", 2, "Work");
+          await dbAddTask("Learn something new today", 3, "Learning");
+          await setSetting("has_seeded_tasks", "true");
+          tasks = await getTasks();
+        }
+      }
+
       set({ tasks, loading: false });
     } catch (err) {
       console.error("[TaskStore] Failed to load tasks:", err);

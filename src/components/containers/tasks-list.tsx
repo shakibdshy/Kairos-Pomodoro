@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useTaskStore } from "@/features/tasks/use-task-store";
 import { useTimerStore } from "@/features/timer/use-timer-store";
 import {
@@ -28,14 +28,6 @@ export function TasksList() {
   const [searchQuery, setSearchQuery] = useState("");
   const [viewMode, setViewMode] = useState<"list" | "grid">("list");
   const [showAddModal, setShowAddModal] = useState(false);
-
-  useEffect(() => {
-    if (tasks.length === 0) {
-      addTask("Plan your first project", 4, "Personal");
-      addTask("Review important documents", 2, "Work");
-      addTask("Learn something new today", 3, "Learning");
-    }
-  }, [tasks.length, addTask]);
 
   const filteredTasks = tasks.filter(
     (t) =>
