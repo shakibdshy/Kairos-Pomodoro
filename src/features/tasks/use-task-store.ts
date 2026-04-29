@@ -45,9 +45,9 @@ export const useTaskStore = create<TaskStore>((set) => ({
     set({ loading: true, error: null });
     try {
       let tasks = await getTasks();
+      const hasSeeded = await getSetting("has_seeded_tasks");
 
       if (tasks.length === 0) {
-        const hasSeeded = await getSetting("has_seeded_tasks");
         if (!hasSeeded) {
           await dbAddTask("Plan your first project", 4, "Personal");
           await dbAddTask("Review important documents", 2, "Work");
@@ -55,6 +55,8 @@ export const useTaskStore = create<TaskStore>((set) => ({
           await setSetting("has_seeded_tasks", "true");
           tasks = await getTasks();
         }
+      } else if (!hasSeeded) {
+        await setSetting("has_seeded_tasks", "true");
       }
 
       set({ tasks, loading: false });
