@@ -1,62 +1,66 @@
-import { useEffect, useState, useCallback, type ReactNode } from "react";
+import { useEffect, useState, useCallback, useRef, type ReactNode } from "react";
+import type { Update } from "@tauri-apps/plugin-updater";
 import { isTauri } from "@/lib/tauri";
 import { X, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-interface UpdateInfo {
-  version: string;
-  date: string;
-  body: string;
-}
+const RECHECK_INTERVAL_MS = 24 * 60 * 60 * 1000;
 
 interface UpdateProviderProps {
   children: ReactNode;
 }
 
 export function UpdateProvider({ children }: UpdateProviderProps) {
-  const [update, setUpdate] = useState<UpdateInfo | null>(null);
+  const [pendingUpdate, setPendingUpdate] = useState<Update | null>(null);
   const [downloading, setDownloading] = useState(false);
   const [dismissed, setDismissed] = useState(false);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const checkForUpdate = useCallback(async () => {
+    try {
+      const { check } = await import("@tauri-apps/plugin-updater");
+      const result = await check();
+      if (result) {
+        setPendingUpdate(result);
+        if (intervalRef.current) {
+          clearInterval(intervalRef.current);
+          intervalRef.current = null;
+        }
+      }
+    } catch (err) {
+      console.debug("[UpdateProvider] Check failed (expected in dev):", err);
+    }
+  }, []);
 
   useEffect(() => {
     if (!isTauri()) return;
 
     let cancelled = false;
-    const timer = setTimeout(async () => {
-      try {
-        const { check } = await import("@tauri-apps/plugin-updater");
-        const result = await check();
-        if (cancelled) return;
 
-        if (result) {
-          setUpdate({
-            version: result.version,
-            date: result.date ?? "",
-            body: result.body ?? "",
-          });
-        }
-      } catch (err) {
-        console.debug("[UpdateProvider] Check failed (expected in dev):", err);
+    const timer = setTimeout(async () => {
+      if (cancelled) return;
+      await checkForUpdate();
+      if (!cancelled) {
+        intervalRef.current = setInterval(checkForUpdate, RECHECK_INTERVAL_MS);
       }
     }, 5000);
 
     return () => {
       cancelled = true;
       clearTimeout(timer);
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
     };
-  }, []);
+  }, [checkForUpdate]);
 
   const handleInstall = useCallback(async () => {
-    if (!update) return;
+    if (!pendingUpdate) return;
     setDownloading(true);
     try {
-      const { check } = await import("@tauri-apps/plugin-updater");
       const { relaunch } = await import("@tauri-apps/plugin-process");
 
-      const result = await check();
-      if (!result) return;
-
-      await result.downloadAndInstall((event) => {
+      await pendingUpdate.downloadAndInstall((event) => {
         switch (event.event) {
           case "Started":
             console.log(
@@ -74,13 +78,13 @@ export function UpdateProvider({ children }: UpdateProviderProps) {
       console.error("[UpdateProvider] Install failed:", err);
       setDownloading(false);
     }
-  }, [update]);
+  }, [pendingUpdate]);
 
   const handleDismiss = () => {
     setDismissed(true);
   };
 
-  if (!update || dismissed) return <>{children}</>;
+  if (!pendingUpdate || dismissed) return <>{children}</>;
 
   return (
     <>
@@ -98,7 +102,7 @@ export function UpdateProvider({ children }: UpdateProviderProps) {
                   Update Available
                 </p>
                 <p className="text-[11px] text-sahara-text-muted">
-                  v{update.version}
+                  v{pendingUpdate.version}
                 </p>
               </div>
             </div>
@@ -110,9 +114,9 @@ export function UpdateProvider({ children }: UpdateProviderProps) {
             </button>
           </div>
 
-          {update.body && (
+          {pendingUpdate.body && (
             <p className="text-xs text-sahara-text-secondary leading-relaxed line-clamp-3">
-              {update.body}
+              {pendingUpdate.body}
             </p>
           )}
 
