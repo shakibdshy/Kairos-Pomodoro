@@ -10,7 +10,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/cn";
-import { setSetting } from "@/lib/db";
+import { useOnboardingStore } from "@/features/onboarding/use-onboarding-store";
 
 const STEP_ICON_COLOR = "bg-sahara-primary-light text-sahara-primary";
 
@@ -48,11 +48,12 @@ const steps = [
 export function OnboardingPage() {
   const [step, setStep] = useState(0);
   const navigate = useNavigate();
+  const markComplete = useOnboardingStore((s) => s.markComplete);
 
   const currentStep = steps[step];
 
   const completeOnboarding = async () => {
-    await setSetting("onboarding_complete", "true");
+    await markComplete();
     navigate("/");
   };
 

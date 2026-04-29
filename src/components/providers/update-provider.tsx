@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback, useRef, type ReactNode } from "react";
 import type { Update } from "@tauri-apps/plugin-updater";
 import { isTauri } from "@/lib/tauri";
-import { X, Download } from "lucide-react";
+import { X, Download, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const RECHECK_INTERVAL_MS = 24 * 60 * 60 * 1000;
@@ -13,7 +13,8 @@ interface UpdateProviderProps {
 export function UpdateProvider({ children }: UpdateProviderProps) {
   const [pendingUpdate, setPendingUpdate] = useState<Update | null>(null);
   const [downloading, setDownloading] = useState(false);
-  const [dismissed, setDismissed] = useState(false);
+  const [installError, setInstallError] = useState<string | null>(null);
+  const dismissedRef = useRef(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const checkForUpdate = useCallback(async () => {
@@ -57,6 +58,7 @@ export function UpdateProvider({ children }: UpdateProviderProps) {
   const handleInstall = useCallback(async () => {
     if (!pendingUpdate) return;
     setDownloading(true);
+    setInstallError(null);
     try {
       const { relaunch } = await import("@tauri-apps/plugin-process");
 
@@ -76,15 +78,17 @@ export function UpdateProvider({ children }: UpdateProviderProps) {
       await relaunch();
     } catch (err) {
       console.error("[UpdateProvider] Install failed:", err);
+      setInstallError(String(err));
       setDownloading(false);
     }
   }, [pendingUpdate]);
 
   const handleDismiss = () => {
-    setDismissed(true);
+    dismissedRef.current = true;
+    setPendingUpdate(null);
   };
 
-  if (!pendingUpdate || dismissed) return <>{children}</>;
+  if (!pendingUpdate || dismissedRef.current) return <>{children}</>;
 
   return (
     <>
@@ -120,6 +124,15 @@ export function UpdateProvider({ children }: UpdateProviderProps) {
             </p>
           )}
 
+          {installError && (
+            <div className="flex items-start gap-2 p-2.5 bg-red-500/10 border border-red-500/20 rounded-xl">
+              <AlertCircle className="w-3.5 h-3.5 text-red-400 shrink-0 mt-0.5" />
+              <p className="text-[11px] text-red-400 leading-relaxed">
+                Update failed. Please try again or download manually from GitHub.
+              </p>
+            </div>
+          )}
+
           <div className="flex items-center gap-2">
             <Button
               variant="solid"
@@ -131,7 +144,7 @@ export function UpdateProvider({ children }: UpdateProviderProps) {
               className="gap-1.5 text-[10px] flex-1"
             >
               <Download className="w-3 h-3" />
-              {downloading ? "Downloading..." : "Install Update"}
+              {downloading ? "Downloading..." : installError ? "Retry Update" : "Install Update"}
             </Button>
             <Button
               variant="outline"
