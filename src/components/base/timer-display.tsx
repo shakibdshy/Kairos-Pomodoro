@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Text } from "@/components/ui/text";
 import { formatSeconds } from "@/lib/time";
 import type { TimerPhase } from "@/features/timer/timer-types";
@@ -46,6 +46,8 @@ export function TimerDisplay({
     formatEditableValueFromSeconds(secondsRemaining),
   );
   const [isEditing, setIsEditing] = useState(false);
+  const originalSecondsRef = useRef(secondsRemaining);
+  const cancelledRef = useRef(false);
   const displayedInputValue = isEditing
     ? rawInput
     : formatEditingDisplay(rawInput || "0");
@@ -190,6 +192,8 @@ export function TimerDisplay({
                 }
               }}
               onFocus={(event) => {
+                originalSecondsRef.current = secondsRemaining;
+                cancelledRef.current = false;
                 setIsEditing(true);
                 requestAnimationFrame(() => {
                   const length = event.target.value.length;
@@ -198,7 +202,9 @@ export function TimerDisplay({
               }}
               onBlur={() => {
                 setIsEditing(false);
-                commitDuration(rawInput);
+                if (!cancelledRef.current) {
+                  commitDuration(rawInput);
+                }
               }}
               onKeyDown={(event) => {
                 if (event.key === "Enter") {
@@ -206,7 +212,9 @@ export function TimerDisplay({
                 }
 
                 if (event.key === "Escape") {
-                  setRawInput(formatEditableValueFromSeconds(secondsRemaining));
+                  cancelledRef.current = true;
+                  onDurationChange?.(originalSecondsRef.current);
+                  setRawInput(formatEditableValueFromSeconds(originalSecondsRef.current));
                   setIsEditing(false);
                   event.currentTarget.blur();
                 }
