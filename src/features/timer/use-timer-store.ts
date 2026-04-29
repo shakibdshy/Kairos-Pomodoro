@@ -9,7 +9,6 @@ import {
 } from "@/lib/constants";
 import {
   addSession,
-  incrementTaskPomos,
   startSession as dbStartSession,
   finishSession as dbFinishSession,
   abandonSession as dbAbandonSession,
@@ -19,6 +18,7 @@ import {
 import type { Category } from "@/lib/db";
 import { sendNotification, playChime } from "@/lib/notifications";
 import { useSettingsStore } from "@/features/settings/use-settings-store";
+import { useTaskStore } from "@/features/tasks/use-task-store";
 
 interface TimerDurations {
   work: number;
@@ -196,7 +196,7 @@ export const useTimerStore = create<TimerStore>((set, get) => ({
     );
 
     if (phase === "work" && completed && activeTaskId) {
-      incrementTaskPomos(activeTaskId);
+      useTaskStore.getState().incrementPomos(activeTaskId);
     }
 
     if (completed) {
@@ -352,7 +352,7 @@ export const useTimerStore = create<TimerStore>((set, get) => ({
       );
 
       if (phase === "work" && activeTaskId) {
-        incrementTaskPomos(activeTaskId);
+        useTaskStore.getState().incrementPomos(activeTaskId);
       }
     }
 
@@ -413,7 +413,7 @@ export const useTimerStore = create<TimerStore>((set, get) => ({
       const actualDuration = totalSeconds + overtimeSeconds;
       await dbFinishSession(currentSessionId, actualDuration, mood, notes);
       if (phase === "work" && activeTaskId) {
-        incrementTaskPomos(activeTaskId);
+        useTaskStore.getState().incrementPomos(activeTaskId);
       }
     }
 
@@ -472,7 +472,7 @@ export const useTimerStore = create<TimerStore>((set, get) => ({
       const actualDuration = totalSeconds + overtimeSeconds;
       await dbFinishSession(currentSessionId, actualDuration);
       if (phase === "work" && activeTaskId) {
-        incrementTaskPomos(activeTaskId);
+        useTaskStore.getState().incrementPomos(activeTaskId);
       }
     }
 
