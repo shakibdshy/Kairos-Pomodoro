@@ -7,7 +7,26 @@ const host = process.env.TAURI_DEV_HOST;
 const e2e = process.env.E2E === "true";
 
 export default defineConfig(async () => ({
-  plugins: [react(), tailwindcss()],
+  plugins: [
+    react(),
+    tailwindcss(),
+    ...(e2e
+      ? [
+          {
+            name: "e2e-tauri-internals",
+            transformIndexHtml() {
+              return [
+                {
+                  tag: "script",
+                  children: "window.__TAURI_INTERNALS__ = window.__TAURI_INTERNALS__ || {};",
+                  injectTo: "head-prepend" as const,
+                },
+              ];
+            },
+          },
+        ]
+      : []),
+  ],
   resolve: {
     alias: {
       "@": fileURLToPath(new URL("./src", import.meta.url)),
@@ -31,9 +50,6 @@ export default defineConfig(async () => ({
           }
         : {}),
     },
-  },
-  define: {
-    ...(e2e ? { "window.__TAURI_INTERNALS__": "{}" } : {}),
   },
   clearScreen: false,
   server: {

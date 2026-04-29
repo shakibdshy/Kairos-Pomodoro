@@ -161,9 +161,9 @@ describe("useTimerStore", () => {
   });
 
   describe("reset", () => {
-    it("resets to idle with correct phase duration", () => {
+    it("resets to idle with correct phase duration", async () => {
       useTimerStore.getState().setPhase("short_break");
-      useTimerStore.getState().start();
+      await useTimerStore.getState().start();
 
       useTimerStore.getState().reset();
       const state = useTimerStore.getState();

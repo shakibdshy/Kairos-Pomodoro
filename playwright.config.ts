@@ -9,7 +9,7 @@ export default defineConfig({
   reporter: "list",
   use: {
     baseURL: "http://localhost:1420",
-    trace: "on-first-retry",
+    trace: "retain-on-failure",
     viewport: { width: 1280, height: 720 },
   },
   projects: [

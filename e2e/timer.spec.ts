@@ -45,10 +45,7 @@ test.describe("Timer", () => {
     await page.getByRole("button", { name: "START FOCUS" }).click();
     await expect(page.getByRole("button", { name: "PAUSE" })).toBeVisible();
 
-    // Click the reset button (RotateCcw icon button, outline variant)
-    await page.locator('aside ~ div').locator('button').filter({ has: page.locator('svg.lucide-rotate-ccw') }).first().click();
-
-    // Or use the main content area reset button
-    await page.getByRole("button", { name: "START FOCUS" }).waitFor({ state: "visible", timeout: 5000 }).catch(() => {});
+    await page.getByRole("button", { name: "Reset" }).click();
+    await expect(page.getByRole("button", { name: "START FOCUS" })).toBeVisible();
   });
 });

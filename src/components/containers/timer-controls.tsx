@@ -226,6 +226,7 @@ export function TimerControls() {
               size="icon"
               intent="default"
               shape="rounded-full"
+              aria-label="Reset"
               onClick={reset}
               className="border-sahara-border/30 text-sahara-text-secondary p-2 md:p-3"
             >
@@ -296,6 +297,7 @@ export function TimerControls() {
               size="icon"
               intent="default"
               shape="rounded-full"
+              aria-label="Reset"
               onClick={reset}
               className="border-sahara-border/30 text-sahara-text-secondary p-2 md:p-3"
             >

@@ -8,6 +8,7 @@ interface Row {
 
 const tables = new Map<string, Map<number, Row>>();
 const autoInc = new Map<string, number>();
+const columnDefaults = new Map<string, Map<string, unknown>>();
 
 function getTable(name: string): Map<number, Row> {
   if (!tables.has(name)) {
@@ -33,6 +34,42 @@ function parseWhereId(sql: string, params: unknown[]): number | null {
   return m ? Number(params[parseInt(m[1]) - 1]) : null;
 }
 
+function parseCreateDefaults(sql: string): Map<string, unknown> {
+  const defaults = new Map<string, unknown>();
+  // Match column definitions inside the CREATE TABLE body
+  const bodyMatch = sql.match(/\(([^)]+)\)/s);
+  if (!bodyMatch) return defaults;
+
+  const lines = bodyMatch[1].split(",").map((l) => l.trim());
+  for (const line of lines) {
+    // Skip constraints (FOREIGN KEY, PRIMARY KEY, etc.)
+    if (/^(FOREIGN|PRIMARY|UNIQUE|CHECK|CONSTRAINT)/i.test(line)) continue;
+
+    const parts = line.split(/\s+/);
+    const colName = parts[0].replace(/["']/g, "");
+    if (!colName) continue;
+
+    const defaultMatch = line.match(/DEFAULT\s+(\S+)/i);
+    if (defaultMatch) {
+      let val = defaultMatch[1];
+      // Remove trailing comma
+      val = val.replace(/,$/, "");
+      // Parse the default value
+      if (val === "0") defaults.set(colName, 0);
+      else if (val === "1") defaults.set(colName, 1);
+      else if (/^\d+$/.test(val)) defaults.set(colName, Number(val));
+      else if (
+        val.startsWith("'") &&
+        val.endsWith("'") &&
+        val !== "'now'"
+      ) {
+        defaults.set(colName, val.slice(1, -1));
+      }
+    }
+  }
+  return defaults;
+}
+
 export class Database {
   static async load(_name: string): Promise<Database> {
     return new Database();
@@ -44,6 +81,7 @@ export class Database {
 
     if (up.startsWith("CREATE TABLE")) {
       getTable(name);
+      columnDefaults.set(name, parseCreateDefaults(sql));
       return { lastInsertId: 0, rowsAffected: 0 };
     }
 
@@ -52,16 +90,32 @@ export class Database {
       const id = (autoInc.get(name) || 0) + 1;
       autoInc.set(name, id);
       const row: Row = { id };
-      const colsM = sql.match(/\(([^)]+)\)\s*VALUES/i);
+
+      // Apply schema defaults first
+      const defaults = columnDefaults.get(name);
+      if (defaults) {
+        for (const [col, val] of defaults) {
+          row[col] = val;
+        }
+      }
+
+      // Parse the VALUES tokens to handle mixed placeholders and literals
+      const colsM = sql.match(/\(([^)]+)\)\s*VALUES\s*\(([^)]+)\)/i);
       if (colsM) {
-        colsM[1]
-          .split(",")
-          .map((c) => c.trim())
-          .forEach((col, i) => {
-            if (col.toLowerCase() !== "id") {
-              row[col] = i < params.length ? params[i] : null;
-            }
-          });
+        const cols = colsM[1].split(",").map((c) => c.trim());
+        const valTokens = colsM[2].split(",").map((v) => v.trim());
+        cols.forEach((col, i) => {
+          if (col.toLowerCase() === "id") return;
+          const token = valTokens[i];
+          if (!token) return;
+
+          if (/^\$\d+$/.test(token)) {
+            // Placeholder — consume from params
+            const pIdx = parseInt(token.slice(1)) - 1;
+            row[col] = pIdx < params.length ? params[pIdx] : null;
+          }
+          // Otherwise it's a literal/function — skip, default was already applied
+        });
       }
       tbl.set(id, row);
       return { lastInsertId: id, rowsAffected: 1 };
