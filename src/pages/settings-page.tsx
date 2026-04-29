@@ -1,9 +1,9 @@
-import { MainLayout } from "@/components/template/main-layout";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useSettingsStore } from "@/features/settings/use-settings-store";
-import { useNotificationStore } from "@/features/settings/use-notification-store";
+import { useNotificationStore } from "@/features/notifications/use-notification-store";
 import { Monitor, Zap, Bell, Keyboard, Shield } from "lucide-react";
 
+import { MainLayout } from "@/components/template/main-layout";
 import { SettingsSidebar } from "@/components/settings/settings-sidebar";
 import type { SidebarTab } from "@/components/settings/settings-sidebar";
 import { SettingsMobileTabs } from "@/components/settings/settings-mobile-tabs";
@@ -25,7 +25,6 @@ export function SettingsPage() {
   const [activeTab, setActiveTab] = useState("general");
 
   const settings = useSettingsStore((s) => s.settings);
-  const loaded = useSettingsStore((s) => s.loaded);
   const updateSetting = useSettingsStore((s) => s.updateSetting);
 
   const notifStatus = useNotificationStore((s) => s.status);
@@ -34,29 +33,6 @@ export function SettingsPage() {
   const requestNotifPermission = useNotificationStore(
     (s) => s.requestPermission,
   );
-
-  const [workMin, setWorkMin] = useState(25);
-  const [shortBreakMin, setShortBreakMin] = useState(5);
-  const [longBreakMin, setLongBreakMin] = useState(15);
-
-  useEffect(() => {
-    if (loaded) {
-      setWorkMin(Math.round(settings.workDuration / 60));
-      setShortBreakMin(Math.round(settings.shortBreakDuration / 60));
-      setLongBreakMin(Math.round(settings.longBreakDuration / 60));
-    }
-  }, [
-    loaded,
-    settings.workDuration,
-    settings.shortBreakDuration,
-    settings.longBreakDuration,
-  ]);
-
-  const handleSaveDurations = () => {
-    updateSetting("workDuration", workMin * 60);
-    updateSetting("shortBreakDuration", shortBreakMin * 60);
-    updateSetting("longBreakDuration", longBreakMin * 60);
-  };
 
   return (
     <MainLayout>
@@ -99,17 +75,7 @@ export function SettingsPage() {
                 />
               )}
 
-              {activeTab === "focus" && (
-                <SettingsFocusSection
-                  durationValues={{ workMin, shortBreakMin, longBreakMin }}
-                  setters={{
-                    workMin: setWorkMin,
-                    shortBreakMin: setShortBreakMin,
-                    longBreakMin: setLongBreakMin,
-                  }}
-                  onSave={handleSaveDurations}
-                />
-              )}
+              {activeTab === "focus" && <SettingsFocusSection />}
 
               {activeTab === "notifications" && (
                 <SettingsNotifications

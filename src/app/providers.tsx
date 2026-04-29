@@ -8,7 +8,7 @@ import { useHotkeys } from "@/features/system/use-hotkeys";
 import { useMenubar } from "@/features/system/use-menubar";
 import { ThemeProvider } from "@/components/providers/theme-provider";
 import { UpdateProvider } from "@/components/providers/update-provider";
-import { useNotificationStore } from "@/features/settings/use-notification-store";
+import { useNotificationStore } from "@/features/notifications/use-notification-store";
 
 interface ProvidersProps {
   children: ReactNode;

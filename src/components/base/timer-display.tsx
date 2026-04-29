@@ -2,6 +2,12 @@ import { useEffect, useRef, useState } from "react";
 import { Text } from "@/components/ui/text";
 import { cn } from "@/lib/cn";
 import { formatSeconds } from "@/lib/time";
+import {
+  sanitizeTimeInput,
+  parseTimeInput,
+  formatEditableValueFromSeconds,
+  formatEditingDisplay,
+} from "@/lib/timer-utils";
 import type { TimerPhase } from "@/features/timer/timer-types";
 
 interface TimerDisplayProps {
@@ -20,7 +26,6 @@ const CENTER_DESKTOP = SIZE_DESKTOP / 2;
 const SIZE_MOBILE = 260;
 const RADIUS_MOBILE = 116;
 const CENTER_MOBILE = SIZE_MOBILE / 2;
-const MAX_INPUT_SECONDS = 99 * 60 + 59;
 
 export function TimerDisplay({
   secondsRemaining,
@@ -255,45 +260,4 @@ export function TimerDisplay({
   );
 }
 
-function sanitizeTimeInput(value: string): string {
-  const cleaned = value.replace(/[^\d:]/g, "");
-  const [minutesPart = "", secondsPart = ""] = cleaned.split(":");
-  const hasColon = cleaned.includes(":");
-  const minutes = minutesPart.slice(0, 2);
-  const seconds = secondsPart.slice(0, 2);
 
-  return hasColon ? `${minutes}:${seconds}` : minutes;
-}
-
-function parseTimeInput(value: string): number {
-  if (!value) return 0;
-
-  if (!value.includes(":")) {
-    return Math.min(MAX_INPUT_SECONDS, Number(value) * 60);
-  }
-
-  const [minutesPart = "0", secondsPart = "0"] = value.split(":");
-  const minutes = Number(minutesPart || "0");
-  const seconds = Number(secondsPart || "0");
-
-  return Math.min(MAX_INPUT_SECONDS, minutes * 60 + seconds);
-}
-
-function formatEditableValueFromSeconds(totalSeconds: number): string {
-  const bounded = Math.max(0, Math.min(MAX_INPUT_SECONDS, Math.floor(totalSeconds)));
-  const minutes = Math.floor(bounded / 60).toString().padStart(2, "0");
-  const seconds = bounded % 60;
-
-  return seconds === 0 ? minutes : `${minutes}:${seconds.toString().padStart(2, "0")}`;
-}
-
-function formatEditingDisplay(value: string): string {
-  if (!value) return "00:00";
-
-  if (!value.includes(":")) {
-    return `${value.padStart(2, "0")}:00`;
-  }
-
-  const [minutesPart = "0", secondsPart = ""] = value.split(":");
-  return `${minutesPart.padStart(2, "0")}:${secondsPart.padEnd(2, "0")}`;
-}

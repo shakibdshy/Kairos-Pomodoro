@@ -1,5 +1,5 @@
 import { useSettingsStore } from "@/features/settings/use-settings-store";
-import { useNotificationStore } from "@/features/settings/use-notification-store";
+import { useNotificationStore } from "@/features/notifications/use-notification-store";
 import { isTauri, invoke } from "@/lib/tauri";
 
 type NotificationType =

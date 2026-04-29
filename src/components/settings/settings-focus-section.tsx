@@ -1,4 +1,6 @@
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
+import { useSettingsStore } from "@/features/settings/use-settings-store";
 import { Save } from "lucide-react";
 
 const DURATION_CONFIGS = [
@@ -7,44 +9,60 @@ const DURATION_CONFIGS = [
     label: "Focus Duration",
     desc: "Recommended length for deep work sessions.",
     max: 120,
+    settingsKey: "workDuration" as const,
   },
   {
     key: "shortBreakMin" as const,
     label: "Short Break",
     desc: "Quick pause to refresh your mind.",
     max: 30,
+    settingsKey: "shortBreakDuration" as const,
   },
   {
     key: "longBreakMin" as const,
     label: "Long Break",
     desc: "Extended rest after 4 focus sessions.",
     max: 60,
+    settingsKey: "longBreakDuration" as const,
   },
 ];
 
-interface DurationValues {
-  workMin: number;
-  shortBreakMin: number;
-  longBreakMin: number;
-}
+export function SettingsFocusSection() {
+  const settings = useSettingsStore((s) => s.settings);
+  const loaded = useSettingsStore((s) => s.loaded);
+  const updateSetting = useSettingsStore((s) => s.updateSetting);
 
-interface Setters {
-  workMin: (v: number) => void;
-  shortBreakMin: (v: number) => void;
-  longBreakMin: (v: number) => void;
-}
+  const [workMin, setWorkMin] = useState(25);
+  const [shortBreakMin, setShortBreakMin] = useState(5);
+  const [longBreakMin, setLongBreakMin] = useState(15);
 
-interface SettingsFocusSectionProps {
-  durationValues: DurationValues;
-  setters: Setters;
-  onSave: () => void;
-}
+  useEffect(() => {
+    if (loaded) {
+      setWorkMin(Math.round(settings.workDuration / 60));
+      setShortBreakMin(Math.round(settings.shortBreakDuration / 60));
+      setLongBreakMin(Math.round(settings.longBreakDuration / 60));
+    }
+  }, [
+    loaded,
+    settings.workDuration,
+    settings.shortBreakDuration,
+    settings.longBreakDuration,
+  ]);
 
-export function SettingsFocusSection({
-  durationValues,
-  setters,
-  onSave,
-}: SettingsFocusSectionProps) {
+  const handleSave = () => {
+    updateSetting("workDuration", workMin * 60);
+    updateSetting("shortBreakDuration", shortBreakMin * 60);
+    updateSetting("longBreakDuration", longBreakMin * 60);
+  };
+
+  const setters = {
+    workMin: setWorkMin,
+    shortBreakMin: setShortBreakMin,
+    longBreakMin: setLongBreakMin,
+  };
+
+  const values = { workMin, shortBreakMin, longBreakMin };
+
   return (
     <section>
       <div className="flex items-center justify-between mb-6 md:mb-8">
@@ -55,7 +73,7 @@ export function SettingsFocusSection({
           variant="link"
           intent="sahara"
           size="xs"
-          onClick={onSave}
+          onClick={handleSave}
           className="gap-2"
         >
           <Save className="w-3.5 h-3.5 md:w-4 md:h-4" />
@@ -82,7 +100,7 @@ export function SettingsFocusSection({
                 type="number"
                 min={1}
                 max={max}
-                value={durationValues[key]}
+                value={values[key]}
                 onChange={(e) =>
                   setters[key](
                     Math.min(
