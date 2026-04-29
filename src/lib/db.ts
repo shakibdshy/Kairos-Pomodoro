@@ -60,7 +60,7 @@ export async function initDb(): Promise<void> {
     CREATE TABLE IF NOT EXISTS categories (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       name TEXT NOT NULL UNIQUE,
-      color TEXT NOT NULL DEFAULT '${DEFAULT_CATEGORY_COLOR}',
+      color TEXT NOT NULL DEFAULT '#C17767',
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )
   `);
@@ -152,9 +152,9 @@ export async function addTask(
   project?: string,
   priority?: string,
   categoryId?: number | null,
-): Promise<void> {
+): Promise<number> {
   const database = await getDb();
-  await database.execute(
+  const result = await database.execute(
     "INSERT INTO tasks (name, estimated_pomos, project, priority, category_id) VALUES ($1, $2, $3, $4, $5)",
     [
       name,
@@ -164,6 +164,7 @@ export async function addTask(
       categoryId ?? null,
     ],
   );
+  return result.lastInsertId as number;
 }
 
 export async function toggleTaskArchived(

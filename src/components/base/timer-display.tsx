@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Text } from "@/components/ui/text";
+import { cn } from "@/lib/cn";
 import { formatSeconds } from "@/lib/time";
 import type { TimerPhase } from "@/features/timer/timer-types";
 
@@ -252,10 +253,6 @@ export function TimerDisplay({
       </div>
     </div>
   );
-}
-
-function cn(...classes: (string | undefined | null | false)[]) {
-  return classes.filter(Boolean).join(" ");
 }
 
 function sanitizeTimeInput(value: string): string {

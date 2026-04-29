@@ -54,7 +54,7 @@ export function useHotkeys() {
   useEffect(() => {
     if (!isTauri()) return;
 
-    invokeHotkey(hotkey).catch(() => {});
+    invokeHotkey(hotkey).catch((e) => console.warn("[Hotkeys] Failed to register global hotkey:", e));
 
     const unlisten = listen("hotkey:toggle-timer", () => {
       if (status === "idle") start();

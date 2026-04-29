@@ -73,21 +73,14 @@ const workerCode = `
       }
       self.postMessage({ type: "tick", remaining });
     }
-
-    if (e.data.command === "done") {
-      onDone?.();
-      set({ secondsRemaining: remaining });
-    }
-
-    if (e.data.command === "overtime_tick") {
-      onOvertimeTick?.(overtime);
-    }
   };
 `;
 
 const blob = new Blob([workerCode], { type: "application/javascript" });
-const workerUrl = URL.createObjectURL(blob);
 
 export function createTimerWorker(): Worker {
-  return new Worker(workerUrl);
+  const url = URL.createObjectURL(blob);
+  const worker = new Worker(url);
+  URL.revokeObjectURL(url);
+  return worker;
 }
