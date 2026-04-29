@@ -34,6 +34,9 @@ export function TimerControls() {
   const reset = useTimerStore((s) => s.reset);
   const setPhase = useTimerStore((s) => s.setPhase);
   const adjustDuration = useTimerStore((s) => s.adjustDuration);
+  const setDurationForCurrentPhase = useTimerStore(
+    (s) => s.setDurationForCurrentPhase,
+  );
   const finishSession = useTimerStore((s) => s.finishSession);
   const abandonSession = useTimerStore((s) => s.abandonSession);
   const selectedCategory = useTimerStore((s) => s.selectedCategory);
@@ -109,6 +112,8 @@ export function TimerControls() {
         totalSeconds={totalSeconds}
         phase={phase}
         overtimeSeconds={overtimeSeconds}
+        editable={status === "idle"}
+        onDurationChange={setDurationForCurrentPhase}
       />
 
       {/* Duration Adjuster with Time Range */}

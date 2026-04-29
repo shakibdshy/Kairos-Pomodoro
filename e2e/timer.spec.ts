@@ -2,18 +2,18 @@ import { test, expect } from "./helpers";
 
 test.describe("Timer", () => {
   test("shows default 25:00 timer with START FOCUS button", async ({ page }) => {
-    await expect(page.getByText("25:00")).toBeVisible();
+    await expect(page.getByRole("textbox", { name: "Set timer duration" })).toHaveValue("25:00");
     await expect(page.getByRole("button", { name: "START FOCUS" })).toBeVisible();
   });
 
   test("switches to Short Break phase", async ({ page }) => {
     await page.getByRole("button", { name: "Short Break" }).click();
-    await expect(page.getByText("05:00")).toBeVisible();
+    await expect(page.getByRole("textbox", { name: "Set timer duration" })).toHaveValue("05:00");
   });
 
   test("switches to Long Break phase", async ({ page }) => {
     await page.getByRole("button", { name: "Long Break" }).click();
-    await expect(page.getByText("15:00")).toBeVisible();
+    await expect(page.getByRole("textbox", { name: "Set timer duration" })).toHaveValue("15:00");
   });
 
   test("starts and pauses timer", async ({ page }) => {

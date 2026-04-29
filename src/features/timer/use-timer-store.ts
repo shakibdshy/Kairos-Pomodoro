@@ -48,6 +48,7 @@ interface TimerStore {
   setPhase: (phase: TimerPhase) => void;
   setActiveTask: (taskId: number | null) => void;
   setDurations: (work: number, short: number, long: number) => void;
+  setDurationForCurrentPhase: (seconds: number) => void;
   adjustDuration: (minutes: number) => void;
   finishSession: (mood?: string, notes?: string) => Promise<void>;
   abandonSession: () => Promise<void>;
@@ -64,6 +65,10 @@ function getPhaseDuration(
   return durations[
     phase === "work" ? "work" : phase === "short_break" ? "short" : "long"
   ];
+}
+
+function getPhaseDurationKey(phase: TimerPhase): keyof TimerDurations {
+  return phase === "work" ? "work" : phase === "short_break" ? "short" : "long";
 }
 
 function getNextPhase(
@@ -288,10 +293,24 @@ export const useTimerStore = create<TimerStore>((set, get) => ({
     }
   },
 
+  setDurationForCurrentPhase: (seconds: number) => {
+    const { status, phase, durations } = get();
+    if (status !== "idle") return;
+
+    const nextDuration = Math.max(1, Math.floor(seconds));
+    const key = getPhaseDurationKey(phase);
+    const nextDurations = { ...durations, [key]: nextDuration };
+
+    set({
+      durations: nextDurations,
+      secondsRemaining: nextDuration,
+      totalSeconds: nextDuration,
+    });
+  },
+
   adjustDuration: (minutes: number) => {
     const { status, worker, phase, durations } = get();
-    const key =
-      phase === "work" ? "work" : phase === "short_break" ? "short" : "long";
+    const key = getPhaseDurationKey(phase);
 
     if (status === "idle") {
       const currentDuration = durations[key];
