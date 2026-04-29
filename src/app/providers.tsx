@@ -7,6 +7,7 @@ import { useTray } from "@/features/system/use-tray";
 import { useHotkeys } from "@/features/system/use-hotkeys";
 import { useMenubar } from "@/features/system/use-menubar";
 import { ThemeProvider } from "@/components/providers/theme-provider";
+import { UpdateProvider } from "@/components/providers/update-provider";
 import { useNotificationStore } from "@/features/settings/use-notification-store";
 
 interface ProvidersProps {
@@ -107,7 +108,9 @@ export function Providers({ children }: ProvidersProps) {
 
   return (
     <ThemeProvider>
-      {children}
+      <UpdateProvider>
+        {children}
+      </UpdateProvider>
     </ThemeProvider>
   );
 }
