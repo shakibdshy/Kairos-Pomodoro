@@ -4,19 +4,40 @@
   <img src="./kairos-banner.png" alt="Kairos-Pomodoro Banner" width="800" />
 </p>
 
-<h1 align="center">Download</h1>
-
-<h3 align="center">
-  <a href="https://github.com/shakibdshy/Kairos-Pomodoro/releases/download/v1.0.0/Kairos-Pomodoro_1.0.0_aarch64.dmg">🍎 macOS (Apple Silicon)</a> &nbsp;·&nbsp;
-  <a href="https://github.com/shakibdshy/Kairos-Pomodoro/releases/download/v1.0.0/Kairos-Pomodoro_1.0.0_x64-setup.exe">🪟 Windows</a> &nbsp;·&nbsp;
-  <a href="https://github.com/shakibdshy/Kairos-Pomodoro/releases/download/v1.0.0/Kairos-Pomodoro_1.0.0_amd64.AppImage">🐧 Linux</a>
-</h3>
-
 <p align="center">
-  <sup><strong>v1.0.0</strong> &nbsp;·&nbsp; MIT Licensed &nbsp;·&nbsp; <a href="#getting-started">Build from source →</a></sup>
+  <a href="https://github.com/shakibdshy/Kairos-Pomodoro/releases"><img alt="GitHub release" src="https://img.shields.io/github/v/release/shakibdshy/Kairos-Pomodoro?style=flat-square&label=Release&color=blueviolet"></a>
+  <a href="https://github.com/shakibdshy/Kairos-Pomodoro/actions/workflows/release.yml"><img alt="CI Status" src="https://github.com/shakibdshy/Kairos-Pomodoro/actions/workflows/release.yml/badge.svg?style=flat-square"></a>
+  <a href="https://github.com/shakibdshy/Kairos-Pomodoro/stargazers"><img alt="GitHub stars" src="https://img.shields.io/github/stars/shakibdshy/Kairos-Pomodoro?style=flat-square&label=Stars&color=yellow"></a>
+  <a href="https://github.com/shakibdshy/Kairos-Pomodoro/blob/main/LICENSE"><img alt="License" src="https://img.shields.io/github/license/shakibdshy/Kairos-Pomodoro?style=flat-square&label=License&color=green"></a>
+  <a href="https://github.com/shakibdshy/Kairos-Pomodoro"><img alt="Platform" src="https://img.shields.io/badge/platform-macOS%20%7C%20Windows%20%7C%20Linux-lightgrey?style=flat-square"></a>
+  <a href="https://github.com/shakibdshy/Kairos-Pomodoro"><img alt="Built with" src="https://img.shields.io/badge/built%20with-Tauri%20%7C%20React%20%7C%20TypeScript-61DAFB?style=flat-square"></a>
 </p>
 
 <br />
+
+<h1 align="center">Download</h1>
+
+<p align="center">
+  <a href="https://github.com/shakibdshy/Kairos-Pomodoro/releases/download/v1.1.0/Kairos-Pomodoro_aarch64_signed.dmg">
+    <img alt="Download for macOS" src="https://img.shields.io/badge/macOS-Apple%20Silicon-000?style=for-the-badge&logo=apple&logoColor=white">
+  </a>
+  <a href="https://github.com/shakibdshy/Kairos-Pomodoro/releases/download/v1.1.0/Kairos-Pomodoro_1.1.0_x64-setup.exe">
+    <img alt="Download for Windows" src="https://img.shields.io/badge/Windows-x64%20Setup-0078D6?style=for-the-badge&logo=windows&logoColor=white">
+  </a>
+  <a href="https://github.com/shakibdshy/Kairos-Pomodoro/releases/download/v1.1.0/Kairos-Pomodoro_1.1.0_amd64.AppImage">
+    <img alt="Download for Linux" src="https://img.shields.io/badge/Linux-AppImage-FCC624?style=for-the-badge&logo=linux&logoColor=black">
+  </a>
+</p>
+
+<p align="center">
+  <a href="https://www.producthunt.com/products/kairos-pomodoro?embed=true&utm_source=badge-featured&utm_medium=badge&utm_campaign=badge-kairos-pomodoro" target="_blank" rel="noopener noreferrer">
+    <img alt="Kairos‑Pomodoro - Focus, track tasks & analyze — local‑first productivity tool | Product Hunt" width="250" height="54" src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1132194&theme=light&t=1777528692255">
+  </a>
+</p>
+
+<p align="center">
+  <sup><strong>v1.1.0</strong> &nbsp;·&nbsp; MIT Licensed &nbsp;·&nbsp; <a href="#getting-started">Build from source →</a></sup>
+</p>
 
 ## 🍎 macOS Installation Guide
 
