@@ -1,9 +1,8 @@
 import { useState, useEffect } from "react";
 import { X, Plus, Edit3, Tag } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useCategoriesStore } from "@/features/categories/use-categories-store";
 import type { Task } from "@/features/tasks/task-types";
-import type { Category } from "@/lib/db";
-import { getCategories } from "@/lib/db";
 
 interface AddTaskModalProps {
   open: boolean;
@@ -36,18 +35,14 @@ export function AddTaskModal({
   const [project, setProject] = useState("");
   const [priority, setPriority] = useState("");
   const [categoryId, setCategoryId] = useState<number | null>(null);
-  const [categories, setCategories] = useState<Category[]>([]);
+  const categories = useCategoriesStore((s) => s.categories);
+  const loadCategories = useCategoriesStore((s) => s.loadCategories);
 
   useEffect(() => {
     if (open) {
-      getCategories()
-        .then(setCategories)
-        .catch((err) => {
-          console.error("[AddTaskModal] Failed to load categories:", err);
-          setCategories([]);
-        });
+      loadCategories();
     }
-  }, [open]);
+  }, [open, loadCategories]);
 
   useEffect(() => {
     if (editTask) {

@@ -68,20 +68,71 @@ export const useTaskStore = create<TaskStore>((set) => ({
 
   addTask: async (name, estimatedPomos, project, priority, categoryId) => {
     try {
-      await dbAddTask(name, estimatedPomos, project, priority, categoryId);
-      const tasks = await getTasks();
-      set({ tasks, error: null });
+      const id = await dbAddTask(
+        name,
+        estimatedPomos,
+        project,
+        priority,
+        categoryId,
+      );
+      const newTask: Task = {
+        id,
+        name,
+        estimated_pomos: estimatedPomos,
+        completed_pomos: 0,
+        project: project ?? undefined,
+        priority: priority as Task["priority"] | undefined,
+        category_id: categoryId ?? null,
+        created_at: new Date().toISOString(),
+        archived: 0,
+      };
+      set((state) => ({
+        tasks: [newTask, ...state.tasks],
+        error: null,
+      }));
     } catch (err) {
       console.error("[TaskStore] Failed to add task:", err);
       set({ error: String(err) });
     }
   },
 
-  updateTask: async (id, name, estimatedPomos, project, priority, categoryId) => {
+  updateTask: async (
+    id,
+    name,
+    estimatedPomos,
+    project,
+    priority,
+    categoryId,
+  ) => {
     try {
-      await dbUpdateTask(id, name, estimatedPomos, project, priority, categoryId);
-      const tasks = await getTasks();
-      set({ tasks, error: null });
+      await dbUpdateTask(
+        id,
+        name,
+        estimatedPomos,
+        project,
+        priority,
+        categoryId,
+      );
+      set((state) => ({
+        tasks: state.tasks.map((t) => {
+          if (t.id !== id) return t;
+          return {
+            ...t,
+            ...(name !== undefined && { name }),
+            ...(estimatedPomos !== undefined && {
+              estimated_pomos: estimatedPomos,
+            }),
+            ...(project !== undefined && { project: project ?? undefined }),
+            ...(priority !== undefined && {
+              priority: priority as Task["priority"] | undefined,
+            }),
+            ...(categoryId !== undefined && {
+              category_id: categoryId ?? null,
+            }),
+          };
+        }),
+        error: null,
+      }));
     } catch (err) {
       console.error("[TaskStore] Failed to update task:", err);
       set({ error: String(err) });

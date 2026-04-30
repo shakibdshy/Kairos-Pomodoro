@@ -20,8 +20,7 @@ export const useNotificationStore = create<NotificationStore>((set) => ({
   checkPermission: async () => {
     set({ checking: true, error: null });
     try {
-      const tauri = await isTauri();
-      if (!tauri) {
+      if (!isTauri()) {
         set({ status: "unavailable", checking: false });
         return;
       }
@@ -47,8 +46,7 @@ export const useNotificationStore = create<NotificationStore>((set) => ({
   requestPermission: async () => {
     set({ checking: true, error: null });
     try {
-      const tauri = await isTauri();
-      if (!tauri) {
+      if (!isTauri()) {
         set({
           status: "unavailable",
           checking: false,

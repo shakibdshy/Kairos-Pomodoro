@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/cn";
+import { useOnboardingStore } from "@/features/onboarding/use-onboarding-store";
 
 const STEP_ICON_COLOR = "bg-sahara-primary-light text-sahara-primary";
 
@@ -47,8 +48,14 @@ const steps = [
 export function OnboardingPage() {
   const [step, setStep] = useState(0);
   const navigate = useNavigate();
+  const markComplete = useOnboardingStore((s) => s.markComplete);
 
   const currentStep = steps[step];
+
+  const completeOnboarding = async () => {
+    await markComplete();
+    navigate("/");
+  };
 
   return (
     <div className="h-screen bg-sahara-bg flex items-center justify-center p-4 md:p-8 overflow-hidden">
@@ -101,7 +108,7 @@ export function OnboardingPage() {
               intent="default"
               size="xs"
               className="text-[9px] md:text-[10px] tracking-widest uppercase"
-              onClick={() => navigate("/")}
+              onClick={() => completeOnboarding()}
             >
               Skip to App
             </Button>
@@ -149,7 +156,7 @@ export function OnboardingPage() {
                 intent="sahara"
                 size="lg"
                 shape="rounded-2xl"
-                onClick={() => navigate("/")}
+                onClick={() => completeOnboarding()}
                 className="hover:scale-[1.02] active:scale-[0.98] shadow-xl text-xs md:text-sm px-5 md:px-7 py-2.5 md:py-3"
               >
                 GET STARTED

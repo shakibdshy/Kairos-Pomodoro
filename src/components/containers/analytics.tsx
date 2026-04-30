@@ -8,6 +8,7 @@ import { StatCard } from "@/components/base/stat-card";
 import { WeeklyChart } from "@/components/base/weekly-chart";
 import { BadgeCard } from "@/components/base/badge-card";
 import { AnalyticsCategoryBreakdown } from "@/components/base/analytics-category-breakdown";
+import { formatTotalTime, formatDuration } from "@/lib/session-utils";
 
 export function AnalyticsDashboard() {
   const [weekData, setWeekData] = useState<DayData[]>([]);
@@ -60,7 +61,7 @@ export function AnalyticsDashboard() {
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
           <StatCard
             label="Total Focus"
-            value={formatHours(totalFocusSec)}
+            value={formatTotalTime(totalFocusSec)}
             icon="clock"
           />
           <StatCard
@@ -70,12 +71,12 @@ export function AnalyticsDashboard() {
           />
           <StatCard
             label="Avg Session"
-            value={avgSessionSec > 0 ? formatMinutes(avgSessionSec) : "0m"}
+            value={avgSessionSec > 0 ? formatDuration(avgSessionSec) : "0m"}
             icon="trending"
           />
           <StatCard
             label="Daily Avg"
-            value={avgDailySec > 0 ? formatMinutes(avgDailySec) : "0m"}
+            value={avgDailySec > 0 ? formatDuration(avgDailySec) : "0m"}
             icon="flame"
           />
         </div>
@@ -129,15 +130,3 @@ export function AnalyticsDashboard() {
   );
 }
 
-function formatHours(sec: number): string {
-  if (!sec) return "0h";
-  const h = Math.floor(sec / 3600);
-  const m = Math.round((sec % 3600) / 60);
-  return m > 0 ? `${h}h ${m}m` : `${h}h`;
-}
-
-function formatMinutes(sec: number): string {
-  if (!sec) return "0m";
-  const m = Math.round(sec / 60);
-  return `${m}m`;
-}

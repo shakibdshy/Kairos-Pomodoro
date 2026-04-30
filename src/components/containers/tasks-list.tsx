@@ -42,7 +42,7 @@ export function TasksList() {
     priority: string;
     categoryId: number | null;
   }) => {
-    await addTask(data.name, data.estimatedPomos);
+    await addTask(data.name, data.estimatedPomos, data.project, data.priority, data.categoryId);
     setShowAddModal(false);
   };
 
