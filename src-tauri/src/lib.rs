@@ -1,15 +1,10 @@
 mod commands;
 
 use commands::menubar::{MenubarState, setup_menubar_tray};
-use tauri::{
-    menu::{Menu, MenuItem, PredefinedMenuItem},
-    tray::TrayIconBuilder,
-    Emitter, Manager,
-};
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    tauri::Builder::default()
+    let app = tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_sql::Builder::new().build())
         .plugin(tauri_plugin_autostart::init(
@@ -33,46 +28,18 @@ pub fn run() {
         ])
         .manage(MenubarState::new())
         .setup(|app| {
-            let show = MenuItem::with_id(app, "show", "Show Kairos-Pomodoro", true, None::<&str>)?;
-            let toggle = MenuItem::with_id(app, "toggle", "Start/Pause", true, None::<&str>)?;
-            let quit = MenuItem::with_id(app, "quit", "Quit", true, None::<&str>)?;
-            let separator = PredefinedMenuItem::separator(app)?;
-
-            let menu = Menu::with_items(app, &[&show, &toggle, &separator, &quit])?;
-
-            let _tray = TrayIconBuilder::new()
-                .menu(&menu)
-                .tooltip("Kairos-Pomodoro")
-                .on_menu_event(|app, event| match event.id.as_ref() {
-                    "show" => {
-                        if let Some(window) = app.get_webview_window("main") {
-                            let _ = window.show();
-                            let _ = window.set_focus();
-                        }
-                    }
-                    "toggle" => {
-                        let _ = app.emit("hotkey:toggle-timer", ());
-                    }
-                    "quit" => {
-                        app.exit(0);
-                    }
-                    _ => {}
-                })
-                .on_tray_icon_event(|tray, event| {
-                    if let tauri::tray::TrayIconEvent::Click { .. } = event {
-                        let app = tray.app_handle();
-                        if let Some(window) = app.get_webview_window("main") {
-                            let _ = window.show();
-                            let _ = window.set_focus();
-                        }
-                    }
-                })
-                .build(app)?;
-
             setup_menubar_tray(app)?;
-
             Ok(())
         })
-        .run(tauri::generate_context!())
-        .expect("error while running tauri application");
+        .build(tauri::generate_context!())
+        .expect("error while building tauri application");
+
+    app.run(|_app_handle, event| {
+        #[cfg(desktop)]
+        if let tauri::RunEvent::ExitRequested { api, code, .. } = event {
+            if code.is_none() {
+                api.prevent_exit();
+            }
+        }
+    });
 }
