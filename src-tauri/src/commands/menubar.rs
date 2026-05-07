@@ -1,5 +1,5 @@
 use std::sync::Mutex;
-use tauri::{Emitter, Manager, tray::TrayIcon};
+use tauri::{tray::TrayIcon, Emitter, Manager};
 
 pub struct MenubarState {
     pub tray: Mutex<Option<TrayIcon>>,
@@ -59,32 +59,34 @@ pub fn menubar_set_tooltip(
     Ok(())
 }
 
-pub fn setup_menubar_tray(
-    app: &tauri::App,
-) -> Result<(), Box<dyn std::error::Error>> {
+pub fn setup_menubar_tray(app: &tauri::App) -> Result<(), Box<dyn std::error::Error>> {
     use tauri::{
+        include_image,
         menu::{Menu, MenuItem, PredefinedMenuItem},
         tray::TrayIconBuilder,
     };
 
-    let show_item =
-        MenuItem::with_id(app, "menubar-show", "Show Kairos-Pomodoro", true, None::<&str>)?;
-    let toggle_item = MenuItem::with_id(
+    let show_item = MenuItem::with_id(
         app,
-        "menubar-toggle",
-        "Pause / Resume",
+        "menubar-show",
+        "Show Kairos-Pomodoro",
         true,
         None::<&str>,
     )?;
+    let toggle_item =
+        MenuItem::with_id(app, "menubar-toggle", "Pause / Resume", true, None::<&str>)?;
     let separator = PredefinedMenuItem::separator(app)?;
-    let quit_item =
-        MenuItem::with_id(app, "menubar-quit", "Quit Kairos-Pomodoro", true, None::<&str>)?;
+    let quit_item = MenuItem::with_id(
+        app,
+        "menubar-quit",
+        "Quit Kairos-Pomodoro",
+        true,
+        None::<&str>,
+    )?;
 
     let menu = Menu::with_items(app, &[&show_item, &toggle_item, &separator, &quit_item])?;
 
-    let tray = TrayIconBuilder::new()
-        .icon(app.default_window_icon().cloned().unwrap())
-        .icon_as_template(true)
+    let tray = TrayIconBuilder::with_id("menubar-tray")
         .menu(&menu)
         .tooltip("Kairos-Pomodoro")
         .show_menu_on_left_click(false)
