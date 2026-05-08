@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { useTaskStore } from "@/features/tasks/use-task-store";
 import { useTimerStore } from "@/features/timer/use-timer-store";
+import { useTaskFilter } from "@/features/tasks/use-task-filter";
+import { useCategoriesStore } from "@/features/categories/use-categories-store";
 import {
   Plus,
   Search,
@@ -8,17 +10,19 @@ import {
   ListTodo,
   LayoutGrid,
   Target,
-  Clock,
   CheckCircle2,
-  Trash2,
+  ChevronDown,
+  ChevronRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/cn";
 import { AddTaskModal } from "@/components/base/add-task-modal";
+import { TaskListCard } from "@/components/base/task-list-card";
 
 export function TasksList() {
   const tasks = useTaskStore((s) => s.tasks);
   const addTask = useTaskStore((s) => s.addTask);
+  const updateTask = useTaskStore((s) => s.updateTask);
   const deleteTask = useTaskStore((s) => s.deleteTask);
   const incrementPomos = useTaskStore((s) => s.incrementPomos);
 
