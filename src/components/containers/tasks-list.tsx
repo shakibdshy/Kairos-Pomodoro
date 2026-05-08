@@ -32,12 +32,11 @@ export function TasksList() {
   const [searchQuery, setSearchQuery] = useState("");
   const [viewMode, setViewMode] = useState<"list" | "grid">("list");
   const [showAddModal, setShowAddModal] = useState(false);
+  const [taskToEdit, setTaskToEdit] = useState<typeof tasks[number] | null>(null);
+  const [showDone, setShowDone] = useState(true);
+  const categories = useCategoriesStore((s) => s.categories);
 
-  const filteredTasks = tasks.filter(
-    (t) =>
-      t.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (t.project || "").toLowerCase().includes(searchQuery.toLowerCase()),
-  );
+  const { active: activeTasks, done: doneTasks } = useTaskFilter(tasks, searchQuery);
 
   const handleAddTask = async (data: {
     name: string;
@@ -47,6 +46,26 @@ export function TasksList() {
     categoryId: number | null;
   }) => {
     await addTask(data.name, data.estimatedPomos, data.project, data.priority, data.categoryId);
+    setShowAddModal(false);
+  };
+
+  const handleEditTask = async (data: {
+    name: string;
+    estimatedPomos: number;
+    project: string;
+    priority: string;
+    categoryId: number | null;
+  }) => {
+    if (!taskToEdit) return;
+    await updateTask(
+      taskToEdit.id,
+      data.name,
+      data.estimatedPomos,
+      data.project || null,
+      data.priority || null,
+      data.categoryId,
+    );
+    setTaskToEdit(null);
     setShowAddModal(false);
   };
 
@@ -113,12 +132,17 @@ export function TasksList() {
 
       <AddTaskModal
         open={showAddModal}
-        onClose={() => setShowAddModal(false)}
-        onSubmit={handleAddTask}
+        onClose={() => {
+          setShowAddModal(false);
+          setTaskToEdit(null);
+        }}
+        onSubmit={taskToEdit ? handleEditTask : handleAddTask}
+        editTask={taskToEdit}
+        categories={categories}
       />
 
-      {/* Task Grid/List */}
-      {filteredTasks.length === 0 && searchQuery ? (
+      {/* Task Sections */}
+      {activeTasks.length === 0 && doneTasks.length === 0 && searchQuery ? (
         <div className="flex flex-col items-center justify-center py-16 text-center">
           <Filter className="w-12 h-12 text-sahara-border mb-4" />
           <p className="text-sm font-bold text-sahara-text-muted">
@@ -129,124 +153,111 @@ export function TasksList() {
           </p>
         </div>
       ) : (
-        <div
-          className={cn(
-            viewMode === "grid"
-              ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4"
-              : "space-y-2.5 md:space-y-3",
-          )}
-        >
-          {filteredTasks.map((task) => (
-            <div
-              key={task.id}
-              className={cn(
-                "group relative bg-sahara-surface border border-sahara-border/15 rounded-xl md:rounded-2xl p-3.5 md:p-5 transition-all hover:border-sahara-primary/25 hover:shadow-sm cursor-pointer",
-                activeTaskId === task.id &&
-                  "border-sahara-primary/40 shadow-md shadow-sahara-primary/5",
-              )}
-              onClick={() =>
-                setActiveTask(activeTaskId === task.id ? null : task.id)
-              }
-            >
-              <div className="flex items-start justify-between gap-2 mb-2 md:mb-3">
-                <span
-                  className={cn(
-                    "px-2 py-0.5 rounded-md text-[9px] md:text-[10px] font-bold uppercase tracking-wider",
-                    activeTaskId === task.id
-                      ? "bg-sahara-primary-light text-sahara-primary"
-                      : "bg-sahara-card text-sahara-text-muted",
-                  )}
-                >
-                  {task.project || "General"}
+        <div className="space-y-8">
+          {/* Active Tasks */}
+          {activeTasks.length > 0 && (
+            <div>
+              <div className="flex items-center gap-2 mb-4">
+                <Target className="w-4 h-4 text-sahara-primary" />
+                <span className="text-xs font-bold text-sahara-text-muted uppercase tracking-wider">
+                  Active ({activeTasks.length})
                 </span>
-                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      incrementPomos(task.id);
-                    }}
-                    className="p-1 rounded-lg hover:bg-sahara-card transition-colors cursor-pointer"
-                    title="Complete pomodoro"
-                  >
-                    <CheckCircle2 className="w-3.5 h-3.5 text-green-500" />
-                  </button>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      deleteTask(task.id).catch(() => {});
-                      if (activeTaskId === task.id) setActiveTask(null);
-                    }}
-                    className="p-1 rounded-lg hover:bg-red-50 transition-colors cursor-pointer"
-                    title="Delete task"
-                  >
-                    <Trash2 className="w-3.5 h-3.5 text-red-400" />
-                  </button>
-                </div>
               </div>
-
-              <h3
+              <div
                 className={cn(
-                  "font-serif text-base md:text-lg leading-snug",
-                  task.completed_pomos > 0 &&
-                    task.completed_pomos >= task.estimated_pomos
-                    ? "line-through text-sahara-text-muted"
-                    : "text-sahara-text",
+                  viewMode === "grid"
+                    ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4"
+                    : "space-y-2.5 md:space-y-3",
                 )}
               >
-                {task.name}
-              </h3>
-
-              <div className="flex items-center gap-3 mt-2 md:mt-3 flex-wrap">
-                <div className="flex items-center gap-1.5">
-                  <Target className="w-3 h-3 md:w-3.5 md:h-3.5 text-sahara-primary" />
-                  <span className="text-[10px] md:text-xs font-bold text-sahara-text-secondary tabular-nums">
-                    {task.completed_pomos}/{task.estimated_pomos}{" "}
-                    <span className="text-sahara-text-muted font-normal">
-                      pomos
-                    </span>
-                  </span>
-                </div>
-
-                {activeTaskId === task.id && (
-                  <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-green-500/10 text-green-600 text-[9px] md:text-[10px] font-bold uppercase tracking-wider">
-                    <Clock className="w-2.5 h-2.5 md:w-3 md:h-3 animate-pulse" />
-                    Active
-                  </div>
-                )}
-
-                {task.completed_pomos > 0 &&
-                  task.completed_pomos >= task.estimated_pomos && (
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-sahara-bg text-sahara-text-muted text-[9px] md:text-[10px] font-bold uppercase tracking-wider">
-                      <CheckCircle2 className="w-2.5 h-2.5 md:w-3 md:h-3" />
-                      Done
-                    </span>
-                  )}
+                  {activeTasks.map((task) => (
+                    <TaskListCard
+                      key={task.id}
+                      task={task}
+                      isActive={activeTaskId === task.id}
+                      onToggleActive={() =>
+                        setActiveTask(activeTaskId === task.id ? null : task.id)
+                      }
+                      onEdit={() => {
+                        setTaskToEdit(task);
+                        setShowAddModal(true);
+                      }}
+                      onDelete={async () => {
+                        await deleteTask(task.id);
+                        if (activeTaskId === task.id) setActiveTask(null);
+                      }}
+                      onCompletePomo={() => incrementPomos(task.id)}
+                    />
+                  ))}
               </div>
+            </div>
+          )}
 
-              {task.estimated_pomos > 0 && (
-                <div className="mt-2 md:mt-3 h-1.5 bg-sahara-bg/60 rounded-full overflow-hidden">
-                  <div
-                    className={cn(
-                      "h-full rounded-full transition-all duration-500",
-                      task.completed_pomos >= task.estimated_pomos
-                        ? "bg-green-500"
-                        : "bg-sahara-primary",
-                    )}
-                    style={{
-                      width: `${Math.min(
-                        100,
-                        Math.round(
-                          (task.completed_pomos / task.estimated_pomos) * 100,
-                        ),
-                      )}%`,
-                    }}
-                  />
+          {/* Active tasks empty state (when search yields results only in done) */}
+          {activeTasks.length === 0 && doneTasks.length > 0 && (
+            <div className="flex flex-col items-center justify-center py-12 text-center">
+              <Target className="w-10 h-10 text-sahara-border mb-3" />
+              <p className="text-sm font-bold text-sahara-text-muted">
+                No active tasks
+              </p>
+              <p className="text-xs text-sahara-text-muted/60 mt-1">
+                All tasks are completed!
+              </p>
+            </div>
+          )}
+
+          {/* Done Tasks */}
+          {doneTasks.length > 0 && (
+            <div>
+              <button
+                onClick={() => setShowDone(!showDone)}
+                className="flex items-center gap-2 mb-4 w-full text-left"
+              >
+                {showDone ? (
+                  <ChevronDown className="w-4 h-4 text-sahara-text-muted" />
+                ) : (
+                  <ChevronRight className="w-4 h-4 text-sahara-text-muted" />
+                )}
+                <CheckCircle2 className="w-4 h-4 text-green-500" />
+                <span className="text-xs font-bold text-sahara-text-muted uppercase tracking-wider">
+                  Completed ({doneTasks.length})
+                </span>
+              </button>
+
+              {showDone && (
+                <div
+                  className={cn(
+                    viewMode === "grid"
+                      ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4"
+                      : "space-y-2.5 md:space-y-3",
+                  )}
+                >
+                  {doneTasks.map((task) => (
+                    <TaskListCard
+                      key={task.id}
+                      task={task}
+                      isActive={false}
+                      onToggleActive={() =>
+                        setActiveTask(task.id)
+                      }
+                      onEdit={() => {
+                        setTaskToEdit(task);
+                        setShowAddModal(true);
+                      }}
+                      onDelete={async () => {
+                        await deleteTask(task.id);
+                      }}
+                      onCompletePomo={() => incrementPomos(task.id)}
+                    />
+                  ))}
                 </div>
               )}
             </div>
-          ))}
+          )}
         </div>
       )}
     </div>
   );
 }
+
+
