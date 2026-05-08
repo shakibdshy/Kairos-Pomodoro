@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import { X, Plus, Edit3, Tag } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useCategoriesStore } from "@/features/categories/use-categories-store";
 import type { Task } from "@/features/tasks/task-types";
+import type { Category } from "@/lib/db/types";
 
 interface AddTaskModalProps {
   open: boolean;
@@ -15,6 +15,7 @@ interface AddTaskModalProps {
     categoryId: number | null;
   }) => void;
   editTask?: Task | null;
+  categories: Category[];
 }
 
 const PRIORITY_OPTIONS = [
@@ -29,20 +30,13 @@ export function AddTaskModal({
   onClose,
   onSubmit,
   editTask,
+  categories,
 }: AddTaskModalProps) {
   const [name, setName] = useState("");
   const [estimatedPomos, setEstimatedPomos] = useState(4);
   const [project, setProject] = useState("");
   const [priority, setPriority] = useState("");
   const [categoryId, setCategoryId] = useState<number | null>(null);
-  const categories = useCategoriesStore((s) => s.categories);
-  const loadCategories = useCategoriesStore((s) => s.loadCategories);
-
-  useEffect(() => {
-    if (open) {
-      loadCategories();
-    }
-  }, [open, loadCategories]);
 
   useEffect(() => {
     if (editTask) {
