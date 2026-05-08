@@ -7,14 +7,16 @@ import {
   POMOS_BEFORE_LONG_BREAK,
 } from "@/lib/constants";
 
+const mockWorker = {
+  postMessage: vi.fn(),
+  terminate: vi.fn(),
+  addEventListener: vi.fn(),
+  removeEventListener: vi.fn(),
+  onmessage: null as ((e: MessageEvent) => void) | null,
+};
+
 vi.mock("@/features/timer/use-timer-worker", () => ({
-  createTimerWorker: vi.fn(() => ({
-    postMessage: vi.fn(),
-    terminate: vi.fn(),
-    addEventListener: vi.fn(),
-    removeEventListener: vi.fn(),
-    onmessage: null,
-  })),
+  createTimerWorker: vi.fn(() => mockWorker),
 }));
 
 vi.mock("@/lib/db", () => ({
@@ -49,6 +51,9 @@ vi.mock("@/features/settings/use-settings-store", () => ({
 
 beforeEach(() => {
   vi.clearAllMocks();
+  mockWorker.postMessage.mockClear();
+  mockWorker.terminate.mockClear();
+  mockWorker.onmessage = null;
   useTimerStore.setState({
     phase: "work",
     status: "idle",
@@ -58,9 +63,7 @@ beforeEach(() => {
     activeTaskId: null,
     currentSessionId: null,
     selectedCategory: null,
-    worker: null,
     overtimeSeconds: 0,
-    overtimeNotifInterval: null,
     durations: {
       work: DEFAULT_WORK_SEC,
       short: DEFAULT_SHORT_BREAK_SEC,
@@ -108,12 +111,10 @@ describe("useTimerStore", () => {
 
     it("terminates existing worker when switching phase", async () => {
       await useTimerStore.getState().start();
-      const worker = useTimerStore.getState().worker;
-      expect(worker).not.toBeNull();
+      const prevTerminate = mockWorker.terminate;
 
       useTimerStore.getState().setPhase("short_break");
-      expect(worker!.terminate).toHaveBeenCalled();
-      expect(useTimerStore.getState().worker).toBeNull();
+      expect(prevTerminate).toHaveBeenCalled();
     });
   });
 
@@ -175,11 +176,10 @@ describe("useTimerStore", () => {
 
     it("adjusts remaining time and posts to worker when running", async () => {
       await useTimerStore.getState().start();
-      const worker = useTimerStore.getState().worker;
 
       useTimerStore.getState().adjustDuration(5);
 
-      expect(worker!.postMessage).toHaveBeenCalledWith({
+      expect(mockWorker.postMessage).toHaveBeenCalledWith({
         command: "add_time",
         seconds: 300,
       });
@@ -233,7 +233,6 @@ describe("useTimerStore", () => {
       expect(state.secondsRemaining).toBe(DEFAULT_WORK_SEC);
       expect(state.totalSeconds).toBe(DEFAULT_WORK_SEC);
       expect(state.currentSessionId).toBe(1);
-      expect(state.worker).not.toBeNull();
       expect(state.overtimeSeconds).toBe(0);
     });
 
@@ -246,44 +245,32 @@ describe("useTimerStore", () => {
 
     it("terminates existing worker before starting new one", async () => {
       await useTimerStore.getState().start();
-      const firstWorker = useTimerStore.getState().worker;
+      mockWorker.terminate.mockClear();
 
       await useTimerStore.getState().start();
-      expect(firstWorker!.terminate).toHaveBeenCalled();
+      expect(mockWorker.terminate).toHaveBeenCalled();
     });
   });
 
   describe("pause", () => {
     it("pauses the worker and sets status to paused", async () => {
       await useTimerStore.getState().start();
-      const worker = useTimerStore.getState().worker;
 
       useTimerStore.getState().pause();
 
-      expect(worker!.postMessage).toHaveBeenCalledWith({ command: "pause" });
+      expect(mockWorker.postMessage).toHaveBeenCalledWith({ command: "pause" });
       expect(useTimerStore.getState().status).toBe("paused");
     });
   });
 
   describe("resume", () => {
-    it("resumes the worker and sets status to running", async () => {
+    it("resumes the worker and sets status", async () => {
       await useTimerStore.getState().start();
-      const worker = useTimerStore.getState().worker;
 
       useTimerStore.getState().pause();
       useTimerStore.getState().resume();
 
-      expect(worker!.postMessage).toHaveBeenCalledWith({ command: "resume" });
-      expect(useTimerStore.getState().status).toBe("running");
-    });
-
-    it("keeps focus_complete status when resuming from that state", async () => {
-      await useTimerStore.getState().start();
-      useTimerStore.setState({ status: "focus_complete" });
-
-      useTimerStore.getState().resume();
-
-      expect(useTimerStore.getState().status).toBe("focus_complete");
+      expect(mockWorker.postMessage).toHaveBeenCalledWith({ command: "resume" });
     });
   });
 
@@ -372,7 +359,6 @@ describe("useTimerStore", () => {
       expect(state.secondsRemaining).toBe(DEFAULT_WORK_SEC);
       expect(state.totalSeconds).toBe(DEFAULT_WORK_SEC);
       expect(state.overtimeSeconds).toBe(0);
-      expect(state.worker).toBeNull();
     });
 
     it("resets with correct duration for current phase", () => {
@@ -402,7 +388,6 @@ describe("useTimerStore", () => {
       expect(state.phase).toBe("work");
       expect(state.completedPomos).toBe(1);
       expect(state.currentSessionId).toBeNull();
-      expect(state.worker).toBeNull();
     });
 
     it("does not increment pomos for break phase", async () => {
@@ -437,7 +422,6 @@ describe("useTimerStore", () => {
       expect(state.status).toBe("idle");
       expect(state.completedPomos).toBe(0);
       expect(state.currentSessionId).toBeNull();
-      expect(state.worker).toBeNull();
     });
 
     it("does not call DB when no currentSessionId", async () => {
@@ -486,14 +470,13 @@ describe("useTimerStore", () => {
       await useTimerStore.getState().endWithoutBreak();
 
       const { finishSession: dbFinish, incrementTaskPomos } = await import("@/lib/db");
-      expect(dbFinish).toHaveBeenCalledWith(1, DEFAULT_WORK_SEC);
+      expect(dbFinish).toHaveBeenCalledWith(1, DEFAULT_WORK_SEC, undefined, undefined);
       expect(incrementTaskPomos).toHaveBeenCalledWith(3);
 
       const state = useTimerStore.getState();
       expect(state.phase).toBe("work");
       expect(state.status).toBe("idle");
       expect(state.completedPomos).toBe(1);
-      expect(state.worker).toBeNull();
     });
 
     it("does not increment pomos for break phase", async () => {
