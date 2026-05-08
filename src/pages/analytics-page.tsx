@@ -12,7 +12,7 @@ export function AnalyticsPage() {
             <h1 className="font-serif text-[10px] md:text-[12px] font-bold uppercase tracking-widest text-sahara-text-muted mb-1 md:mb-2">
               Performance Overview
             </h1>
-            <p className="font-serif text-xl md:text-4xl text-sahara-text">
+            <p className="font-serif text-xl font-bold tracking-wide md:text-4xl text-sahara-text">
               Your Focus Insights
             </p>
           </div>

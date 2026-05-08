@@ -29,12 +29,12 @@ export function AnalyticsCategoryBreakdown({ startDate, endDate }: AnalyticsCate
 
   return (
     <div className="bg-sahara-surface border border-sahara-border/20 rounded-xl md:rounded-2xl p-3.5 md:p-5">
-      <h3 className="text-[10px] md:text-xs font-bold text-sahara-text-muted uppercase tracking-wider mb-3 md:mb-4">
+      {/* <h3 className="text-xs md:text-sm font-bold text-sahara-text-muted uppercase tracking-wider mb-3 md:mb-4">
         Time by Category
-      </h3>
+      </h3> */}
       <CategoryBreakdownBars breakdowns={breakdowns} />
       {breakdowns.length === 0 && (
-        <p className="text-sm text-sahara-text-muted text-center py-6">
+        <p className="text-[15px] text-sahara-text-muted text-center py-6">
           No category data yet
         </p>
       )}

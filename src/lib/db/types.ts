@@ -8,6 +8,8 @@ export interface Session {
   completed: number;
   category_id: number | null;
   intention: string | null;
+  mood: string | null;
+  notes: string | null;
 }
 
 export interface Category {
@@ -45,6 +47,8 @@ export interface WeekSession {
   category_name: string | null;
   category_color: string | null;
   intention: string | null;
+  mood: string | null;
+  notes: string | null;
 }
 
 export interface WeekSummary {
@@ -55,4 +59,32 @@ export interface WeekSummary {
   avg_daily_seconds: number;
   peak_day: string | null;
   peak_day_seconds: number;
+}
+
+export interface MoodStat {
+  mood: string;
+  count: number;
+}
+
+export interface SessionNoteEntry {
+  id: number;
+  started_at: string;
+  ended_at: string | null;
+  duration_sec: number;
+  mood: string | null;
+  notes: string | null;
+  category_name: string | null;
+  category_color: string | null;
+  task_name: string | null;
+}
+
+export interface CompletedTaskEntry {
+  task_id: number;
+  task_name: string;
+  category_name: string | null;
+  category_color: string | null;
+  total_seconds: number;
+  session_count: number;
+  completed_pomos: number;
+  estimated_pomos: number;
 }

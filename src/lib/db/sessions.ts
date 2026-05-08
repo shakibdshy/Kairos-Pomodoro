@@ -105,7 +105,9 @@ export async function getWeekSessions(
       s.category_id,
       c.name AS category_name,
       c.color AS category_color,
-      s.intention
+      s.intention,
+      s.mood,
+      s.notes
     FROM sessions s
     LEFT JOIN tasks t ON s.task_id = t.id
     LEFT JOIN categories c ON s.category_id = c.id
