@@ -3,9 +3,8 @@ import { initDb } from "@/lib/db";
 import { useSettingsStore } from "@/features/settings/use-settings-store";
 import { useTaskStore } from "@/features/tasks/use-task-store";
 import { useTimerStore } from "@/features/timer/use-timer-store";
-import { useTray } from "@/features/system/use-tray";
+import { useNativeUI } from "@/features/system/use-native-ui";
 import { useHotkeys } from "@/features/system/use-hotkeys";
-import { useMenubar } from "@/features/system/use-menubar";
 import { ThemeProvider } from "@/components/providers/theme-provider";
 import { UpdateProvider } from "@/components/providers/update-provider";
 import { useNotificationStore } from "@/features/notifications/use-notification-store";
@@ -72,9 +71,8 @@ function useApplyTimerDurations() {
 export function Providers({ children }: ProvidersProps) {
   const { loading, error } = useDbInit();
   useApplyTimerDurations();
-  useTray();
+  useNativeUI();
   useHotkeys();
-  useMenubar();
 
   if (loading) {
     return (
