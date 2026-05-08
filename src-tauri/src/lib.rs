@@ -21,8 +21,6 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             commands::hotkey::register_hotkey,
             commands::hotkey::unregister_hotkey,
-            commands::dnd::set_dnd,
-            commands::dnd::is_dnd_enabled,
             commands::menubar::menubar_show,
             commands::menubar::menubar_hide,
             commands::menubar::menubar_set_title,

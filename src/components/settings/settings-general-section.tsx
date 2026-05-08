@@ -13,7 +13,7 @@ const THEME_OPTIONS: { id: ThemeMode; label: string; icon: typeof Sun }[] = [
 interface ToggleItem {
   label: string;
   desc: string;
-  key: "autoStartBreaks" | "respectDnd";
+  key: "autoStartBreaks";
 }
 
 const TOGGLE_ITEMS: ToggleItem[] = [
@@ -21,11 +21,6 @@ const TOGGLE_ITEMS: ToggleItem[] = [
     label: "Auto-start breaks",
     desc: "Automatically start break timer after focus",
     key: "autoStartBreaks",
-  },
-  {
-    label: "Respect Do Not Disturb",
-    desc: "Mute notifications when DnD is active",
-    key: "respectDnd",
   },
 ];
 
@@ -75,7 +70,7 @@ export function SettingsGeneralSection({
       <div className="mt-8 space-y-5">
         {TOGGLE_ITEMS.map(({ label, desc, key }) => (
           <div key={key} className="flex items-center justify-between py-2">
-            <div>
+            <div className="flex-1">
               <span className="font-bold text-sahara-text-secondary text-sm block">
                 {label}
               </span>

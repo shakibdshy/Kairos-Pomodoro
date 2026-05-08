@@ -71,13 +71,6 @@ export function SettingsPanel() {
             onCheckedChange={(v) => updateSetting("soundEnabled", v)}
           />
         </div>
-        <div className="flex items-center justify-between">
-          <Text variant="body">Respect OS Do Not Disturb</Text>
-          <Switch
-            checked={settings.respectDnd}
-            onCheckedChange={(v) => updateSetting("respectDnd", v)}
-          />
-        </div>
       </div>
     </div>
   );

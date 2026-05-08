@@ -1,6 +1,6 @@
 import { useSettingsStore } from "@/features/settings/use-settings-store";
 import { useNotificationStore } from "@/features/notifications/use-notification-store";
-import { isTauri, invoke } from "@/lib/tauri";
+import { isTauri } from "@/lib/tauri";
 
 type NotificationType =
   | "session-complete"
@@ -58,13 +58,6 @@ export async function sendNotification(
 ): Promise<void> {
   const settings = getSettings();
 
-  if (settings.respectDnd) {
-    try {
-      const dndEnabled = await invoke("is_dnd_enabled");
-      if (dndEnabled) return;
-    } catch {}
-  }
-
   if (isTauri()) {
     try {
       const { sendNotification, isPermissionGranted, requestPermission } =
@@ -98,6 +91,6 @@ export async function sendNotification(
   }
 
   if (settings.soundEnabled) {
-    playChime();
+    await playChime();
   }
 }

@@ -17,7 +17,6 @@ const DEFAULTS: Settings = {
   autoStartBreaks: false,
   hotkey: HOTKEY_DEFAULT,
   soundEnabled: true,
-  respectDnd: true,
   theme: "system",
 };
 
