@@ -1,5 +1,5 @@
 import { getDb } from "./schema";
-import type { CategoryBreakdown, DayData } from "./types";
+import type { CategoryBreakdown, DayData, MoodStat, SessionNoteEntry, CompletedTaskEntry } from "./types";
 
 export async function getCategoryBreakdown(
   startDate?: string,
@@ -168,4 +168,119 @@ export async function getBestStreak(): Promise<number> {
     }
   }
   return bestStreak;
+}
+
+export async function getMoodDistribution(
+  startDate?: string,
+  endDate?: string,
+): Promise<MoodStat[]> {
+  const database = await getDb();
+  if (startDate && endDate) {
+    return database.select<MoodStat[]>(
+      `SELECT mood, COUNT(*) AS count
+       FROM sessions
+       WHERE date(started_at) >= $1 AND date(started_at) <= $2
+         AND completed = 1 AND mood IS NOT NULL AND mood != ''
+       GROUP BY mood
+       ORDER BY count DESC`,
+      [startDate, endDate],
+    );
+  }
+  return database.select<MoodStat[]>(
+    `SELECT mood, COUNT(*) AS count
+     FROM sessions
+     WHERE completed = 1 AND mood IS NOT NULL AND mood != ''
+     GROUP BY mood
+     ORDER BY count DESC`,
+  );
+}
+
+export async function getSessionNotes(
+  startDate?: string,
+  endDate?: string,
+): Promise<SessionNoteEntry[]> {
+  const database = await getDb();
+  if (startDate && endDate) {
+    return database.select<SessionNoteEntry[]>(
+      `SELECT
+        s.id,
+        s.started_at,
+        s.ended_at,
+        s.duration_sec,
+        s.mood,
+        s.notes,
+        c.name AS category_name,
+        c.color AS category_color,
+        t.name AS task_name
+      FROM sessions s
+      LEFT JOIN categories c ON s.category_id = c.id
+      LEFT JOIN tasks t ON s.task_id = t.id
+      WHERE date(s.started_at) >= $1 AND date(s.started_at) <= $2
+        AND s.completed = 1 AND s.notes IS NOT NULL AND s.notes != ''
+      ORDER BY s.started_at DESC`,
+      [startDate, endDate],
+    );
+  }
+  return database.select<SessionNoteEntry[]>(
+    `SELECT
+      s.id,
+      s.started_at,
+      s.ended_at,
+      s.duration_sec,
+      s.mood,
+      s.notes,
+      c.name AS category_name,
+      c.color AS category_color,
+      t.name AS task_name
+    FROM sessions s
+    LEFT JOIN categories c ON s.category_id = c.id
+    LEFT JOIN tasks t ON s.task_id = t.id
+    WHERE s.completed = 1 AND s.notes IS NOT NULL AND s.notes != ''
+    ORDER BY s.started_at DESC`,
+  );
+}
+
+export async function getCompletedTasksForPeriod(
+  startDate?: string,
+  endDate?: string,
+): Promise<CompletedTaskEntry[]> {
+  const database = await getDb();
+  if (startDate && endDate) {
+    return database.select<CompletedTaskEntry[]>(
+      `SELECT
+        s.task_id,
+        t.name AS task_name,
+        c.name AS category_name,
+        c.color AS category_color,
+        COALESCE(SUM(s.duration_sec), 0) AS total_seconds,
+        COUNT(*) AS session_count,
+        t.completed_pomos,
+        t.estimated_pomos
+      FROM sessions s
+      LEFT JOIN tasks t ON s.task_id = t.id
+      LEFT JOIN categories c ON t.category_id = c.id
+      WHERE date(s.started_at) >= $1 AND date(s.started_at) <= $2
+        AND s.completed = 1 AND s.task_id IS NOT NULL
+      GROUP BY s.task_id
+      ORDER BY total_seconds DESC`,
+      [startDate, endDate],
+    );
+  }
+  return database.select<CompletedTaskEntry[]>(
+    `SELECT
+      s.task_id,
+      t.name AS task_name,
+      c.name AS category_name,
+      c.color AS category_color,
+      COALESCE(SUM(s.duration_sec), 0) AS total_seconds,
+      COUNT(*) AS session_count,
+      t.completed_pomos,
+      t.estimated_pomos
+    FROM sessions s
+    LEFT JOIN tasks t ON s.task_id = t.id
+    LEFT JOIN categories c ON t.category_id = c.id
+    WHERE s.completed = 1 AND s.task_id IS NOT NULL
+    GROUP BY s.task_id
+    ORDER BY total_seconds DESC`,
+  );
 }

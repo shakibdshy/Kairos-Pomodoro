@@ -9,6 +9,9 @@ import { WeeklyChart } from "@/components/base/weekly-chart";
 import { BadgeCard } from "@/components/base/badge-card";
 import { AnalyticsCategoryBreakdown } from "@/components/base/analytics-category-breakdown";
 import { DateRangePicker } from "@/components/base/date-range-picker";
+import { MoodDistribution } from "@/components/base/mood-distribution";
+import { SessionNotes } from "@/components/base/session-notes";
+import { CompletedTasks } from "@/components/base/completed-tasks";
 import { formatTotalTime, formatDuration } from "@/lib/session-utils";
 import { type DatePeriod, getDateRange } from "@/lib/date-range";
 
@@ -61,7 +64,7 @@ export function AnalyticsDashboard() {
       {/* Overview Stats */}
       <section>
         <div className="flex items-center justify-between mb-4 md:mb-6">
-          <h2 className="font-serif text-lg md:text-xl text-sahara-text">
+          <h2 className="font-serif text-lg font-bold tracking-wide md:text-2xl text-sahara-text">
             Overview
           </h2>
           <DateRangePicker value={period} onChange={setPeriod} />
@@ -92,7 +95,7 @@ export function AnalyticsDashboard() {
 
       {/* Weekly Chart */}
       <section>
-        <h2 className="font-serif text-lg md:text-xl text-sahara-text mb-4 md:mb-6">
+        <h2 className="font-serif text-lg font-bold tracking-wide md:text-2xl text-sahara-text mb-4 md:mb-6">
           {range.label}
         </h2>
         <div className="bg-sahara-surface border border-sahara-border/20 rounded-xl md:rounded-2xl p-3.5 md:p-5">
@@ -105,7 +108,7 @@ export function AnalyticsDashboard() {
 
       {/* Badges */}
       <section>
-        <h2 className="font-serif text-lg md:text-xl text-sahara-text mb-4 md:mb-6">
+        <h2 className="font-serif text-lg font-bold tracking-wide md:text-2xl text-sahara-text mb-4 md:mb-6">
           Achievements
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
@@ -127,12 +130,38 @@ export function AnalyticsDashboard() {
         </div>
       </section>
 
-      {/* Category Breakdown */}
+      {/* Category Breakdown & Tasks */}
       <section>
-        <h2 className="font-serif text-lg md:text-xl text-sahara-text mb-4 md:mb-6">
-          Category Breakdown
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
+          <div>
+            <h2 className="font-serif text-lg font-bold tracking-wide md:text-2xl text-sahara-text mb-4 md:mb-6">
+              Category Breakdown
+            </h2>
+            <AnalyticsCategoryBreakdown startDate={range.startDate} endDate={range.endDate} />
+          </div>
+          <div>
+            <h2 className="font-serif text-lg font-bold tracking-wide md:text-2xl text-sahara-text mb-4 md:mb-6">
+              Tasks
+            </h2>
+            <CompletedTasks startDate={range.startDate} endDate={range.endDate} />
+          </div>
+        </div>
+      </section>
+
+      {/* Mood Distribution */}
+      <section>
+        <h2 className="font-serif text-lg font-bold tracking-wide md:text-2xl text-sahara-text mb-4 md:mb-6">
+          Mood Insights
         </h2>
-        <AnalyticsCategoryBreakdown startDate={range.startDate} endDate={range.endDate} />
+        <MoodDistribution startDate={range.startDate} endDate={range.endDate} />
+      </section>
+
+      {/* Session Notes */}
+      <section>
+        <h2 className="font-serif text-lg font-bold tracking-wide md:text-2xl text-sahara-text mb-4 md:mb-6">
+          Session Notes
+        </h2>
+        <SessionNotes startDate={range.startDate} endDate={range.endDate} />
       </section>
     </div>
   );
