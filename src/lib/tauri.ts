@@ -8,9 +8,6 @@ export const invokeHotkey = (key: string) =>
 export const invokeUnregisterHotkey = (key: string) =>
   invoke("unregister_hotkey", { key });
 
-export const invokeSetDnd = (enabled: boolean) =>
-  invoke("set_dnd", { enabled });
-
 export function isTauri(): boolean {
   return typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
 }

@@ -285,7 +285,7 @@ Kairos-Pomodoro/
 │   └── pages/           # Top-level routes
 ├── src-tauri/           # Native Tauri/Rust app
 │   ├── src/
-│   │   ├── commands/    # Native commands (hotkey, menubar, DND)
+│   │   ├── commands/    # Native commands (hotkey, menubar)
 │   │   ├── lib.rs       # Tauri setup and plugin registration
 │   │   └── main.rs      # Native entry point
 │   └── tauri.conf.json  # Tauri app config
@@ -358,7 +358,6 @@ Important implementation details discovered from the current codebase:
 These are useful to know before extending the project:
 
 - the README reflects the current implementation, not a planned roadmap
-- Do Not Disturb handling is not fully implemented in the native layer yet
 - some analytics/export actions are visible in the UI but not active
 - the onboarding route exists, but the app does not currently force a first-run onboarding flow
 

@@ -264,13 +264,14 @@ describe("useTimerStore", () => {
   });
 
   describe("resume", () => {
-    it("resumes the worker and sets status", async () => {
+    it("resumes the worker and restores running status", async () => {
       await useTimerStore.getState().start();
 
       useTimerStore.getState().pause();
       useTimerStore.getState().resume();
 
       expect(mockWorker.postMessage).toHaveBeenCalledWith({ command: "resume" });
+      expect(useTimerStore.getState().status).toBe("running");
     });
   });
 

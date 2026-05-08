@@ -38,7 +38,6 @@ beforeEach(() => {
       autoStartBreaks: false,
       hotkey: HOTKEY_DEFAULT,
       soundEnabled: true,
-      respectDnd: true,
       theme: "system",
     },
     loaded: false,
@@ -55,7 +54,6 @@ describe("useSettingsStore", () => {
       expect(settings.autoStartBreaks).toBe(false);
       expect(settings.hotkey).toBe(HOTKEY_DEFAULT);
       expect(settings.soundEnabled).toBe(true);
-      expect(settings.respectDnd).toBe(true);
       expect(settings.theme).toBe("system");
       expect(loaded).toBe(false);
     });

@@ -8,6 +8,5 @@ export interface Settings {
   autoStartBreaks: boolean;
   hotkey: string;
   soundEnabled: boolean;
-  respectDnd: boolean;
   theme: ThemeMode;
 }

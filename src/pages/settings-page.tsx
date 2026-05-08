@@ -67,7 +67,6 @@ export function SettingsPage() {
                   onThemeChange={(t) => updateSetting("theme", t)}
                   settings={{
                     autoStartBreaks: settings.autoStartBreaks,
-                    respectDnd: settings.respectDnd,
                   }}
                   onToggle={(k: string, v: boolean) =>
                     updateSetting(k as any, v)

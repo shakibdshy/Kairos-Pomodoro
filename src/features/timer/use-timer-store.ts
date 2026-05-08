@@ -162,7 +162,7 @@ export const useTimerStore = create<TimerStore>((set, get) => {
 
     resume: () => {
       engine.resume();
-      set({ status: "focus_complete" });
+      set({ status: "running" });
     },
 
     skip: () => {
