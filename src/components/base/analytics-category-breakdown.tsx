@@ -2,16 +2,22 @@ import { useState, useEffect } from "react";
 import { getCategoryBreakdown, type CategoryBreakdown } from "@/lib/db";
 import { CategoryBreakdown as CategoryBreakdownBars } from "@/components/base/category-breakdown";
 
-export function AnalyticsCategoryBreakdown() {
+interface AnalyticsCategoryBreakdownProps {
+  startDate?: string;
+  endDate?: string;
+}
+
+export function AnalyticsCategoryBreakdown({ startDate, endDate }: AnalyticsCategoryBreakdownProps) {
   const [breakdowns, setBreakdowns] = useState<CategoryBreakdown[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    getCategoryBreakdown()
+    setLoading(true);
+    getCategoryBreakdown(startDate, endDate)
       .then(setBreakdowns)
       .catch(() => setBreakdowns([]))
       .finally(() => setLoading(false));
-  }, []);
+  }, [startDate, endDate]);
 
   if (loading) {
     return (

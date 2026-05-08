@@ -1,8 +1,28 @@
 import { getDb } from "./schema";
 import type { CategoryBreakdown, DayData } from "./types";
 
-export async function getCategoryBreakdown(): Promise<CategoryBreakdown[]> {
+export async function getCategoryBreakdown(
+  startDate?: string,
+  endDate?: string,
+): Promise<CategoryBreakdown[]> {
   const database = await getDb();
+  if (startDate && endDate) {
+    return database.select<CategoryBreakdown[]>(
+      `SELECT
+        s.category_id,
+        s.intention,
+        c.name AS category_name,
+        c.color AS category_color,
+        COALESCE(SUM(s.duration_sec), 0) AS total_seconds,
+        COUNT(*) AS session_count
+      FROM sessions s
+      LEFT JOIN categories c ON s.category_id = c.id
+      WHERE date(s.started_at) >= $1 AND date(s.started_at) <= $2 AND s.completed = 1
+      GROUP BY s.category_id, s.intention, c.name, c.color
+      ORDER BY total_seconds DESC`,
+      [startDate, endDate],
+    );
+  }
   return database.select<CategoryBreakdown[]>(`
     SELECT
       s.category_id,
@@ -37,9 +57,12 @@ export async function getAllCategoryBreakdown(): Promise<CategoryBreakdown[]> {
   `);
 }
 
-export async function getWeeklyData(): Promise<DayData[]> {
+export async function getWeeklyData(
+  startDate?: string,
+  endDate?: string,
+): Promise<DayData[]> {
   const database = await getDb();
-  return database.select<DayData[]>(`
+  const query = `
     SELECT
       date(started_at) AS date,
       CASE CAST(strftime('%w', started_at) AS INTEGER)
@@ -50,10 +73,10 @@ export async function getWeeklyData(): Promise<DayData[]> {
       COALESCE(SUM(duration_sec), 0) AS total_seconds,
       COUNT(*) AS session_count
     FROM sessions
-    WHERE date(started_at) >= date('now', 'localtime', '-6 days') AND completed = 1
+    WHERE date(started_at) >= $1 AND date(started_at) <= $2 AND completed = 1
     GROUP BY date(started_at)
-    ORDER BY date(started_at) ASC
-  `);
+    ORDER BY date(started_at) ASC`;
+  return database.select<DayData[]>(query, [startDate ?? "", endDate ?? ""]);
 }
 
 export async function getAllTimeStats(): Promise<{
