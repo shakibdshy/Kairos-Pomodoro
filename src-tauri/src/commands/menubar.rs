@@ -1,5 +1,8 @@
 use std::sync::Mutex;
+use tauri::image::Image;
 use tauri::{tray::TrayIcon, Emitter, Manager};
+
+const TRAY_ICON: Image<'_> = tauri::include_image!("./icons/32x32.png");
 
 pub struct MenubarState {
     pub tray: Mutex<Option<TrayIcon>>,
@@ -61,7 +64,6 @@ pub fn menubar_set_tooltip(
 
 pub fn setup_menubar_tray(app: &tauri::App) -> Result<(), Box<dyn std::error::Error>> {
     use tauri::{
-        include_image,
         menu::{Menu, MenuItem, PredefinedMenuItem},
         tray::TrayIconBuilder,
     };
@@ -87,6 +89,7 @@ pub fn setup_menubar_tray(app: &tauri::App) -> Result<(), Box<dyn std::error::Er
     let menu = Menu::with_items(app, &[&show_item, &toggle_item, &separator, &quit_item])?;
 
     let tray = TrayIconBuilder::with_id("menubar-tray")
+        .icon(TRAY_ICON)
         .menu(&menu)
         .tooltip("Kairos-Pomodoro")
         .show_menu_on_left_click(false)
