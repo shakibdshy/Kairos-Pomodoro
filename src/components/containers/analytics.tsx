@@ -8,18 +8,23 @@ import { StatCard } from "@/components/base/stat-card";
 import { WeeklyChart } from "@/components/base/weekly-chart";
 import { BadgeCard } from "@/components/base/badge-card";
 import { AnalyticsCategoryBreakdown } from "@/components/base/analytics-category-breakdown";
+import { DateRangePicker } from "@/components/base/date-range-picker";
 import { formatTotalTime, formatDuration } from "@/lib/session-utils";
+import { type DatePeriod, getDateRange } from "@/lib/date-range";
 
 export function AnalyticsDashboard() {
   const [weekData, setWeekData] = useState<DayData[]>([]);
   const [loading, setLoading] = useState(true);
+  const [period, setPeriod] = useState<DatePeriod>("last7days");
+
+  const range = getDateRange(period);
 
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
 
     Promise.all([
-      getWeeklyData().catch(() => []),
+      getWeeklyData(range.startDate, range.endDate).catch(() => []),
     ]).then(([wd]) => {
       if (!cancelled) {
         setWeekData(wd);
@@ -30,7 +35,7 @@ export function AnalyticsDashboard() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [range.startDate, range.endDate]);
 
   const totalFocusSec = weekData.reduce((s, d) => s + d.total_seconds, 0);
   const totalSessions = weekData.reduce((s, d) => s + d.session_count, 0);
@@ -55,9 +60,12 @@ export function AnalyticsDashboard() {
     <div className="space-y-6 md:space-y-10">
       {/* Overview Stats */}
       <section>
-        <h2 className="font-serif text-lg md:text-xl text-sahara-text mb-4 md:mb-6">
-          Overview
-        </h2>
+        <div className="flex items-center justify-between mb-4 md:mb-6">
+          <h2 className="font-serif text-lg md:text-xl text-sahara-text">
+            Overview
+          </h2>
+          <DateRangePicker value={period} onChange={setPeriod} />
+        </div>
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
           <StatCard
             label="Total Focus"
@@ -76,7 +84,7 @@ export function AnalyticsDashboard() {
           />
           <StatCard
             label="Daily Avg"
-            value={avgDailySec > 0 ? formatDuration(avgDailySec) : "0m"}
+            value={avgDailySec > 0 ? formatTotalTime(avgDailySec) : "0m"}
             icon="flame"
           />
         </div>
@@ -85,7 +93,7 @@ export function AnalyticsDashboard() {
       {/* Weekly Chart */}
       <section>
         <h2 className="font-serif text-lg md:text-xl text-sahara-text mb-4 md:mb-6">
-          This Week
+          {range.label}
         </h2>
         <div className="bg-sahara-surface border border-sahara-border/20 rounded-xl md:rounded-2xl p-3.5 md:p-5">
           <WeeklyChart data={weekData.map(d => ({
@@ -124,7 +132,7 @@ export function AnalyticsDashboard() {
         <h2 className="font-serif text-lg md:text-xl text-sahara-text mb-4 md:mb-6">
           Category Breakdown
         </h2>
-        <AnalyticsCategoryBreakdown />
+        <AnalyticsCategoryBreakdown startDate={range.startDate} endDate={range.endDate} />
       </section>
     </div>
   );
