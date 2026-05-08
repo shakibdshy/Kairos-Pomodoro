@@ -30,6 +30,19 @@
     "autostart:default",
     "updater:default",
     "updater:allow-check",
-    "updater:allow-download-and-install"
+    "updater:allow-download-and-install",
+    "dialog:allow-save",
+    "dialog:allow-open",
+    "fs:allow-write-file",
+    "fs:allow-mkdir",
+    {
+      "identifier": "fs:scope",
+      "allow": [
+        { "path": "$DESKTOP" },
+        { "path": "$DOCUMENT" },
+        { "path": "$DOWNLOAD" },
+        { "path": "$HOME" }
+      ]
+    }
   ]
 }

@@ -15,10 +15,18 @@ import { CompletedTasks } from "@/components/base/completed-tasks";
 import { formatTotalTime, formatDuration } from "@/lib/session-utils";
 import { type DatePeriod, getDateRange } from "@/lib/date-range";
 
-export function AnalyticsDashboard() {
+interface AnalyticsDashboardProps {
+  period?: DatePeriod;
+  onPeriodChange?: (p: DatePeriod) => void;
+}
+
+export function AnalyticsDashboard({ period: externalPeriod, onPeriodChange }: AnalyticsDashboardProps) {
   const [weekData, setWeekData] = useState<DayData[]>([]);
   const [loading, setLoading] = useState(true);
-  const [period, setPeriod] = useState<DatePeriod>("last7days");
+  const [internalPeriod, setInternalPeriod] = useState<DatePeriod>("last7days");
+
+  const period = externalPeriod ?? internalPeriod;
+  const setPeriod = onPeriodChange ?? setInternalPeriod;
 
   const range = getDateRange(period);
 
