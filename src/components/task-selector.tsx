@@ -19,7 +19,7 @@ export function TaskSelector({ disabled = false }: TaskSelectorProps) {
   const setActiveTask = useTimerStore((s) => s.setActiveTask);
 
   const activeTask = tasks.find((t) => t.id === activeTaskId);
-  
+
   // Use the standard task filter to get active tasks
   const { active: availableTasks } = useTaskFilter(tasks, searchQuery);
 
@@ -47,8 +47,9 @@ export function TaskSelector({ disabled = false }: TaskSelectorProps) {
         onClick={() => !disabled && setIsOpen(true)}
         disabled={disabled}
         className={cn(
-          "text-left gap-1.5 max-w-[200px] md:max-w-[250px]",
-          !activeTask && "border border-sahara-border/20 bg-sahara-surface/30 hover:border-sahara-primary/30 hover:bg-sahara-surface/50",
+          "text-left gap-1.5 max-w-50 md:max-w-62.5",
+          !activeTask &&
+            "border border-sahara-border/20 bg-sahara-surface/30 hover:border-sahara-primary/30 hover:bg-sahara-surface/50",
           activeTask && "hover:shadow-md",
         )}
       >
@@ -128,7 +129,9 @@ export function TaskSelector({ disabled = false }: TaskSelectorProps) {
                   <span
                     className={cn(
                       "text-sm font-medium",
-                      activeTaskId === null ? "text-sahara-primary font-bold" : "text-sahara-text-muted"
+                      activeTaskId === null
+                        ? "text-sahara-primary font-bold"
+                        : "text-sahara-text-muted",
                     )}
                   >
                     No Task (Independent Session)
@@ -154,10 +157,14 @@ export function TaskSelector({ disabled = false }: TaskSelectorProps) {
                   )}
                 >
                   <div className="flex items-center gap-3 w-full min-w-0">
-                    <CheckCircle2 className={cn(
-                      "w-4 h-4 shrink-0", 
-                      activeTaskId === task.id ? "text-sahara-primary" : "text-sahara-text-muted"
-                    )} />
+                    <CheckCircle2
+                      className={cn(
+                        "w-4 h-4 shrink-0",
+                        activeTaskId === task.id
+                          ? "text-sahara-primary"
+                          : "text-sahara-text-muted",
+                      )}
+                    />
                     <div className="flex flex-col items-start min-w-0 flex-1">
                       <span
                         className={cn(

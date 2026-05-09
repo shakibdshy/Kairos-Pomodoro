@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { getPresets, addPreset, deletePreset, type TimerPreset } from "@/lib/db";
+import { getPresets, addPreset, updatePreset, deletePreset, type TimerPreset } from "@/lib/db";
 import { useTimerStore } from "@/features/timer/use-timer-store";
 
 interface PresetsStore {
@@ -7,6 +7,7 @@ interface PresetsStore {
   loaded: boolean;
   loadPresets: () => Promise<void>;
   savePreset: (name: string) => Promise<void>;
+  editPreset: (id: number, name: string) => Promise<void>;
   applyPreset: (preset: TimerPreset) => void;
   removePreset: (id: number) => Promise<void>;
 }
@@ -30,6 +31,17 @@ export const usePresetsStore = create<PresetsStore>((set, get) => ({
       pomos_before_long_break: 4, // Defaulting or could pull from settings if added
     };
     await addPreset(newPreset);
+    await get().loadPresets();
+  },
+
+  editPreset: async (id: number, name: string) => {
+    const timer = useTimerStore.getState();
+    await updatePreset(id, {
+      name,
+      work_duration: timer.durations.work,
+      short_break_duration: timer.durations.short,
+      long_break_duration: timer.durations.long,
+    });
     await get().loadPresets();
   },
 
