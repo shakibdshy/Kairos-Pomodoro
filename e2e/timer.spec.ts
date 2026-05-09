@@ -6,14 +6,17 @@ test.describe("Timer", () => {
     await expect(page.getByRole("button", { name: "START FOCUS" })).toBeVisible();
   });
 
-  test("switches to Short Break phase", async ({ page }) => {
-    await page.getByRole("button", { name: "Short Break" }).click();
+  test("switches to Break phase", async ({ page }) => {
+    await page.getByRole("button", { name: "Break" }).click();
     await expect(page.getByRole("textbox", { name: "Set timer duration" })).toHaveValue("05:00");
   });
 
-  test("switches to Long Break phase", async ({ page }) => {
-    await page.getByRole("button", { name: "Long Break" }).click();
-    await expect(page.getByRole("textbox", { name: "Set timer duration" })).toHaveValue("15:00");
+  test("switches back to Focus phase from Break", async ({ page }) => {
+    await page.getByRole("button", { name: "Break" }).click();
+    await expect(page.getByRole("textbox", { name: "Set timer duration" })).toHaveValue("05:00");
+
+    await page.getByRole("button", { name: "Focus", exact: true }).click();
+    await expect(page.getByRole("textbox", { name: "Set timer duration" })).toHaveValue("25:00");
   });
 
   test("starts and pauses timer", async ({ page }) => {
@@ -35,17 +38,16 @@ test.describe("Timer", () => {
   test("phase selector buttons are disabled while running", async ({ page }) => {
     await page.getByRole("button", { name: "START FOCUS" }).click();
 
-    await expect(page.getByRole("button", { name: "Work" })).toBeDisabled();
-    await expect(page.getByRole("button", { name: "Short Break" })).toBeDisabled();
-    await expect(page.getByRole("button", { name: "Long Break" })).toBeDisabled();
+    await expect(page.getByRole("button", { name: "Focus" })).toBeDisabled();
+    await expect(page.getByRole("button", { name: "Break" })).toBeDisabled();
   });
 
   test("reset button returns timer to idle", async ({ page }) => {
-    await page.getByRole("button", { name: "Short Break" }).click();
+    await page.getByRole("button", { name: "Break" }).click();
     await page.getByRole("button", { name: "START FOCUS" }).click();
     await expect(page.getByRole("button", { name: "PAUSE" })).toBeVisible();
 
-    await page.getByRole("button", { name: "Reset" }).click();
+    await page.getByRole("button", { name: "Reset", exact: true }).click();
     await expect(page.getByRole("button", { name: "START FOCUS" })).toBeVisible();
   });
 });

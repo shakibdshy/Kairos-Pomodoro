@@ -10,6 +10,12 @@ const tables = new Map<string, Map<number, Row>>();
 const autoInc = new Map<string, number>();
 const columnDefaults = new Map<string, Map<string, unknown>>();
 
+(function seedDefaults() {
+  const settings = getTable("settings");
+  autoInc.set("settings", 1);
+  settings.set(1, { id: 1, key: "onboarding_complete", value: "true" });
+})();
+
 function getTable(name: string): Map<number, Row> {
   if (!tables.has(name)) {
     tables.set(name, new Map());
@@ -198,18 +204,40 @@ export class Database {
     const up = sql.trim().toUpperCase();
     const name = parseTable(sql);
 
-    // Aggregation queries — return empty for simplicity
+    if (name === "_schema_meta") {
+      const tbl = getTable(name);
+      const vrow = Array.from(tbl.values()).find((r) => r.key === "version");
+      return (vrow ? [{ value: vrow.value }] : []) as T[];
+    }
+
+    if (up.includes("COUNT(*)")) {
+      const countCol = (sql.match(/COUNT\(\*\)\s+(?:AS\s+)?(\w+)/i) || [])[1] ?? "count";
+      let rows = allRows(name);
+
+      if (up.includes("WHERE")) {
+        if (up.includes("archived = 0")) rows = rows.filter((r) => r.archived === 0);
+        if (up.includes("completed = 1")) rows = rows.filter((r) => r.completed === 1);
+        if (up.includes("completed = 0")) rows = rows.filter((r) => r.completed === 0);
+
+        const genericEq = sql.match(/WHERE\s+(\w+)\s*=\s*\$(\d+)/i);
+        if (genericEq) {
+          const col = genericEq[1];
+          const pIdx = parseInt(genericEq[2]) - 1;
+          if (pIdx < params.length) {
+            rows = rows.filter((r) => r[col] === params[pIdx]);
+          }
+        }
+      }
+
+      return [{ [countCol]: rows.length }] as T[];
+    }
+
     if (
       up.includes("SUM(") ||
       up.includes("COUNT(") ||
       up.includes("AVG(") ||
       up.includes("COALESCE")
     ) {
-      if (name === "_schema_meta") {
-        const tbl = getTable(name);
-        const vrow = Array.from(tbl.values()).find((r) => r.key === "version");
-        return (vrow ? [{ value: vrow.value }] : []) as T[];
-      }
       return [] as T[];
     }
 
@@ -220,8 +248,18 @@ export class Database {
       if (up.includes("completed = 1")) rows = rows.filter((r) => r.completed === 1);
       if (up.includes("completed = 0")) rows = rows.filter((r) => r.completed === 0);
       if (up.includes("date(started_at)")) rows = []; // today queries
+
       const id = parseWhereId(sql, params);
       if (id) rows = rows.filter((r) => r.id === id);
+
+      const genericEq = sql.match(/WHERE\s+(\w+)\s*=\s*\$(\d+)/i);
+      if (genericEq) {
+        const col = genericEq[1];
+        const pIdx = parseInt(genericEq[2]) - 1;
+        if (pIdx < params.length && col !== "id") {
+          rows = rows.filter((r) => r[col] === params[pIdx]);
+        }
+      }
     }
 
     return rows as T[];

@@ -14,3 +14,13 @@ export async function addPluginListener(
 export async function convertFileSrc(_filePath: string) {
   return "";
 }
+
+export class Resource {
+  rid = 0;
+  async close() {}
+}
+
+export class Channel {
+  onmessage: ((message: unknown) => void) | null = null;
+  constructor() {}
+}
