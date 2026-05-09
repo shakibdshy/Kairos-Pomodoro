@@ -39,6 +39,7 @@ beforeEach(() => {
       hotkey: HOTKEY_DEFAULT,
       soundEnabled: true,
       theme: "system",
+      timerStyle: "solid",
     },
     loaded: false,
   });
