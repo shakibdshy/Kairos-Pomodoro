@@ -63,6 +63,10 @@ function getPhaseDurationKey(phase: TimerPhase): keyof TimerDurations {
   return phase === "work" ? "work" : phase === "short_break" ? "short" : "long";
 }
 
+function determineBreakPhase(durationSec: number): TimerPhase {
+  return durationSec >= 15 * 60 ? "long_break" : "short_break";
+}
+
 function getNextPhase(
   currentPhase: TimerPhase,
   pomosCompleted: number,
@@ -137,9 +141,15 @@ export const useTimerStore = create<TimerStore>((set, get) => {
       const state = get();
       const secs = duration ?? getPhaseDuration(state.phase, state.durations);
 
+      // Auto-detect break phase based on actual duration
+      let resolvedPhase = state.phase;
+      if (resolvedPhase === "short_break" || resolvedPhase === "long_break") {
+        resolvedPhase = determineBreakPhase(secs);
+      }
+
       const sessionId = await SessionService.start(
         state.activeTaskId,
-        state.phase,
+        resolvedPhase,
         state.selectedCategory?.id,
         state.selectedCategory?.name,
       );
@@ -147,6 +157,7 @@ export const useTimerStore = create<TimerStore>((set, get) => {
       engine.start(secs);
 
       set({
+        phase: resolvedPhase,
         status: "running",
         secondsRemaining: secs,
         totalSeconds: secs,
