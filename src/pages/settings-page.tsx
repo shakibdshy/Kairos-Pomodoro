@@ -65,6 +65,8 @@ export function SettingsPage() {
                 <SettingsGeneralSection
                   currentTheme={settings.theme}
                   onThemeChange={(t) => updateSetting("theme", t)}
+                  timerStyle={settings.timerStyle}
+                  onTimerStyleChange={(s) => updateSetting("timerStyle", s)}
                   settings={{
                     autoStartBreaks: settings.autoStartBreaks,
                   }}

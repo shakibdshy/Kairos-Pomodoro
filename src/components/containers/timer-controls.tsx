@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
 import { useTimerStore } from "@/features/timer/use-timer-store";
+import { useSettingsStore } from "@/features/settings/use-settings-store";
 import { TimerDisplay } from "@/components/base/timer-display";
 import { IntentionSelector } from "@/components/intention-selector";
 import { TaskSelector } from "@/components/task-selector";
@@ -26,6 +27,7 @@ import type { TimerPhase } from "@/features/timer/timer-types";
 import { PresetSelector } from "@/components/base/preset-selector";
 
 export function TimerControls() {
+  const timerStyle = useSettingsStore((s) => s.settings.timerStyle);
   const phase = useTimerStore((s) => s.phase);
   const status = useTimerStore((s) => s.status);
   const secondsRemaining = useTimerStore((s) => s.secondsRemaining);
@@ -138,6 +140,7 @@ export function TimerControls() {
         overtimeSeconds={overtimeSeconds}
         editable={status === "idle"}
         onDurationChange={setDurationForCurrentPhase}
+        style={timerStyle}
       />
 
       {/* Duration Adjuster with Time Range */}
