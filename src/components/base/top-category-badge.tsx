@@ -26,19 +26,25 @@ export function TopCategoryBadge({ sessions }: TopCategoryBadgeProps) {
   return (
     <div
       className={cn(
-        "flex items-center gap-2 mb-4 px-4 py-2.5 rounded-xl bg-linear-to-r from-sahara-primary/5 to-transparent border border-sahara-primary/10",
+        "flex items-center gap-3 mb-6 px-5 py-3.5 rounded-2xl bg-linear-to-r from-sahara-primary/10 via-sahara-primary/5 to-transparent border border-sahara-primary/15 shadow-sm shadow-sahara-primary/5",
       )}
     >
-      <Flame className="w-4 h-4 text-sahara-primary" />
-      <span className="text-xs font-bold text-sahara-text-secondary">
-        Most focused on:
-      </span>
-      <span className="px-2 py-0.5 rounded-full bg-sahara-primary text-white text-[10px] font-bold tracking-wide">
-        {topCategory[0]}
-      </span>
-      <span className="text-xs text-sahara-text-muted">
-        ({topCategory[1]} sessions)
-      </span>
+      <div className="w-8 h-8 rounded-full bg-sahara-primary/20 flex items-center justify-center shrink-0">
+        <Flame className="w-4 h-4 text-sahara-primary" />
+      </div>
+      <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
+        <span className="text-xs md:text-sm font-black text-sahara-text-secondary uppercase tracking-widest">
+          Top Focus:
+        </span>
+        <div className="flex items-center gap-2">
+          <span className="px-3 py-1 rounded-lg bg-sahara-primary text-white text-[11px] md:text-xs font-black tracking-tight shadow-md shadow-sahara-primary/20">
+            {topCategory[0]}
+          </span>
+          <span className="text-[11px] md:text-xs font-bold text-sahara-text-muted tabular-nums">
+            {topCategory[1]} Sessions Recorded Today
+          </span>
+        </div>
+      </div>
     </div>
   );
 }

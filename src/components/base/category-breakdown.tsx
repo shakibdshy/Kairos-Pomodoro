@@ -12,45 +12,58 @@ export function CategoryBreakdown({ breakdowns }: CategoryBreakdownProps) {
   const maxSeconds = Math.max(...breakdowns.map((b) => b.total_seconds), 1);
 
   return (
-    <div className="space-y-5.75">
+    <div className="space-y-6 md:space-y-7">
       {breakdowns.map((item) => {
         const percentage = Math.round((item.total_seconds / maxSeconds) * 100);
         const label = item.category_name || item.intention || "Uncategorized";
         const color = item.category_color || "#94a3b8";
 
         return (
-          <div key={`${item.category_id}-${item.intention}`} className="group">
-            <div className="flex items-center justify-between mb-1.5 px-1">
-              <div className="flex items-center gap-2.5 min-w-0">
-                <span
-                  className="w-3 h-3 rounded-full shrink-0"
-                  style={{ backgroundColor: color }}
+          <div key={`${item.category_id}-${item.intention}`} className="group relative">
+            <div className="flex items-center justify-between mb-2.5">
+              <div className="flex items-center gap-3 min-w-0">
+                <div 
+                  className="w-2.5 h-2.5 rounded-full ring-offset-0 transition-all duration-300 group-hover:scale-125"
+                  style={{ 
+                    backgroundColor: color, 
+                    boxShadow: `0 0 0 4px ${color}20` 
+                  }}
                 />
-                <span className="text-[17px] font-medium text-sahara-text truncate">
+                <span className="text-sm md:text-base font-bold text-sahara-text truncate tracking-tight">
                   {label}
                 </span>
               </div>
-              <div className="flex items-center gap-2 shrink-0 ml-3">
-                <span className="text-sm font-bold text-sahara-text-secondary tabular-nums">
+              <div className="flex items-center gap-2.5 shrink-0 ml-4">
+                <span className="text-sm md:text-base font-black text-sahara-text-secondary tabular-nums">
                   {formatTotalTime(item.total_seconds)}
                 </span>
-                <span className="text-xs font-bold text-sahara-text-muted tabular-nums bg-sahara-bg/50 px-1.5 py-0.5 rounded">
-                  {item.session_count}
-                  {item.session_count === 1 ? " session" : " sessions"}
+                <span className="hidden sm:inline-flex items-center px-2 py-0.5 rounded-md bg-sahara-card/80 text-[10px] font-bold text-sahara-text-muted uppercase tracking-wider border border-sahara-border/10">
+                  {item.session_count} {item.session_count === 1 ? "Session" : "Sessions"}
                 </span>
               </div>
             </div>
-            <div className="h-2.5 bg-sahara-bg/40 rounded-full overflow-hidden">
+            
+            <div className="relative h-2.5 w-full bg-sahara-bg/50 rounded-full overflow-hidden border border-sahara-border/5">
               <div
                 className={cn(
-                  "h-full rounded-full transition-all duration-500 ease-out",
-                  "group-hover:brightness-110",
+                  "h-full rounded-full transition-all duration-1000 ease-out relative",
+                  "group-hover:brightness-110 shadow-[0_0_10px_rgba(0,0,0,0.05)]"
                 )}
                 style={{
                   width: `${percentage}%`,
                   backgroundColor: color,
                 }}
-              />
+              >
+                {/* Subtle glow effect */}
+                <div 
+                  className="absolute inset-0 opacity-20 bg-white"
+                  style={{ 
+                    maskImage: 'linear-gradient(to right, transparent, white, transparent)',
+                    maskSize: '200% 100%',
+                    animation: 'shimmer 3s infinite linear'
+                  }}
+                />
+              </div>
             </div>
           </div>
         );

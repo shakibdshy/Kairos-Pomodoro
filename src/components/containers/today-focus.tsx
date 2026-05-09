@@ -53,15 +53,16 @@ export function TodayFocus() {
       { name: string; color: string; count: number }
     > = {};
     workSessions.forEach((s) => {
-      if (s.intention) {
-        if (!counts[s.intention]) {
-          counts[s.intention] = {
-            name: s.intention,
-            color: DEFAULT_CATEGORY_COLOR,
+      const catName = s.category_name || s.intention;
+      if (catName) {
+        if (!counts[catName]) {
+          counts[catName] = {
+            name: catName,
+            color: s.category_color || DEFAULT_CATEGORY_COLOR,
             count: 0,
           };
         }
-        counts[s.intention].count++;
+        counts[catName].count++;
       }
     });
     const sorted = Object.values(counts).sort((a, b) => b.count - a.count);
@@ -75,13 +76,16 @@ export function TodayFocus() {
       <FocusSummaryBar sessions={sessions} topCategory={topCategoryEntry} />
 
       {hasAnyData && (
-        <div className="bg-sahara-surface rounded-xl border border-sahara-border/15 p-3.5 md:p-5">
-          <Text
-            variant="body"
-            className="text-[10px] md:text-xs font-bold text-sahara-text-muted uppercase tracking-wider mb-2.5 md:mb-3"
-          >
-            Time by Category
-          </Text>
+        <div className="bg-sahara-surface/40 backdrop-blur-md rounded-3xl border border-sahara-border/10 p-5 md:p-7 shadow-sm">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-1.5 h-6 bg-sahara-primary rounded-full" />
+            <Text
+              variant="body"
+              className="text-[11px] md:text-xs font-black text-sahara-text-secondary uppercase tracking-widest"
+            >
+              Category Breakdown
+            </Text>
+          </div>
           <CategoryBars breakdowns={breakdowns} />
         </div>
       )}
