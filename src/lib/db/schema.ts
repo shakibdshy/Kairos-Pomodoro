@@ -81,9 +81,20 @@ export async function initDb(): Promise<void> {
       "ALTER TABLE sessions ADD COLUMN mood TEXT",
       "ALTER TABLE sessions ADD COLUMN notes TEXT",
     ],
+    2: [
+      `CREATE TABLE IF NOT EXISTS presets (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        work_duration INTEGER NOT NULL,
+        short_break_duration INTEGER NOT NULL,
+        long_break_duration INTEGER NOT NULL,
+        pomos_before_long_break INTEGER NOT NULL DEFAULT 4,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      )`,
+    ],
   };
 
-  const targetVersion = 1;
+  const targetVersion = 2;
 
   for (let v = currentVersion + 1; v <= targetVersion; v++) {
     const statements = migrations[v];
@@ -102,5 +113,20 @@ export async function initDb(): Promise<void> {
       "INSERT OR REPLACE INTO _schema_meta (key, value) VALUES ('version', $1)",
       [String(v)],
     );
+  }
+
+  // Seed default presets if none exist
+  const presetCount = await database.select<{ count: number }[]>(
+    "SELECT COUNT(*) as count FROM presets",
+  );
+  if (presetCount[0].count === 0) {
+    await database.execute(`
+      INSERT INTO presets (name, work_duration, short_break_duration, long_break_duration, pomos_before_long_break)
+      VALUES 
+        ('Classic Pomodoro', 1500, 300, 900, 4),
+        ('Deep Work', 3600, 600, 1800, 3),
+        ('Flow State', 5400, 900, 3600, 2),
+        ('Quick Sprints', 900, 180, 600, 4)
+    `);
   }
 }

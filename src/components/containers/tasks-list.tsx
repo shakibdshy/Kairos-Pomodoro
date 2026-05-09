@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useTaskStore } from "@/features/tasks/use-task-store";
 import { useTimerStore } from "@/features/timer/use-timer-store";
 import { useTaskFilter } from "@/features/tasks/use-task-filter";
@@ -20,6 +21,7 @@ import { AddTaskModal } from "@/components/base/add-task-modal";
 import { TaskListCard } from "@/components/base/task-list-card";
 
 export function TasksList() {
+  const navigate = useNavigate();
   const tasks = useTaskStore((s) => s.tasks);
   const addTask = useTaskStore((s) => s.addTask);
   const updateTask = useTaskStore((s) => s.updateTask);
@@ -37,6 +39,11 @@ export function TasksList() {
   const categories = useCategoriesStore((s) => s.categories);
 
   const { active: activeTasks, done: doneTasks } = useTaskFilter(tasks, searchQuery);
+
+  const handleFocus = async (taskId: number) => {
+    await setActiveTask(taskId);
+    navigate("/");
+  };
 
   const handleAddTask = async (data: {
     name: string;
@@ -178,6 +185,7 @@ export function TasksList() {
                       onToggleActive={() =>
                         setActiveTask(activeTaskId === task.id ? null : task.id)
                       }
+                      onFocus={() => handleFocus(task.id)}
                       onEdit={() => {
                         setTaskToEdit(task);
                         setShowAddModal(true);

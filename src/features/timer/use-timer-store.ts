@@ -254,13 +254,17 @@ export const useTimerStore = create<TimerStore>((set, get) => {
         try {
           const tasks = await getTasks();
           const task = tasks.find((t) => t.id === taskId);
-          if (task?.category_id && task?.id) {
+          if (task?.category_id) {
             const category = await getCategory(task.category_id);
-            if (category) set({ selectedCategory: category });
+            set({ selectedCategory: category || null });
+          } else {
+            set({ selectedCategory: null });
           }
         } catch (err) {
           console.error("[TimerStore] Failed to load category for task:", taskId, err);
         }
+      } else {
+        set({ selectedCategory: null });
       }
     },
 
