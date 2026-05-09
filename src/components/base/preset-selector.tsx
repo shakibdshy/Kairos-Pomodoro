@@ -2,19 +2,25 @@ import { useState, useEffect } from "react";
 import { usePresetsStore } from "@/features/timer/use-presets-store";
 import { useTimerStore } from "@/features/timer/use-timer-store";
 import { Button } from "@/components/ui/button";
-import { Settings2, Check, Trash2, Plus, X, Clock } from "lucide-react";
+import { Settings2, Check, Trash2, Plus, X, Clock, Pencil } from "lucide-react";
 import { cn } from "@/lib/cn";
+import type { TimerPreset } from "@/lib/db";
 
 export function PresetSelector() {
   const [isOpen, setIsOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [newPresetName, setNewPresetName] = useState("");
+  const [editingPreset, setEditingPreset] = useState<TimerPreset | null>(null);
+  const [editName, setEditName] = useState("");
+  const [editWork, setEditWork] = useState(0);
+  const [editBreak, setEditBreak] = useState(0);
 
   const {
     presets,
     loadPresets,
     applyPreset,
     savePreset,
+    editPreset,
     removePreset,
     loaded,
   } = usePresetsStore();
@@ -32,6 +38,23 @@ export function PresetSelector() {
     setIsSaving(false);
   };
 
+  const handleStartEdit = (preset: TimerPreset) => {
+    setEditingPreset(preset);
+    setEditName(preset.name);
+    setEditWork(preset.work_duration);
+    setEditBreak(preset.short_break_duration);
+    setIsSaving(false);
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editingPreset || !editName.trim()) return;
+    useTimerStore
+      .getState()
+      .setDurations(editWork, editBreak, editingPreset.long_break_duration);
+    await editPreset(editingPreset.id, editName.trim());
+    setEditingPreset(null);
+  };
+
   const isCurrentPreset = (preset: any) => {
     return (
       preset.work_duration === currentDurations.work &&
@@ -47,7 +70,7 @@ export function PresetSelector() {
         size="sm"
         shape="rounded-full"
         onClick={() => setIsOpen(!isOpen)}
-        className="gap-1.5 border-sahara-border/30 text-sahara-text-secondary hover:text-sahara-primary"
+        className="gap-1.5 border-sahara-border/30 cursor-pointer text-sahara-text-secondary hover:text-sahara-primary"
       >
         <Settings2 className="w-3.5 h-3.5" />
         <span className="text-[11px] font-bold uppercase tracking-wider">
@@ -131,15 +154,26 @@ export function PresetSelector() {
                           <Check className="w-4 h-4" />
                         </div>
                       ) : (
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            removePreset(preset.id);
-                          }}
-                          className="p-2 text-sahara-text-muted hover:text-red-400 hover:bg-red-50 rounded-xl opacity-0 group-hover:opacity-100 transition-all"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
+                        <>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleStartEdit(preset);
+                            }}
+                            className="p-2 text-sahara-text-muted hover:text-sahara-primary hover:bg-sahara-primary/5 rounded-xl opacity-0 group-hover:opacity-100 transition-all cursor-pointer"
+                          >
+                            <Pencil className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              removePreset(preset.id);
+                            }}
+                            className="p-2 text-sahara-text-muted cursor-pointer hover:text-red-400 hover:bg-red-50 rounded-xl opacity-0 group-hover:opacity-100 transition-all"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </>
                       )}
                     </div>
                   </div>
@@ -148,7 +182,96 @@ export function PresetSelector() {
             </div>
 
             <div className="p-5 bg-sahara-card/40 border-t border-sahara-border/10 space-y-4">
-              {isSaving ? (
+              {editingPreset ? (
+                <div className="space-y-4 animate-in slide-in-from-bottom-2 duration-300">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-[10px] font-bold text-sahara-text-muted uppercase tracking-wider">
+                      Edit Preset
+                    </span>
+                    <button
+                      onClick={() => setEditingPreset(null)}
+                      className="text-sahara-text-muted cursor-pointer hover:text-sahara-text transition-colors"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+
+                  <input
+                    autoFocus
+                    type="text"
+                    value={editName}
+                    onChange={(e) => setEditName(e.target.value)}
+                    placeholder="Preset name"
+                    className="w-full bg-sahara-surface border border-sahara-border/20 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-sahara-primary/50 transition-all shadow-inner"
+                  />
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="bg-sahara-surface/50 border border-sahara-border/10 rounded-xl p-3">
+                      <p className="text-[9px] font-bold text-sahara-text-muted uppercase mb-1">
+                        Focus
+                      </p>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-bold text-sahara-text">
+                          {editWork / 60}m
+                        </span>
+                        <div className="flex gap-1">
+                          <button
+                            onClick={() =>
+                              setEditWork(Math.max(60, editWork - 300))
+                            }
+                            className="w-5 h-5 flex items-center justify-center rounded bg-sahara-card cursor-pointer hover:bg-sahara-border/20 text-sahara-text-muted transition-colors"
+                          >
+                            -
+                          </button>
+                          <button
+                            onClick={() => setEditWork(editWork + 300)}
+                            className="w-5 h-5 flex items-center justify-center rounded bg-sahara-card cursor-pointer hover:bg-sahara-border/20 text-sahara-text-muted transition-colors"
+                          >
+                            +
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="bg-sahara-surface/50 border border-sahara-border/10 rounded-xl p-3">
+                      <p className="text-[9px] font-bold text-sahara-text-muted uppercase mb-1">
+                        Break
+                      </p>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-bold text-sahara-text">
+                          {editBreak / 60}m
+                        </span>
+                        <div className="flex gap-1">
+                          <button
+                            onClick={() =>
+                              setEditBreak(Math.max(60, editBreak - 60))
+                            }
+                            className="w-5 h-5 flex items-center justify-center rounded bg-sahara-card cursor-pointer hover:bg-sahara-border/20 text-sahara-text-muted transition-colors"
+                          >
+                            -
+                          </button>
+                          <button
+                            onClick={() => setEditBreak(editBreak + 60)}
+                            className="w-5 h-5 flex items-center justify-center rounded bg-sahara-card cursor-pointer hover:bg-sahara-border/20 text-sahara-text-muted transition-colors"
+                          >
+                            +
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <Button
+                    variant="solid"
+                    intent="sahara"
+                    fullWidth
+                    onClick={handleSaveEdit}
+                    disabled={!editName.trim()}
+                    className="py-3 shadow-lg shadow-sahara-primary/20"
+                  >
+                    Save Changes
+                  </Button>
+                </div>
+              ) : isSaving ? (
                 <div className="space-y-4 animate-in slide-in-from-bottom-2 duration-300">
                   <div className="flex items-center justify-between mb-1">
                     <span className="text-[10px] font-bold text-sahara-text-muted uppercase tracking-wider">
@@ -191,7 +314,7 @@ export function PresetSelector() {
                                   currentDurations.long,
                                 )
                             }
-                            className="w-5 h-5 flex items-center justify-center rounded bg-sahara-card hover:bg-sahara-border/20 text-sahara-text-muted transition-colors"
+                            className="w-5 h-5 flex items-center justify-center rounded bg-sahara-card cursor-pointer hover:bg-sahara-border/20 text-sahara-text-muted transition-colors"
                           >
                             -
                           </button>
@@ -205,7 +328,7 @@ export function PresetSelector() {
                                   currentDurations.long,
                                 )
                             }
-                            className="w-5 h-5 flex items-center justify-center rounded bg-sahara-card hover:bg-sahara-border/20 text-sahara-text-muted transition-colors"
+                            className="w-5 h-5 flex items-center justify-center rounded bg-sahara-card cursor-pointer hover:bg-sahara-border/20 text-sahara-text-muted transition-colors"
                           >
                             +
                           </button>
@@ -231,7 +354,7 @@ export function PresetSelector() {
                                   currentDurations.long,
                                 )
                             }
-                            className="w-5 h-5 flex items-center justify-center rounded bg-sahara-card hover:bg-sahara-border/20 text-sahara-text-muted transition-colors"
+                            className="w-5 h-5 flex items-center justify-center rounded bg-sahara-card cursor-pointer hover:bg-sahara-border/20 text-sahara-text-muted transition-colors"
                           >
                             -
                           </button>
@@ -245,7 +368,7 @@ export function PresetSelector() {
                                   currentDurations.long,
                                 )
                             }
-                            className="w-5 h-5 flex items-center justify-center rounded bg-sahara-card hover:bg-sahara-border/20 text-sahara-text-muted transition-colors"
+                            className="w-5 h-5 flex items-center justify-center rounded bg-sahara-card cursor-pointer hover:bg-sahara-border/20 text-sahara-text-muted transition-colors"
                           >
                             +
                           </button>
@@ -260,7 +383,7 @@ export function PresetSelector() {
                     fullWidth
                     onClick={handleSave}
                     disabled={!newPresetName.trim()}
-                    className="py-3 shadow-lg shadow-sahara-primary/20"
+                    className="py-3 shadow-lg shadow-sahara-primary/20 cursor-pointer"
                   >
                     Confirm & Save Preset
                   </Button>
@@ -268,7 +391,7 @@ export function PresetSelector() {
               ) : (
                 <button
                   onClick={() => setIsSaving(true)}
-                  className="w-full py-4 flex items-center justify-center gap-2 text-xs font-bold uppercase tracking-widest text-sahara-text-muted hover:text-sahara-primary transition-all border border-dashed border-sahara-border/30 rounded-2xl hover:border-sahara-primary/30 hover:bg-sahara-primary/5 group"
+                  className="w-full py-4 flex items-center justify-center gap-2 text-xs font-bold uppercase tracking-widest text-sahara-text-muted hover:text-sahara-primary transition-all border border-dashed border-sahara-border/30 rounded-2xl hover:border-sahara-primary/30 hover:bg-sahara-primary/5 group cursor-pointer"
                 >
                   <Plus className="w-4 h-4 group-hover:scale-110 transition-transform" />
                   Create New Preset

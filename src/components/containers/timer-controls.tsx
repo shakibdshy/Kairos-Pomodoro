@@ -200,18 +200,6 @@ export function TimerControls() {
               {isWorkPhase ? "Start Break" : "Back to Work"}
             </Button>
 
-            {/* <Button
-              variant="solid"
-              intent="amber"
-              size="md"
-              shape="rounded-full"
-              onClick={() => addFiveMinutes()}
-              className="gap-1.5 md:gap-2 text-[10px] md:text-xs"
-            >
-              <ClockPlus className="w-3.5 h-3.5 md:w-4 md:h-4" />
-              Add 5 Min
-            </Button> */}
-
             <Button
               variant="outline"
               intent="slate"
@@ -256,7 +244,8 @@ export function TimerControls() {
 
             {/* Only show Reset in idle state if the duration has been modified from the default */}
             {((phase === "work" && secondsRemaining !== durations.work) ||
-              (phase === "short_break" && secondsRemaining !== durations.short) ||
+              (phase === "short_break" &&
+                secondsRemaining !== durations.short) ||
               (phase === "long_break" &&
                 secondsRemaining !== durations.long)) && (
               <>
