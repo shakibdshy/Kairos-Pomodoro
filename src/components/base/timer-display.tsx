@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useMemo } from "react";
+import { useAnimationFrame } from "framer-motion";
 import { Text } from "@/components/ui/text";
 import { cn } from "@/lib/cn";
 import { formatSeconds } from "@/lib/time";
@@ -17,6 +18,7 @@ interface TimerDisplayProps {
   overtimeSeconds?: number;
   editable?: boolean;
   onDurationChange?: (seconds: number) => void;
+  style?: "solid" | "zigzag";
 }
 
 const SIZE_DESKTOP = 400;
@@ -27,6 +29,116 @@ const SIZE_MOBILE = 260;
 const RADIUS_MOBILE = 116;
 const CENTER_MOBILE = SIZE_MOBILE / 2;
 
+function generateWavyCirclePath(
+  cx: number,
+  cy: number,
+  r: number,
+  amplitude: number,
+  frequency: number,
+  phase: number,
+) {
+  let d = "";
+  const steps = 180;
+  for (let i = 0; i <= steps; i++) {
+    const angle = (i * 2 * Math.PI) / steps;
+    const wave = Math.sin(angle * frequency + phase) * amplitude;
+    const currentRadius = r + wave;
+    const x = cx + currentRadius * Math.cos(angle);
+    const y = cy + currentRadius * Math.sin(angle);
+    if (i === 0) {
+      d += `M ${x} ${y} `;
+    } else {
+      d += `L ${x} ${y} `;
+    }
+  }
+  return d;
+}
+
+function WavyRing({
+  cx,
+  cy,
+  r,
+  progress,
+  isRunning,
+  style,
+  strokeWidth,
+  className,
+  showDot,
+}: {
+  cx: number;
+  cy: number;
+  r: number;
+  progress: number;
+  isRunning: boolean;
+  style: string;
+  strokeWidth: string;
+  className: string;
+  showDot?: boolean;
+}) {
+  const pathRef = useRef<SVGPathElement>(null);
+  const dotRef = useRef<SVGCircleElement>(null);
+
+  const amplitude = style === "zigzag" ? 8 : 0;
+  const frequency = 12;
+
+  useAnimationFrame((time) => {
+    if (!pathRef.current) return;
+
+    // Slither phase
+    const phase = style === "zigzag" && isRunning ? -(time / 400) : 0;
+    pathRef.current.setAttribute(
+      "d",
+      generateWavyCirclePath(cx, cy, r, amplitude, frequency, phase),
+    );
+
+    if (dotRef.current && showDot && progress > 0 && progress < 100) {
+      const angle = (progress / 100) * 2 * Math.PI;
+      const wave = Math.sin(angle * frequency + phase) * amplitude;
+      const currentRadius = r + wave;
+      dotRef.current.setAttribute(
+        "cx",
+        String(cx + currentRadius * Math.cos(angle)),
+      );
+      dotRef.current.setAttribute(
+        "cy",
+        String(cy + currentRadius * Math.sin(angle)),
+      );
+    }
+  });
+
+  const staticD = useMemo(
+    () => generateWavyCirclePath(cx, cy, r, amplitude, frequency, 0),
+    [cx, cy, r, amplitude, frequency],
+  );
+
+  return (
+    <>
+      <path
+        ref={pathRef}
+        d={staticD}
+        fill="none"
+        className={className}
+        strokeWidth={strokeWidth}
+        pathLength="100"
+        strokeDasharray="100"
+        strokeDashoffset={100 - progress}
+        strokeLinecap="round"
+        style={{ transition: "stroke-dashoffset 300ms ease" }}
+      />
+      {showDot && progress > 0 && progress < 100 && (
+        <circle
+          ref={dotRef}
+          cx={cx + r * Math.cos((progress / 100) * 2 * Math.PI)}
+          cy={cy + r * Math.sin((progress / 100) * 2 * Math.PI)}
+          r="6"
+          className="fill-sahara-primary"
+          style={{ transition: "opacity 1000ms ease" }}
+        />
+      )}
+    </>
+  );
+}
+
 export function TimerDisplay({
   secondsRemaining,
   totalSeconds,
@@ -34,20 +146,15 @@ export function TimerDisplay({
   overtimeSeconds = 0,
   editable = false,
   onDurationChange,
+  style = "solid",
 }: TimerDisplayProps) {
+  const isRunning = secondsRemaining > 0 && secondsRemaining < totalSeconds;
   const isComplete = secondsRemaining <= 0 || overtimeSeconds > 0;
   const progress =
     totalSeconds > 0
       ? Math.min(100, ((totalSeconds - secondsRemaining) / totalSeconds) * 100)
       : 100;
-  const circumferenceDesktop =
-    2 * Math.PI * RADIUS_DESKTOP;
-  const offsetDesktop =
-    circumferenceDesktop - (progress / 100) * circumferenceDesktop;
-  const circumferenceMobile =
-    2 * Math.PI * RADIUS_MOBILE;
-  const offsetMobile =
-    circumferenceMobile - (progress / 100) * circumferenceMobile;
+      
   const [rawInput, setRawInput] = useState(() =>
     formatEditableValueFromSeconds(secondsRemaining),
   );
@@ -85,47 +192,32 @@ export function TimerDisplay({
         height={SIZE_DESKTOP}
         className="-rotate-90 hidden md:block"
       >
-        <circle
+        <WavyRing
           cx={CENTER_DESKTOP}
           cy={CENTER_DESKTOP}
           r={RADIUS_DESKTOP}
-          fill="none"
-          className="stroke-sahara-ring-track"
+          progress={100}
+          isRunning={isRunning}
+          style={style}
           strokeWidth="1"
+          className="stroke-sahara-ring-track"
+          showDot={false}
         />
-        <circle
+        <WavyRing
           cx={CENTER_DESKTOP}
           cy={CENTER_DESKTOP}
           r={RADIUS_DESKTOP}
-          fill="none"
-          className={
+          progress={progress}
+          isRunning={isRunning}
+          style={style}
+          strokeWidth={style === "zigzag" ? "6" : "4"}
+          className={cn(
             isComplete
               ? "stroke-sahara-ring-complete"
-              : "stroke-sahara-primary"
-          }
-          strokeWidth="4"
-          strokeDasharray={circumferenceDesktop}
-          strokeDashoffset={offsetDesktop}
-          strokeLinecap="round"
-          style={{ transition: "stroke-dashoffset 300ms ease" }}
+              : "stroke-sahara-primary",
+          )}
+          showDot={true}
         />
-        {progress > 0 && progress < 100 && (
-          <circle
-            cx={
-              CENTER_DESKTOP +
-              RADIUS_DESKTOP *
-                Math.cos((progress / 100) * 2 * Math.PI)
-            }
-            cy={
-              CENTER_DESKTOP +
-              RADIUS_DESKTOP *
-                Math.sin((progress / 100) * 2 * Math.PI)
-            }
-            r="6"
-            className="fill-sahara-primary"
-            style={{ transition: "all 300ms ease" }}
-          />
-        )}
       </svg>
 
       {/* Mobile SVG */}
@@ -134,47 +226,28 @@ export function TimerDisplay({
         height={SIZE_MOBILE}
         className="-rotate-90 md:hidden"
       >
-        <circle
+        <WavyRing
           cx={CENTER_MOBILE}
           cy={CENTER_MOBILE}
           r={RADIUS_MOBILE}
-          fill="none"
-          className="stroke-sahara-ring-track"
+          progress={100}
+          isRunning={isRunning}
+          style={style}
           strokeWidth="1"
+          className="stroke-sahara-ring-track"
+          showDot={false}
         />
-        <circle
+        <WavyRing
           cx={CENTER_MOBILE}
           cy={CENTER_MOBILE}
           r={RADIUS_MOBILE}
-          fill="none"
-          className={
-            isComplete
-              ? "stroke-sahara-ring-complete"
-              : "stroke-sahara-primary"
-          }
-          strokeWidth="3"
-          strokeDasharray={circumferenceMobile}
-          strokeDashoffset={offsetMobile}
-          strokeLinecap="round"
-          style={{ transition: "stroke-dashoffset 300ms ease" }}
+          progress={progress}
+          isRunning={isRunning}
+          style={style}
+          strokeWidth={style === "zigzag" ? "5" : "3"}
+          className={cn(isComplete ? "stroke-sahara-ring-complete" : "stroke-sahara-primary")}
+          showDot={true}
         />
-        {progress > 0 && progress < 100 && (
-          <circle
-            cx={
-              CENTER_MOBILE +
-              RADIUS_MOBILE *
-                Math.cos((progress / 100) * 2 * Math.PI)
-            }
-            cy={
-              CENTER_MOBILE +
-              RADIUS_MOBILE *
-                Math.sin((progress / 100) * 2 * Math.PI)
-            }
-            r="4.5"
-            className="fill-sahara-primary"
-            style={{ transition: "all 300ms ease" }}
-          />
-        )}
       </svg>
 
       {/* Center text overlay */}
@@ -220,7 +293,9 @@ export function TimerDisplay({
                 if (event.key === "Escape") {
                   cancelledRef.current = true;
                   onDurationChange?.(originalSecondsRef.current);
-                  setRawInput(formatEditableValueFromSeconds(originalSecondsRef.current));
+                  setRawInput(
+                    formatEditableValueFromSeconds(originalSecondsRef.current),
+                  );
                   setIsEditing(false);
                   event.currentTarget.blur();
                 }
@@ -259,5 +334,3 @@ export function TimerDisplay({
     </div>
   );
 }
-
-

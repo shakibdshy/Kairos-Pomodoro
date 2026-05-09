@@ -9,4 +9,5 @@ export interface Settings {
   hotkey: string;
   soundEnabled: boolean;
   theme: ThemeMode;
+  timerStyle: "solid" | "zigzag";
 }
