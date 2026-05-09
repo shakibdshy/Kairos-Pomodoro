@@ -254,19 +254,26 @@ export function TimerControls() {
               START FOCUS
             </Button>
 
-            <div className="h-6 md:h-8 w-px bg-sahara-border/20 mx-0.5 md:mx-1 hidden sm:block" />
-
-            <Button
-              variant="outline"
-              size="icon"
-              intent="default"
-              shape="rounded-full"
-              aria-label="Reset"
-              onClick={reset}
-              className="border-sahara-border/30 text-sahara-text-secondary p-2 md:p-3"
-            >
-              <RotateCcw className="w-3.5 h-3.5 md:w-4 md:h-4" />
-            </Button>
+            {/* Only show Reset in idle state if the duration has been modified from the default */}
+            {((phase === "work" && secondsRemaining !== durations.work) ||
+              (phase === "short_break" && secondsRemaining !== durations.short) ||
+              (phase === "long_break" &&
+                secondsRemaining !== durations.long)) && (
+              <>
+                <div className="h-6 md:h-8 w-px bg-sahara-border/20 mx-0.5 md:mx-1 hidden sm:block" />
+                <Button
+                  variant="outline"
+                  size="icon"
+                  intent="default"
+                  shape="rounded-full"
+                  aria-label="Reset"
+                  onClick={reset}
+                  className="border-sahara-border/30 text-sahara-text-secondary p-2 md:p-3"
+                >
+                  <RotateCcw className="w-3.5 h-3.5 md:w-4 md:h-4" />
+                </Button>
+              </>
+            )}
           </>
         ) : (
           <>
