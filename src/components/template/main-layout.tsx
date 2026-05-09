@@ -111,7 +111,7 @@ export function MainLayout({ children }: MainLayoutProps) {
                   )}
                 />
                 {!isCollapsed && (
-                  <span className="text-xs tracking-widest font-bold whitespace-nowrap">
+                  <span className="text-xs tracking-widest font-bold uppercase whitespace-nowrap">
                     {item.label}
                   </span>
                 )}
@@ -126,6 +126,7 @@ export function MainLayout({ children }: MainLayoutProps) {
             variant="solid"
             intent="sahara"
             fullWidth
+            shape="rounded-full"
             disabled={isRunning}
             onClick={() => {
               if (location.pathname !== "/") {
@@ -135,13 +136,13 @@ export function MainLayout({ children }: MainLayoutProps) {
             }}
             title={isCollapsed ? (isRunning ? "SESSION ACTIVE" : "START SESSION") : undefined}
             className={cn(
-              "tracking-[0.15em]",
-              isCollapsed ? "h-12" : "py-4 gap-3",
-              isRunning && "opacity-50 cursor-not-allowed",
+              "tracking-widest text-[10px] sm:text-xs font-bold shadow-lg shadow-sahara-primary/20 hover:shadow-xl transition-all",
+              isCollapsed ? "h-12" : "py-4 gap-2",
+              isRunning && "opacity-50 cursor-not-allowed shadow-none",
             )}
           >
             <Play
-              className={cn("w-4 h-4 fill-current", !isCollapsed && "ml-1")}
+              className={cn("w-4 h-4 fill-current", !isCollapsed && "ml-0.5")}
             />
             {!isCollapsed && (
               <span>{isRunning ? "SESSION ACTIVE" : "START SESSION"}</span>

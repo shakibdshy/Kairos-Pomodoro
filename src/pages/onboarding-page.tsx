@@ -155,9 +155,9 @@ export function OnboardingPage() {
                 variant="solid"
                 intent="sahara"
                 size="lg"
-                shape="rounded-2xl"
+                shape="rounded-full"
                 onClick={() => completeOnboarding()}
-                className="hover:scale-[1.02] active:scale-[0.98] shadow-xl text-xs md:text-sm px-5 md:px-7 py-2.5 md:py-3"
+                className="hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-sahara-primary/20 text-[10px] sm:text-xs tracking-widest font-bold uppercase px-5 md:px-7 py-2.5 md:py-3 transition-all"
               >
                 GET STARTED
               </Button>
@@ -166,11 +166,11 @@ export function OnboardingPage() {
                 variant="solid"
                 intent="sahara"
                 size="md"
-                shape="rounded-2xl"
+                shape="rounded-full"
                 onClick={() =>
                   setStep((s) => Math.min(steps.length - 1, s + 1))
                 }
-                className="gap-1.5 md:gap-2 shadow-xl group text-xs md:text-sm px-5 md:px-7 py-2.5 md:py-3"
+                className="gap-1.5 md:gap-2 shadow-lg shadow-sahara-primary/20 hover:shadow-xl hover:shadow-sahara-primary/30 group text-[10px] sm:text-xs tracking-widest font-bold uppercase px-5 md:px-7 py-2.5 md:py-3 transition-all"
               >
                 CONTINUE
                 <ChevronRight className="w-3.5 h-3.5 md:w-4 md:h-4 transition-transform group-hover:translate-x-1" />

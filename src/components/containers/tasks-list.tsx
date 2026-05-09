@@ -97,7 +97,7 @@ export function TasksList() {
             placeholder="Search tasks..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full bg-sahara-card border border-sahara-border/20 rounded-xl pl-9 pr-4 py-2.5 text-sm text-sahara-text placeholder:text-sahara-text-muted/50 outline-none focus:border-sahara-primary/40 transition-colors"
+            className="w-full bg-sahara-card border border-sahara-border/20 rounded-full pl-9 pr-4 py-2.5 text-sm text-sahara-text placeholder:text-sahara-text-muted/50 outline-none focus:border-sahara-primary/40 transition-colors"
           />
         </div>
 
@@ -106,7 +106,7 @@ export function TasksList() {
             variant={viewMode === "list" ? "solid" : "outline"}
             intent={viewMode === "list" ? "sahara" : "default"}
             size="icon"
-            shape="rounded-lg"
+            shape="rounded-full"
             onClick={() => setViewMode("list")}
             className="border-sahara-border/30"
           >
@@ -116,7 +116,7 @@ export function TasksList() {
             variant={viewMode === "grid" ? "solid" : "outline"}
             intent={viewMode === "grid" ? "sahara" : "default"}
             size="icon"
-            shape="rounded-lg"
+            shape="rounded-full"
             onClick={() => setViewMode("grid")}
             className="border-sahara-border/30"
           >
