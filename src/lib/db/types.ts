@@ -1,12 +1,15 @@
 export interface Session {
   id: number;
   task_id: number | null;
+  task_name?: string | null;
   phase: string;
   started_at: string;
   ended_at: string | null;
   duration_sec: number;
   completed: number;
   category_id: number | null;
+  category_name?: string | null;
+  category_color?: string | null;
   intention: string | null;
   mood: string | null;
   notes: string | null;

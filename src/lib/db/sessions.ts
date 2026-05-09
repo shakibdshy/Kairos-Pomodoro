@@ -83,7 +83,18 @@ export async function getSessions(): Promise<Session[]> {
 export async function getTodaySessions(): Promise<Session[]> {
   const database = await getDb();
   return database.select<Session[]>(
-    "SELECT * FROM sessions WHERE date(started_at) = date('now', 'localtime') AND completed = 1 ORDER BY started_at DESC",
+    `
+    SELECT
+      s.*,
+      t.name AS task_name,
+      c.name AS category_name,
+      c.color AS category_color
+    FROM sessions s
+    LEFT JOIN tasks t ON s.task_id = t.id
+    LEFT JOIN categories c ON s.category_id = c.id
+    WHERE date(s.started_at) = date('now', 'localtime') AND s.completed = 1
+    ORDER BY s.started_at DESC
+  `,
   );
 }
 

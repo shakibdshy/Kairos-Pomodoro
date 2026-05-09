@@ -35,54 +35,54 @@ export function SessionStatsCards({ sessions }: SessionStatsCardsProps) {
       value: formatTotalTime(totalFocusSec),
       icon: Target,
       color: "text-[#c2652a]",
-      bg: "bg-[#c2652a]/15",
+      bg: "bg-[#c2652a]/10",
     },
     {
       label: "Sessions",
       value: String(workSessions.length),
       icon: CheckCircle2,
-      color: "text-[#6b9080]",
-      bg: "bg-[#6b9080]/15",
+      color: "text-emerald-600",
+      bg: "bg-emerald-500/10",
     },
     {
       label: "Avg Length",
       value: formatDuration(avgSessionLength),
       icon: TrendingUp,
-      color: "text-[#c4956a]",
-      bg: "bg-[#c4956a]/15",
+      color: "text-blue-600",
+      bg: "bg-blue-500/10",
     },
     {
       label: "Break Time",
       value: formatTotalTime(totalBreakSec),
       icon: Zap,
-      color: "text-[#c45c4a]",
-      bg: "bg-[#c45c4a]/15",
+      color: "text-amber-600",
+      bg: "bg-amber-500/10",
     },
   ];
 
   return (
-    <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 lg:gap-3 mb-6">
+    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4 mb-8">
       {stats.map((stat) => {
         const Icon = stat.icon;
         return (
           <div
             key={stat.label}
             className={cn(
-              "flex flex-col items-center p-3 md:p-4 lg:p-3 rounded-xl border border-sahara-border/15 bg-sahara-surface",
+              "group relative flex flex-col items-center p-4 md:p-5 lg:p-4 rounded-2xl border border-sahara-border/15 bg-sahara-surface/60 backdrop-blur-sm transition-all duration-300 hover:border-sahara-primary/30 hover:shadow-lg hover:shadow-sahara-primary/5",
             )}
           >
             <div
               className={cn(
-                "w-8 h-8 md:w-9 md:h-9 lg:w-9 lg:h-9 rounded-full flex items-center justify-center mb-1.5 md:mb-2 lg:mb-1.5",
+                "w-10 h-10 md:w-12 md:h-12 lg:w-11 lg:h-11 rounded-xl flex items-center justify-center mb-2.5 md:mb-3 lg:mb-2.5 transition-transform duration-300 group-hover:scale-110 shadow-sm",
                 stat.bg,
               )}
             >
-              <Icon className={cn("w-3.5 h-3.5 md:w-4.5 md:h-4.5 lg:w-4.5 lg:h-4.5", stat.color)} />
+              <Icon className={cn("w-5 h-5 md:w-6 md:h-6 lg:w-5.5 lg:h-5.5", stat.color)} />
             </div>
-            <p className="text-base md:text-lg lg:text-base font-bold tabular-nums text-sahara-text">
+            <p className="text-lg md:text-xl lg:text-lg font-black tabular-nums text-sahara-text tracking-tight">
               {stat.value}
             </p>
-            <p className="text-[9px] md:text-[10px] lg:text-[10px] font-medium text-sahara-text-muted uppercase tracking-wider mt-0.5">
+            <p className="text-[10px] md:text-xs lg:text-[10px] font-bold text-sahara-text-muted uppercase tracking-widest mt-1">
               {stat.label}
             </p>
           </div>

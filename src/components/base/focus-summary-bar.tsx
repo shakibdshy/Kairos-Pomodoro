@@ -1,6 +1,7 @@
 import { Clock, Target, Flame, Timer } from "lucide-react";
 import type { Session } from "@/lib/session-utils";
 import { formatTotalTime } from "@/lib/session-utils";
+import { cn } from "@/lib/cn";
 
 interface FocusSummaryBarProps {
   sessions: Session[];
@@ -8,7 +9,7 @@ interface FocusSummaryBarProps {
 }
 
 const ICON_STYLES = {
-  clock: "bg-[#c2652a]/15 text-[#c2652a]",
+  clock: "bg-sahara-primary/10 text-sahara-primary",
   target: "bg-[#6b9080]/15 text-[#6b9080]",
   flame: "bg-[#c4956a]/15 text-[#c4956a]",
   timer: "bg-[#c45c4a]/15 text-[#c45c4a]",
@@ -25,86 +26,91 @@ export function FocusSummaryBar({
   );
   const sessionCount = workSessions.length;
 
+  const StatBox = ({
+    label,
+    value,
+    icon: Icon,
+    styleKey,
+    extra,
+    iconColor,
+  }: {
+    label: string;
+    value: React.ReactNode;
+    icon: any;
+    styleKey: keyof typeof ICON_STYLES;
+    extra?: React.ReactNode;
+    iconColor?: string;
+  }) => (
+    <div className="group relative bg-sahara-surface/40 backdrop-blur-md rounded-2xl border border-sahara-border/10 p-3.5 md:p-4 flex items-center gap-3.5 transition-all duration-300 hover:border-sahara-primary/30 hover:bg-sahara-surface/60 shadow-sm">
+      <div
+        className={cn(
+          "w-10 h-10 md:w-11 md:h-11 rounded-xl flex items-center justify-center shrink-0 transition-transform duration-300 group-hover:scale-110",
+          styleKey === "flame" && iconColor ? "" : ICON_STYLES[styleKey],
+        )}
+        style={
+          styleKey === "flame" && iconColor
+            ? { backgroundColor: `${iconColor}15`, color: iconColor }
+            : {}
+        }
+      >
+        <Icon className="w-5 h-5 md:w-5.5 md:h-5.5" />
+      </div>
+
+      <div className="min-w-0 flex-1">
+        <p className="text-[10px] font-black text-sahara-text-muted uppercase tracking-widest mb-0.5">
+          {label}
+        </p>
+        <div className="flex flex-col">
+          <p className="text-base md:text-lg font-black text-sahara-text truncate leading-tight">
+            {value}
+          </p>
+          {extra && <div className="mt-1">{extra}</div>}
+        </div>
+      </div>
+    </div>
+  );
+
   return (
-    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
-      {/* Focus Time */}
-      <div className="bg-sahara-surface rounded-xl border border-sahara-border/15 p-3 md:p-4 lg:p-3.5 flex items-center gap-2.5 md:gap-3 lg:gap-2.5">
-        <div className={`w-9 h-9 md:w-10 md:h-10 lg:w-9 lg:h-9 rounded-lg flex items-center justify-center shrink-0 ${ICON_STYLES.clock}`}>
-          <Clock className="w-4 h-4 md:w-5 md:h-5 lg:w-4.5 lg:h-4.5" />
-        </div>
-        <div>
-          <p className="text-[10px] md:text-xs lg:text-[10px] font-bold text-sahara-text-muted uppercase tracking-wider">
-            Focus Time
-          </p>
-          <p className="text-base md:text-lg lg:text-base font-bold text-sahara-text tabular-nums">
-            {formatTotalTime(totalFocusSec)}
-          </p>
-        </div>
-      </div>
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+      <StatBox 
+        label="Focus Time" 
+        value={formatTotalTime(totalFocusSec)} 
+        icon={Clock} 
+        styleKey="clock" 
+      />
+      
+      <StatBox 
+        label="Sessions" 
+        value={sessionCount} 
+        icon={Target} 
+        styleKey="target" 
+      />
 
-      {/* Sessions */}
-      <div className="bg-sahara-surface rounded-xl border border-sahara-border/15 p-3 md:p-4 lg:p-3.5 flex items-center gap-2.5 md:gap-3 lg:gap-2.5">
-        <div className={`w-9 h-9 md:w-10 md:h-10 lg:w-9 lg:h-9 rounded-lg flex items-center justify-center shrink-0 ${ICON_STYLES.target}`}>
-          <Target className="w-4 h-4 md:w-5 md:h-5 lg:w-4.5 lg:h-4.5" />
-        </div>
-        <div>
-          <p className="text-[10px] md:text-xs lg:text-[10px] font-bold text-sahara-text-muted uppercase tracking-wider">
-            Sessions
-          </p>
-          <p className="text-base md:text-lg lg:text-base font-bold text-sahara-text tabular-nums">
-            {sessionCount}
-          </p>
-        </div>
-      </div>
-
-      {/* Top Category */}
-      <div className="bg-sahara-surface rounded-xl border border-sahara-border/15 p-3 md:p-4 lg:p-3.5 flex items-center gap-2.5 md:gap-3 lg:gap-2.5">
-        <div className={`w-9 h-9 md:w-10 md:h-10 lg:w-9 lg:h-9 rounded-lg flex items-center justify-center shrink-0 ${ICON_STYLES.flame}`}>
-          <Flame className="w-4 h-4 md:w-5 md:h-5 lg:w-4.5 lg:h-4.5" />
-        </div>
-        <div>
-          <p className="text-[10px] md:text-xs lg:text-[10px] font-bold text-sahara-text-muted uppercase tracking-wider">
-            Top Category
-          </p>
-          {topCategory ? (
-            <div className="flex items-center gap-1.5 mt-0.5">
-              <span
-                className="w-2 h-2 rounded-full shrink-0"
+      <StatBox 
+        label="Top Focus" 
+        styleKey="flame"
+        icon={Flame}
+        iconColor={topCategory?.color}
+        value={topCategory ? topCategory.name : "—"}
+        extra={topCategory && (
+          <div className="flex items-center gap-1">
+             <span
+                className="w-1.5 h-1.5 rounded-full"
                 style={{ backgroundColor: topCategory.color }}
               />
-              <span className="text-sm md:text-base lg:text-sm font-bold text-sahara-text truncate max-w-16 md:max-w-none lg:max-w-20">
-                {topCategory.name}
+              <span className="text-[9px] font-bold text-sahara-text-muted tabular-nums uppercase">
+                {topCategory.count} Recorded
               </span>
-              <span className="text-[10px] text-sahara-text-muted tabular-nums">
-                ×{topCategory.count}
-              </span>
-            </div>
-          ) : (
-            <p className="text-sm md:text-base lg:text-sm font-bold text-sahara-text-muted mt-0.5">
-              —
-            </p>
-          )}
-        </div>
-      </div>
+          </div>
+        )}
+      />
 
-      {/* Avg Focus */}
-      <div className="bg-sahara-surface rounded-xl border border-sahara-border/15 p-3 md:p-4 lg:p-3.5 flex items-center gap-2.5 md:gap-3 lg:gap-2.5">
-        <div className={`w-9 h-9 md:w-10 md:h-10 lg:w-9 lg:h-9 rounded-lg flex items-center justify-center shrink-0 ${ICON_STYLES.timer}`}>
-          <Timer className="w-4 h-4 md:w-5 md:h-5 lg:w-4.5 lg:h-4.5" />
-        </div>
-        <div>
-          <p className="text-[10px] md:text-xs lg:text-[10px] font-bold text-sahara-text-muted uppercase tracking-wider">
-            Avg Focus
-          </p>
-          <p className="text-base md:text-lg lg:text-base font-bold text-sahara-text tabular-nums">
-            {sessionCount > 0
-              ? formatTotalTime(
-                  Math.round(totalFocusSec / sessionCount),
-                )
-              : "0m"}
-          </p>
-        </div>
-      </div>
+      <StatBox 
+        label="Avg Focus" 
+        value={sessionCount > 0 ? formatTotalTime(Math.round(totalFocusSec / sessionCount)) : "0m"} 
+        icon={Timer} 
+        styleKey="timer" 
+      />
     </div>
   );
 }
