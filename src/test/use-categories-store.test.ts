@@ -58,12 +58,12 @@ describe("useCategoriesStore", () => {
       expect(useCategoriesStore.getState().categories).toHaveLength(1);
     });
 
-    it("assigns default color from palette when not specified", async () => {
+    it("assigns a random HSL color when not specified", async () => {
       const category = await useCategoriesStore.getState().addCategory("No Color");
-      expect(category.color).toBe("#C17767");
+      expect(category.color).toMatch(/^#[0-9a-f]{6}$/);
     });
 
-    it("cycles through default colors based on index", async () => {
+    it("assigns a random color regardless of existing categories", async () => {
       useCategoriesStore.setState({
         categories: [
           { id: 1, name: "A", color: "#C17767", created_at: "" },
@@ -71,7 +71,7 @@ describe("useCategoriesStore", () => {
         ],
       });
       const category = await useCategoriesStore.getState().addCategory("C");
-      expect(category.color).toBe("#4A7C59");
+      expect(category.color).toMatch(/^#[0-9a-f]{6}$/);
     });
   });
 
