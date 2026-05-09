@@ -21,7 +21,7 @@ export async function addPreset(preset: Omit<TimerPreset, "id" | "created_at">):
     "INSERT INTO presets (name, work_duration, short_break_duration, long_break_duration, pomos_before_long_break) VALUES ($1, $2, $3, $4, $5)",
     [preset.name, preset.work_duration, preset.short_break_duration, preset.long_break_duration, preset.pomos_before_long_break]
   );
-  return result.lastInsertId;
+  return result.lastInsertId ?? 0;
 }
 
 export async function deletePreset(id: number): Promise<void> {

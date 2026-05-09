@@ -17,7 +17,7 @@ interface CategoriesStore {
   deleteCategory: (id: number) => Promise<void>;
 }
 
-export const useCategoriesStore = create<CategoriesStore>((set, get) => ({
+export const useCategoriesStore = create<CategoriesStore>((set) => ({
   categories: [],
   isLoading: false,
 
