@@ -2,6 +2,7 @@ import { useState, useMemo } from "react";
 import { useTimerStore } from "@/features/timer/use-timer-store";
 import { TimerDisplay } from "@/components/base/timer-display";
 import { IntentionSelector } from "@/components/intention-selector";
+import { TaskSelector } from "@/components/task-selector";
 import { Button } from "@/components/ui/button";
 import {
   FinishSessionModal,
@@ -21,6 +22,8 @@ import {
 } from "lucide-react";
 import { formatTimeAmPm } from "@/lib/time";
 import type { TimerPhase } from "@/features/timer/timer-types";
+
+import { PresetSelector } from "@/components/base/preset-selector";
 
 export function TimerControls() {
   const phase = useTimerStore((s) => s.phase);
@@ -85,40 +88,47 @@ export function TimerControls() {
 
   return (
     <div className="flex flex-col items-center gap-5 md:gap-8 w-full">
-      {/* Phase Selector */}
-      <div className="flex bg-sahara-card p-1 rounded-full border border-sahara-border/20">
-        <Button
-          variant="ghost"
-          size="sm"
-          intent="default"
-          shape="rounded-full"
-          active={isFocus}
-          onClick={() => setPhase("work")}
-          disabled={status !== "idle"}
-          className="px-3 sm:px-4 md:px-6 py-2 text-[10px] sm:text-xs font-bold tracking-wider"
-        >
-          Focus
-        </Button>
-        <Button
-          variant="ghost"
-          size="sm"
-          intent="default"
-          shape="rounded-full"
-          active={isBreak}
-          onClick={handleSetBreak}
-          disabled={status !== "idle"}
-          className="px-3 sm:px-4 md:px-6 py-2 text-[10px] sm:text-xs font-bold tracking-wider"
-        >
-          Break
-        </Button>
+      {/* Top Controls */}
+      <div className="flex items-center gap-3">
+        <div className="flex bg-sahara-card p-1 rounded-full border border-sahara-border/20">
+          <Button
+            variant="ghost"
+            size="sm"
+            intent="default"
+            shape="rounded-full"
+            active={isFocus}
+            onClick={() => setPhase("work")}
+            disabled={status !== "idle"}
+            className="px-3 sm:px-4 md:px-6 py-2 text-[10px] sm:text-xs font-bold tracking-wider"
+          >
+            Focus
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            intent="default"
+            shape="rounded-full"
+            active={isBreak}
+            onClick={handleSetBreak}
+            disabled={status !== "idle"}
+            className="px-3 sm:px-4 md:px-6 py-2 text-[10px] sm:text-xs font-bold tracking-wider"
+          >
+            Break
+          </Button>
+        </div>
+        <div className="w-px h-6 bg-sahara-border/20" />
+        <PresetSelector />
       </div>
 
-      {/* Intention Selector */}
-      <IntentionSelector
-        selectedCategory={selectedCategory}
-        onSelect={setSelectedCategory}
-        disabled={status !== "idle"}
-      />
+      {/* Task & Intention Selectors */}
+      <div className="flex flex-wrap items-center justify-center gap-3">
+        <TaskSelector disabled={status !== "idle"} />
+        <IntentionSelector
+          selectedCategory={selectedCategory}
+          onSelect={setSelectedCategory}
+          disabled={status !== "idle"}
+        />
+      </div>
 
       {/* Timer Display */}
       <TimerDisplay

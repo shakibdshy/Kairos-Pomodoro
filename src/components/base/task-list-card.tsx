@@ -1,4 +1,4 @@
-import { Target, Clock, CheckCircle2, Trash2, Edit3 } from "lucide-react";
+import { Target, Clock, CheckCircle2, Trash2, Edit3, Play } from "lucide-react";
 import type { Task } from "@/features/tasks/task-types";
 import { cn } from "@/lib/cn";
 
@@ -6,6 +6,7 @@ interface TaskListCardProps {
   task: Task;
   isActive: boolean;
   onToggleActive: () => void;
+  onFocus?: () => void;
   onEdit: () => void;
   onDelete: () => void;
   onCompletePomo: () => void;
@@ -15,6 +16,7 @@ export function TaskListCard({
   task,
   isActive,
   onToggleActive,
+  onFocus,
   onEdit,
   onDelete,
   onCompletePomo,
@@ -46,17 +48,31 @@ export function TaskListCard({
         </span>
         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
           {!isDone && (
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                onCompletePomo();
-              }}
+            <>
+              {onFocus && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onFocus();
+                  }}
+                  className="p-1 rounded-lg hover:bg-sahara-primary/10 transition-colors cursor-pointer group/play"
+                  title="Start Focus"
+                >
+                  <Play className="w-3.5 h-3.5 text-sahara-primary fill-sahara-primary group-hover/play:scale-110 transition-transform" />
+                </button>
+              )}
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onCompletePomo();
+                }}
               className="p-1 rounded-lg hover:bg-sahara-card transition-colors cursor-pointer"
               title="Complete pomodoro"
             >
               <CheckCircle2 className="w-3.5 h-3.5 text-green-500" />
             </button>
-          )}
+          </>
+        )}
           <button
             onClick={(e) => {
               e.stopPropagation();

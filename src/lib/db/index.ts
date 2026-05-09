@@ -39,3 +39,5 @@ export {
   getSessionNotes,
   getCompletedTasksForPeriod,
 } from "./analytics";
+export { getPresets, addPreset, deletePreset } from "./presets";
+export type { TimerPreset } from "./presets";
