@@ -32,7 +32,7 @@ export function TaskListCard({
           ? "opacity-60 hover:opacity-80 border-sahara-border/10"
           : "hover:border-sahara-primary/25 hover:shadow-sm",
         isActive && !isDone &&
-          "border-sahara-primary/40 shadow-md shadow-sahara-primary/5",
+          "border-sahara-primary shadow-lg shadow-sahara-primary/5",
       )}
     >
       <div className="flex items-start justify-between gap-2 mb-2 md:mb-3">

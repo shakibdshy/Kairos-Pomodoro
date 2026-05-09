@@ -127,11 +127,11 @@ export function TasksList() {
             variant="solid"
             intent="sahara"
             size="sm"
-            shape="rounded-xl"
+            shape="rounded-full"
             onClick={() => setShowAddModal(true)}
-            className="gap-1.5 ml-1"
+            className="gap-1.5 ml-1 md:ml-2 px-4 shadow-lg shadow-sahara-primary/20 hover:shadow-xl hover:shadow-sahara-primary/30 text-[10px] sm:text-xs font-bold tracking-widest uppercase transition-all"
           >
-            <Plus className="w-3.5 h-3.5" />
+            <Plus className="w-3.5 h-3.5 md:w-4 md:h-4" />
             <span className="hidden sm:inline">Add Task</span>
           </Button>
         </div>
