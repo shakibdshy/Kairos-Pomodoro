@@ -6,6 +6,7 @@ import {
   updateCategory,
   deleteCategory,
 } from "@/lib/db";
+import { generateCategoryColor } from "@/lib/category-colors";
 
 interface CategoriesStore {
   categories: Category[];
@@ -15,17 +16,6 @@ interface CategoriesStore {
   updateCategory: (id: number, name: string, color: string) => Promise<void>;
   deleteCategory: (id: number) => Promise<void>;
 }
-
-const DEFAULT_COLORS = [
-  "#C17767",
-  "#8B9E6B",
-  "#4A7C59",
-  "#5B8FA3",
-  "#9B7EBD",
-  "#D4A574",
-  "#E07A5F",
-  "#81B29A",
-];
 
 export const useCategoriesStore = create<CategoriesStore>((set, get) => ({
   categories: [],
@@ -42,8 +32,7 @@ export const useCategoriesStore = create<CategoriesStore>((set, get) => ({
   },
 
   addCategory: async (name: string, color?: string) => {
-    const categoryColor =
-      color || DEFAULT_COLORS[get().categories.length % DEFAULT_COLORS.length];
+    const categoryColor = color || generateCategoryColor();
     const id = await addCategory(name, categoryColor);
     const newCategory: Category = {
       id,
