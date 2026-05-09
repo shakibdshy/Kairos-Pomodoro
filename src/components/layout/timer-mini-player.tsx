@@ -45,7 +45,7 @@ export function TimerMiniPlayer() {
   const accentColor = selectedCategory?.color || "var(--color-sahara-primary)";
 
   return (
-    <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 w-[92%] max-w-2xl animate-in fade-in slide-in-from-bottom-4 duration-500">
+    <div className="fixed bottom-20 md:bottom-6 left-1/2 -translate-x-1/2 z-50 w-[92%] max-w-2xl animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="bg-sahara-surface/80 backdrop-blur-2xl border border-sahara-border/20 rounded-2xl p-3 md:p-4 shadow-2xl shadow-black/20 flex items-center gap-4 md:gap-6">
         
         {/* Progress & Exit */}
