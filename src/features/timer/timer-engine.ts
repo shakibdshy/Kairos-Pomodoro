@@ -8,7 +8,6 @@ export interface TimerEngineCallbacks {
 
 export class TimerEngine {
   private worker: Worker | null = null;
-  private overtoneInterval: ReturnType<typeof setInterval> | null = null;
   private callbacks: TimerEngineCallbacks | null = null;
 
   setCallbacks(cb: TimerEngineCallbacks) {
@@ -17,7 +16,6 @@ export class TimerEngine {
 
   start(seconds: number) {
     this.terminate();
-    this.clearOvertimeNotif();
 
     const worker = createTimerWorker();
     worker.onmessage = (e: MessageEvent) => {
@@ -54,14 +52,6 @@ export class TimerEngine {
     };
     worker.postMessage({ command: "start_overtime", startFrom });
     this.worker = worker;
-
-    this.overtoneInterval = setInterval(() => {
-      this.callbacks?.onDone();
-    }, 60_000);
-  }
-
-  stopOvertime() {
-    this.clearOvertimeNotif();
   }
 
   private terminateWorker() {
@@ -69,16 +59,8 @@ export class TimerEngine {
     this.worker = null;
   }
 
-  private clearOvertimeNotif() {
-    if (this.overtoneInterval) {
-      clearInterval(this.overtoneInterval);
-      this.overtoneInterval = null;
-    }
-  }
-
   terminate() {
     this.terminateWorker();
-    this.clearOvertimeNotif();
   }
 
   isRunning(): boolean {
