@@ -35,7 +35,7 @@ export function CalendarWeekNav({
         variant="outline"
         size="icon"
         intent="default"
-        shape="rounded-xl"
+        shape="rounded-full"
         onClick={onPrev}
         className="border-sahara-border/30"
       >
@@ -52,7 +52,7 @@ export function CalendarWeekNav({
         variant="outline"
         size="icon"
         intent="default"
-        shape="rounded-xl"
+        shape="rounded-full"
         onClick={onNext}
         className="border-sahara-border/30"
       >

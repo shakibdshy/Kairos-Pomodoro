@@ -26,21 +26,22 @@ export function AnalyticsPage() {
       <div className="px-4 sm:px-6 md:px-12 py-6 md:py-12 max-w-6xl mx-auto">
         <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-8 md:mb-12">
           <div>
-            <h1 className="font-serif text-[10px] md:text-[12px] font-bold uppercase tracking-widest text-sahara-text-muted mb-1 md:mb-2">
+            <p className="text-[10px] font-bold text-sahara-text-muted uppercase tracking-[0.2em] mb-1">
               Performance Overview
-            </h1>
-            <p className="font-serif text-xl font-bold tracking-wide md:text-4xl text-sahara-text">
-              Your Focus Insights
             </p>
+            <h1 className="font-serif text-2xl md:text-4xl text-sahara-text">
+              Your Focus Insights
+            </h1>
           </div>
           <div className="flex gap-2 md:gap-4 self-start sm:self-auto">
             <Button
               variant="solid"
               intent="sahara"
               size="sm"
+              shape="rounded-full"
               onClick={handleExportPdf}
               disabled={exporting}
-              className="gap-2 text-xs"
+              className="gap-1.5 px-4 shadow-lg shadow-sahara-primary/20 hover:shadow-xl hover:shadow-sahara-primary/30 text-[10px] sm:text-xs font-bold tracking-widest uppercase transition-all"
               title="Export analytics as PDF"
             >
               {exporting ? (

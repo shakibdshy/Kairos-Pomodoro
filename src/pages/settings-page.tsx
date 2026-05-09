@@ -38,12 +38,12 @@ export function SettingsPage() {
     <MainLayout>
       <div className="px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16 py-8 md:py-12 max-w-6xl xl:max-w-7xl mx-auto h-full flex flex-col">
         <header className="mb-8 md:mb-12">
-          <h1 className="font-serif text-[10px] md:text-[12px] font-bold uppercase tracking-widest text-sahara-text-muted mb-2">
+          <p className="text-[10px] font-bold text-sahara-text-muted uppercase tracking-[0.2em] mb-1">
             Configuration
-          </h1>
-          <p className="font-serif text-2xl md:text-4xl text-sahara-text">
-            App Settings
           </p>
+          <h1 className="font-serif text-2xl md:text-4xl text-sahara-text">
+            App Settings
+          </h1>
         </header>
 
         <SettingsMobileTabs
