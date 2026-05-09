@@ -48,7 +48,7 @@ export function TaskSelector({ disabled = false }: TaskSelectorProps) {
         disabled={disabled}
         className={cn(
           "text-left gap-1.5 max-w-[200px] md:max-w-[250px]",
-          !activeTask && "border-dashed border-sahara-border/40 hover:border-sahara-primary/30",
+          !activeTask && "border border-sahara-border/20 bg-sahara-surface/30 hover:border-sahara-primary/30 hover:bg-sahara-surface/50",
           activeTask && "hover:shadow-md",
         )}
       >

@@ -57,7 +57,7 @@ export function IntentionSelector({
         disabled={disabled}
         className={cn(
           "text-left gap-1.5",
-          !selectedCategory && "border-dashed border-sahara-border/40 hover:border-sahara-primary/30",
+          !selectedCategory && "border border-sahara-border/20 bg-sahara-surface/30 hover:border-sahara-primary/30 hover:bg-sahara-surface/50",
           selectedCategory && "hover:shadow-md",
         )}
       >
