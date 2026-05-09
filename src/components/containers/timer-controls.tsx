@@ -34,6 +34,7 @@ export function TimerControls() {
   const reset = useTimerStore((s) => s.reset);
   const setPhase = useTimerStore((s) => s.setPhase);
   const adjustDuration = useTimerStore((s) => s.adjustDuration);
+  const durations = useTimerStore((s) => s.durations);
   const setDurationForCurrentPhase = useTimerStore(
     (s) => s.setDurationForCurrentPhase,
   );
@@ -47,11 +48,8 @@ export function TimerControls() {
   const [showFinishModal, setShowFinishModal] = useState(false);
   const [modalMode, setModalMode] = useState<"finish" | "nextPhase">("finish");
 
-  const phases: { id: TimerPhase; label: string }[] = [
-    { id: "work", label: "Work" },
-    { id: "short_break", label: "Short Break" },
-    { id: "long_break", label: "Long Break" },
-  ];
+  const isFocus = phase === "work";
+  const isBreak = phase === "short_break" || phase === "long_break";
 
   const durationMinutes = Math.round(totalSeconds / 60);
 
@@ -65,6 +63,13 @@ export function TimerControls() {
     const start = new Date(end.getTime() - totalSeconds * 1000);
     return [end, start];
   }, [secondsRemaining, totalSeconds, isFocusComplete]);
+
+  const handleSetBreak = () => {
+    // Auto-detect short vs long break based on short break duration
+    const detectedPhase: TimerPhase =
+      durations.short >= 15 * 60 ? "long_break" : "short_break";
+    setPhase(detectedPhase);
+  };
 
   const handleFinishWithReflection = async (data: {
     mood: SessionMood;
@@ -82,21 +87,30 @@ export function TimerControls() {
     <div className="flex flex-col items-center gap-5 md:gap-8 w-full">
       {/* Phase Selector */}
       <div className="flex bg-sahara-card p-1 rounded-full border border-sahara-border/20">
-        {phases.map((p) => (
-          <Button
-            key={p.id}
-            variant="ghost"
-            size="sm"
-            intent="default"
-            shape="rounded-full"
-            active={phase === p.id}
-            onClick={() => setPhase(p.id)}
-            disabled={status !== "idle"}
-            className="px-3 sm:px-4 md:px-6 py-2 text-[10px] sm:text-xs font-bold tracking-wider"
-          >
-            {p.label}
-          </Button>
-        ))}
+        <Button
+          variant="ghost"
+          size="sm"
+          intent="default"
+          shape="rounded-full"
+          active={isFocus}
+          onClick={() => setPhase("work")}
+          disabled={status !== "idle"}
+          className="px-3 sm:px-4 md:px-6 py-2 text-[10px] sm:text-xs font-bold tracking-wider"
+        >
+          Focus
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          intent="default"
+          shape="rounded-full"
+          active={isBreak}
+          onClick={handleSetBreak}
+          disabled={status !== "idle"}
+          className="px-3 sm:px-4 md:px-6 py-2 text-[10px] sm:text-xs font-bold tracking-wider"
+        >
+          Break
+        </Button>
       </div>
 
       {/* Intention Selector */}
