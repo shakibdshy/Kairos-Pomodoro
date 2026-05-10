@@ -63,8 +63,13 @@ function getPhaseDurationKey(phase: TimerPhase): keyof TimerDurations {
   return phase === "work" ? "work" : phase === "short_break" ? "short" : "long";
 }
 
-function determineBreakPhase(durationSec: number): TimerPhase {
-  return durationSec >= 15 * 60 ? "long_break" : "short_break";
+function determineBreakPhase(
+  durationSec: number,
+  durations: TimerDurations,
+): TimerPhase {
+  const longDelta = Math.abs(durationSec - durations.long);
+  const shortDelta = Math.abs(durationSec - durations.short);
+  return longDelta <= shortDelta ? "long_break" : "short_break";
 }
 
 function getNextPhase(
@@ -144,7 +149,7 @@ export const useTimerStore = create<TimerStore>((set, get) => {
       // Auto-detect break phase based on actual duration
       let resolvedPhase = state.phase;
       if (resolvedPhase === "short_break" || resolvedPhase === "long_break") {
-        resolvedPhase = determineBreakPhase(secs);
+        resolvedPhase = determineBreakPhase(secs, state.durations);
       }
 
       const sessionId = await SessionService.start(
@@ -201,8 +206,13 @@ export const useTimerStore = create<TimerStore>((set, get) => {
 
       if (completed) {
         const notifType =
-          phase === "work" ? "session-complete" as const : "break-over" as const;
-        sendNotification(notifType, `Your ${phase.replace("_", " ")} has ended.`);
+          phase === "work"
+            ? ("session-complete" as const)
+            : ("break-over" as const);
+        sendNotification(
+          notifType,
+          `Your ${phase.replace("_", " ")} has ended.`,
+        );
       }
 
       engine.terminate();
@@ -261,7 +271,11 @@ export const useTimerStore = create<TimerStore>((set, get) => {
             set({ selectedCategory: null });
           }
         } catch (err) {
-          console.error("[TimerStore] Failed to load category for task:", taskId, err);
+          console.error(
+            "[TimerStore] Failed to load category for task:",
+            taskId,
+            err,
+          );
         }
       } else {
         set({ selectedCategory: null });
@@ -371,19 +385,32 @@ export const useTimerStore = create<TimerStore>((set, get) => {
 
     confirmStartNextPhase: async (mood?: string, notes?: string) => {
       const state = get();
-      const { currentSessionId, activeTaskId, phase, totalSeconds, overtimeSeconds } = state;
+      const {
+        currentSessionId,
+        activeTaskId,
+        phase,
+        totalSeconds,
+        overtimeSeconds,
+      } = state;
       engine.terminate();
 
       if (currentSessionId) {
         const actualDuration = totalSeconds + overtimeSeconds;
-        await SessionService.finish(currentSessionId, actualDuration, mood, notes);
+        await SessionService.finish(
+          currentSessionId,
+          actualDuration,
+          mood,
+          notes,
+        );
         if (phase === "work" && activeTaskId) {
           useTaskStore.getState().incrementPomos(activeTaskId);
         }
       }
 
       const newPomos =
-        state.phase === "work" ? state.completedPomos + 1 : state.completedPomos;
+        state.phase === "work"
+          ? state.completedPomos + 1
+          : state.completedPomos;
       const next = getNextPhase(state.phase, newPomos, state.durations);
 
       set({
@@ -418,7 +445,13 @@ export const useTimerStore = create<TimerStore>((set, get) => {
 
     endWithoutBreak: async () => {
       const state = get();
-      const { currentSessionId, activeTaskId, phase, totalSeconds, overtimeSeconds } = state;
+      const {
+        currentSessionId,
+        activeTaskId,
+        phase,
+        totalSeconds,
+        overtimeSeconds,
+      } = state;
       engine.terminate();
 
       if (currentSessionId) {

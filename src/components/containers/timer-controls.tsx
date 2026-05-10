@@ -22,6 +22,7 @@ import {
   Flag,
 } from "lucide-react";
 import { formatTimeAmPm } from "@/lib/time";
+import { POMOS_BEFORE_LONG_BREAK } from "@/lib/constants";
 import type { TimerPhase } from "@/features/timer/timer-types";
 
 import { PresetSelector } from "@/components/base/preset-selector";
@@ -40,6 +41,7 @@ export function TimerControls() {
   const setPhase = useTimerStore((s) => s.setPhase);
   const adjustDuration = useTimerStore((s) => s.adjustDuration);
   const durations = useTimerStore((s) => s.durations);
+  const completedPomos = useTimerStore((s) => s.completedPomos);
   const setDurationForCurrentPhase = useTimerStore(
     (s) => s.setDurationForCurrentPhase,
   );
@@ -70,9 +72,10 @@ export function TimerControls() {
   }, [secondsRemaining, totalSeconds, isFocusComplete]);
 
   const handleSetBreak = () => {
-    // Auto-detect short vs long break based on short break duration
     const detectedPhase: TimerPhase =
-      durations.short >= 15 * 60 ? "long_break" : "short_break";
+      completedPomos > 0 && completedPomos % POMOS_BEFORE_LONG_BREAK === 0
+        ? "long_break"
+        : "short_break";
     setPhase(detectedPhase);
   };
 
