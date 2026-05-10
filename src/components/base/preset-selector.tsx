@@ -309,7 +309,7 @@ export function PresetSelector() {
                               useTimerStore
                                 .getState()
                                 .setDurations(
-                                  currentDurations.work - 300,
+                                  Math.max(60, currentDurations.work - 300),
                                   currentDurations.short,
                                   currentDurations.long,
                                 )
@@ -350,7 +350,7 @@ export function PresetSelector() {
                                 .getState()
                                 .setDurations(
                                   currentDurations.work,
-                                  currentDurations.short - 60,
+                                  Math.max(60, currentDurations.short - 60),
                                   currentDurations.long,
                                 )
                             }

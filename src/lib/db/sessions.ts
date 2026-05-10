@@ -54,7 +54,7 @@ export async function finishSession(
       `
       UPDATE sessions
       SET ended_at = datetime('now', 'localtime'),
-          duration_sec = CAST(strftime('%s', 'now', 'localtime') - strftime('%s', started_at) AS INTEGER),
+          duration_sec = CAST(strftime('%s', 'now', 'localtime') - strftime('%s', started_at, 'localtime') AS INTEGER),
           completed = 1,
           mood = $2,
           notes = $3

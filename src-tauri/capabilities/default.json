@@ -32,7 +32,6 @@
     "updater:allow-check",
     "updater:allow-download-and-install",
     "dialog:allow-save",
-    "dialog:allow-open",
     "fs:allow-write-file",
     "fs:allow-mkdir",
     {
@@ -40,8 +39,7 @@
       "allow": [
         { "path": "$DESKTOP" },
         { "path": "$DOCUMENT" },
-        { "path": "$DOWNLOAD" },
-        { "path": "$HOME" }
+        { "path": "$DOWNLOAD" }
       ]
     }
   ]
