@@ -48,6 +48,8 @@ interface TimerStore {
   confirmStartNextPhase: (mood?: string, notes?: string) => Promise<void>;
   addFiveMinutes: () => void;
   endWithoutBreak: () => Promise<void>;
+  isFullscreenFocus: boolean;
+  setFullscreenFocus: (active: boolean) => void;
 }
 
 function getPhaseDuration(
@@ -141,6 +143,8 @@ export const useTimerStore = create<TimerStore>((set, get) => {
       short: DEFAULT_SHORT_BREAK_SEC,
       long: DEFAULT_LONG_BREAK_SEC,
     },
+    isFullscreenFocus: false,
+    setFullscreenFocus: (active) => set({ isFullscreenFocus: active }),
 
     start: async (duration?: number) => {
       const state = get();
@@ -357,6 +361,7 @@ export const useTimerStore = create<TimerStore>((set, get) => {
         currentSessionId: null,
         completedPomos: get().completedPomos + (phase === "work" ? 1 : 0),
         overtimeSeconds: 0,
+        isFullscreenFocus: false,
       });
     },
 
@@ -376,6 +381,7 @@ export const useTimerStore = create<TimerStore>((set, get) => {
         totalSeconds: duration,
         currentSessionId: null,
         overtimeSeconds: 0,
+        isFullscreenFocus: false,
       });
     },
 
@@ -471,6 +477,7 @@ export const useTimerStore = create<TimerStore>((set, get) => {
         currentSessionId: null,
         completedPomos: get().completedPomos + (phase === "work" ? 1 : 0),
         overtimeSeconds: 0,
+        isFullscreenFocus: false,
       });
     },
   };

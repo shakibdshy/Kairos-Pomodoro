@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { useTimerStore } from "@/features/timer/use-timer-store";
 import { useSettingsStore } from "@/features/settings/use-settings-store";
 import { TimerDisplay } from "@/components/base/timer-display";
@@ -20,6 +21,8 @@ import {
   ArrowRight,
   Coffee,
   Flag,
+  Maximize2,
+  Minimize2,
 } from "lucide-react";
 import { formatTimeAmPm } from "@/lib/time";
 import { POMOS_BEFORE_LONG_BREAK } from "@/lib/constants";
@@ -51,6 +54,8 @@ export function TimerControls() {
   const setSelectedCategory = useTimerStore((s) => s.setSelectedCategory);
   const confirmStartNextPhase = useTimerStore((s) => s.confirmStartNextPhase);
   const endWithoutBreak = useTimerStore((s) => s.endWithoutBreak);
+  const isFullscreenFocus = useTimerStore((s) => s.isFullscreenFocus);
+  const setFullscreenFocus = useTimerStore((s) => s.setFullscreenFocus);
 
   const [showFinishModal, setShowFinishModal] = useState(false);
   const [modalMode, setModalMode] = useState<"finish" | "nextPhase">("finish");
@@ -92,65 +97,83 @@ export function TimerControls() {
   };
 
   return (
-    <div className="flex flex-col items-center gap-5 md:gap-8 w-full">
+    <motion.div
+      layout="position"
+      transition={{ type: "spring", damping: 30, stiffness: 200 }}
+      className="flex flex-col items-center gap-5 md:gap-8 w-full"
+    >
       {/* Top Controls Group */}
-      <div className="flex flex-col items-center gap-4 md:gap-5 w-full">
-        {/* Top Controls */}
-        <div className="flex items-center gap-3">
-          <div className="flex bg-sahara-card p-1 rounded-full border border-sahara-border/20">
-            <Button
-              variant="ghost"
-              size="sm"
-              intent="default"
-              shape="rounded-full"
-              active={isFocus}
-              onClick={() => setPhase("work")}
-              disabled={status !== "idle"}
-              className="px-3 sm:px-4 md:px-6 py-2 text-[10px] sm:text-xs font-bold tracking-wider"
-            >
-              Focus
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              intent="default"
-              shape="rounded-full"
-              active={isBreak}
-              onClick={handleSetBreak}
-              disabled={status !== "idle"}
-              className="px-3 sm:px-4 md:px-6 py-2 text-[10px] sm:text-xs font-bold tracking-wider"
-            >
-              Break
-            </Button>
-          </div>
-          <div className="w-px h-6 bg-sahara-border/20" />
-          <PresetSelector />
-        </div>
+      <AnimatePresence>
+        {!isFullscreenFocus && (
+          <motion.div
+            initial={{ opacity: 0, height: 0, y: -20 }}
+            animate={{ opacity: 1, height: "auto", y: 0 }}
+            exit={{ opacity: 0, height: 0, y: -20 }}
+            className="flex flex-col items-center gap-4 md:gap-5 w-full overflow-hidden"
+          >
+            {/* Top Controls */}
+            <div className="flex items-center gap-3">
+              <div className="flex bg-sahara-card p-1 rounded-full border border-sahara-border/20">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  intent="default"
+                  shape="rounded-full"
+                  active={isFocus}
+                  onClick={() => setPhase("work")}
+                  disabled={status !== "idle"}
+                  className="px-3 sm:px-4 md:px-6 py-2 text-[10px] sm:text-xs font-bold tracking-wider"
+                >
+                  Focus
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  intent="default"
+                  shape="rounded-full"
+                  active={isBreak}
+                  onClick={handleSetBreak}
+                  disabled={status !== "idle"}
+                  className="px-3 sm:px-4 md:px-6 py-2 text-[10px] sm:text-xs font-bold tracking-wider"
+                >
+                  Break
+                </Button>
+              </div>
+              <div className="w-px h-6 bg-sahara-border/20" />
+              <PresetSelector />
+            </div>
 
-        {/* Task & Intention Selectors */}
-        <div className="flex flex-wrap items-center justify-center gap-3">
-          <TaskSelector disabled={status !== "idle"} />
-          <IntentionSelector
-            selectedCategory={selectedCategory}
-            onSelect={setSelectedCategory}
-            disabled={status !== "idle"}
-          />
-        </div>
-      </div>
+            {/* Task & Intention Selectors */}
+            <div className="flex flex-wrap items-center justify-center gap-3">
+              <TaskSelector disabled={status !== "idle"} />
+              <IntentionSelector
+                selectedCategory={selectedCategory}
+                onSelect={setSelectedCategory}
+                disabled={status !== "idle"}
+              />
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Timer Display */}
-      <TimerDisplay
-        secondsRemaining={secondsRemaining}
-        totalSeconds={totalSeconds}
-        phase={phase}
-        overtimeSeconds={overtimeSeconds}
-        editable={status === "idle"}
-        onDurationChange={setDurationForCurrentPhase}
-        style={timerStyle}
-      />
+      <motion.div layout="position">
+        <TimerDisplay
+          secondsRemaining={secondsRemaining}
+          totalSeconds={totalSeconds}
+          phase={phase}
+          overtimeSeconds={overtimeSeconds}
+          editable={status === "idle"}
+          onDurationChange={setDurationForCurrentPhase}
+          style={timerStyle}
+        />
+      </motion.div>
 
       {/* Duration Adjuster with Time Range */}
-      <div className="flex items-center gap-2 md:gap-3">
+      <motion.div
+        layout="position"
+        className="flex items-center gap-2 md:gap-3"
+      >
         <Button
           variant="outline"
           size="icon"
@@ -182,10 +205,13 @@ export function TimerControls() {
         >
           <Plus className="w-3 h-3 md:w-3.5 md:h-3.5" />
         </Button>
-      </div>
+      </motion.div>
 
       {/* Action Buttons */}
-      <div className="flex items-center gap-2 md:gap-4 flex-wrap justify-center max-w-lg md:max-w-none">
+      <motion.div
+        layout="position"
+        className="flex items-center gap-2 md:gap-4 flex-wrap justify-center max-w-lg md:max-w-none"
+      >
         {isFocusComplete ? (
           <>
             <Button
@@ -230,6 +256,24 @@ export function TimerControls() {
                 Pause Overtime
               </Button>
             )}
+
+            <div className="h-6 md:h-8 w-px bg-sahara-border/20 mx-0.5 md:mx-1 hidden sm:block" />
+
+            <Button
+              variant="outline"
+              size="icon"
+              intent="default"
+              shape="rounded-full"
+              onClick={() => setFullscreenFocus(!isFullscreenFocus)}
+              title={isFullscreenFocus ? "Exit Focus Mode" : "Enter Focus Mode"}
+              className="border-sahara-border/30 text-sahara-text-secondary hover:border-sahara-primary/40 hover:text-sahara-primary"
+            >
+              {isFullscreenFocus ? (
+                <Minimize2 className="w-3.5 h-3.5" />
+              ) : (
+                <Maximize2 className="w-3.5 h-3.5" />
+              )}
+            </Button>
           </>
         ) : status === "idle" ? (
           <>
@@ -238,7 +282,10 @@ export function TimerControls() {
               intent="sahara"
               size="lg"
               shape="rounded-full"
-              onClick={() => start()}
+              onClick={() => {
+                start();
+                setFullscreenFocus(true);
+              }}
               className="gap-1.5 md:gap-2 text-xs md:text-xs px-6 md:px-8 py-3 md:py-3.5"
             >
               <Play className="w-3.5 h-3.5 md:w-4 md:h-4 fill-current ml-0.5" />
@@ -266,6 +313,24 @@ export function TimerControls() {
                 </Button>
               </>
             )}
+
+            <div className="h-6 md:h-8 w-px bg-sahara-border/20 mx-0.5 md:mx-1 hidden sm:block" />
+
+            <Button
+              variant="outline"
+              size="icon"
+              intent="default"
+              shape="rounded-full"
+              onClick={() => setFullscreenFocus(!isFullscreenFocus)}
+              title={isFullscreenFocus ? "Exit Focus Mode" : "Enter Focus Mode"}
+              className="border-sahara-border/30 text-sahara-text-secondary hover:border-sahara-primary/40 hover:text-sahara-primary p-2 md:p-3"
+            >
+              {isFullscreenFocus ? (
+                <Minimize2 className="w-3.5 h-3.5" />
+              ) : (
+                <Maximize2 className="w-3.5 h-3.5" />
+              )}
+            </Button>
           </>
         ) : (
           <>
@@ -337,9 +402,27 @@ export function TimerControls() {
             >
               <RotateCcw className="w-3.5 h-3.5 md:w-4 md:h-4" />
             </Button>
+
+            <div className="h-6 md:h-8 w-px bg-sahara-border/20 mx-0.5 md:mx-1 hidden sm:block" />
+
+            <Button
+              variant="outline"
+              size="icon"
+              intent="default"
+              shape="rounded-full"
+              onClick={() => setFullscreenFocus(!isFullscreenFocus)}
+              title={isFullscreenFocus ? "Exit Focus Mode" : "Enter Focus Mode"}
+              className="border-sahara-border/30 text-sahara-text-secondary hover:border-sahara-primary/40 hover:text-sahara-primary p-2 md:p-3"
+            >
+              {isFullscreenFocus ? (
+                <Minimize2 className="w-3.5 h-3.5" />
+              ) : (
+                <Maximize2 className="w-3.5 h-3.5" />
+              )}
+            </Button>
           </>
         )}
-      </div>
+      </motion.div>
 
       <FinishSessionModal
         open={showFinishModal}
@@ -348,6 +431,6 @@ export function TimerControls() {
         category={selectedCategory}
         durationMinutes={durationMinutes}
       />
-    </div>
+    </motion.div>
   );
 }
