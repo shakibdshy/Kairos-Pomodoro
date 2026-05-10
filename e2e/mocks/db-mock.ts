@@ -40,6 +40,30 @@ function parseWhereId(sql: string, params: unknown[]): number | null {
   return m ? Number(params[parseInt(m[1]) - 1]) : null;
 }
 
+function applyWhereFilters(rows: Row[], sql: string, up: string, params: unknown[]): Row[] {
+  if (!up.includes("WHERE")) return rows;
+
+  let result = rows;
+  if (up.includes("ARCHIVED = 0")) result = result.filter((r) => r.archived === 0);
+  if (up.includes("COMPLETED = 1")) result = result.filter((r) => r.completed === 1);
+  if (up.includes("COMPLETED = 0")) result = result.filter((r) => r.completed === 0);
+  if (up.includes("DATE(STARTED_AT)")) result = [];
+
+  const id = parseWhereId(sql, params);
+  if (id) result = result.filter((r) => r.id === id);
+
+  const genericEq = sql.match(/WHERE\s+(\w+)\s*=\s*\$(\d+)/i);
+  if (genericEq) {
+    const col = genericEq[1];
+    const pIdx = parseInt(genericEq[2]) - 1;
+    if (pIdx < params.length && col !== "id") {
+      result = result.filter((r) => r[col] === params[pIdx]);
+    }
+  }
+
+  return result;
+}
+
 function parseCreateDefaults(sql: string): Map<string, unknown> {
   const defaults = new Map<string, unknown>();
   // Match column definitions inside the CREATE TABLE body
@@ -211,23 +235,10 @@ export class Database {
     }
 
     if (up.includes("COUNT(*)")) {
-      const countCol = (sql.match(/COUNT\(\*\)\s+(?:AS\s+)?(\w+)/i) || [])[1] ?? "count";
+      const countCol = (sql.match(/COUNT\(\*\)\s+AS\s+(\w+)/i) || [])[1] ?? "count";
       let rows = allRows(name);
 
-      if (up.includes("WHERE")) {
-        if (up.includes("archived = 0")) rows = rows.filter((r) => r.archived === 0);
-        if (up.includes("completed = 1")) rows = rows.filter((r) => r.completed === 1);
-        if (up.includes("completed = 0")) rows = rows.filter((r) => r.completed === 0);
-
-        const genericEq = sql.match(/WHERE\s+(\w+)\s*=\s*\$(\d+)/i);
-        if (genericEq) {
-          const col = genericEq[1];
-          const pIdx = parseInt(genericEq[2]) - 1;
-          if (pIdx < params.length) {
-            rows = rows.filter((r) => r[col] === params[pIdx]);
-          }
-        }
-      }
+      rows = applyWhereFilters(rows, sql, up, params);
 
       return [{ [countCol]: rows.length }] as T[];
     }
@@ -243,24 +254,7 @@ export class Database {
 
     let rows = allRows(name);
 
-    if (up.includes("WHERE")) {
-      if (up.includes("archived = 0")) rows = rows.filter((r) => r.archived === 0);
-      if (up.includes("completed = 1")) rows = rows.filter((r) => r.completed === 1);
-      if (up.includes("completed = 0")) rows = rows.filter((r) => r.completed === 0);
-      if (up.includes("date(started_at)")) rows = []; // today queries
-
-      const id = parseWhereId(sql, params);
-      if (id) rows = rows.filter((r) => r.id === id);
-
-      const genericEq = sql.match(/WHERE\s+(\w+)\s*=\s*\$(\d+)/i);
-      if (genericEq) {
-        const col = genericEq[1];
-        const pIdx = parseInt(genericEq[2]) - 1;
-        if (pIdx < params.length && col !== "id") {
-          rows = rows.filter((r) => r[col] === params[pIdx]);
-        }
-      }
-    }
+    rows = applyWhereFilters(rows, sql, up, params);
 
     return rows as T[];
   }
