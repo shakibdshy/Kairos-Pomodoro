@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTaskStore } from "@/features/tasks/use-task-store";
 import { useTimerStore } from "@/features/timer/use-timer-store";
@@ -34,11 +34,21 @@ export function TasksList() {
   const [searchQuery, setSearchQuery] = useState("");
   const [viewMode, setViewMode] = useState<"list" | "grid">("list");
   const [showAddModal, setShowAddModal] = useState(false);
-  const [taskToEdit, setTaskToEdit] = useState<typeof tasks[number] | null>(null);
+  const [taskToEdit, setTaskToEdit] = useState<(typeof tasks)[number] | null>(
+    null,
+  );
   const [showDone, setShowDone] = useState(true);
   const categories = useCategoriesStore((s) => s.categories);
+  const loadCategories = useCategoriesStore((s) => s.loadCategories);
 
-  const { active: activeTasks, done: doneTasks } = useTaskFilter(tasks, searchQuery);
+  useEffect(() => {
+    loadCategories();
+  }, [loadCategories]);
+
+  const { active: activeTasks, done: doneTasks } = useTaskFilter(
+    tasks,
+    searchQuery,
+  );
 
   const handleFocus = async (taskId: number) => {
     await setActiveTask(taskId);
@@ -52,7 +62,13 @@ export function TasksList() {
     priority: string;
     categoryId: number | null;
   }) => {
-    await addTask(data.name, data.estimatedPomos, data.project, data.priority, data.categoryId);
+    await addTask(
+      data.name,
+      data.estimatedPomos,
+      data.project,
+      data.priority,
+      data.categoryId,
+    );
     setShowAddModal(false);
   };
 
@@ -177,26 +193,26 @@ export function TasksList() {
                     : "space-y-2.5 md:space-y-3",
                 )}
               >
-                  {activeTasks.map((task) => (
-                    <TaskListCard
-                      key={task.id}
-                      task={task}
-                      isActive={activeTaskId === task.id}
-                      onToggleActive={() =>
-                        setActiveTask(activeTaskId === task.id ? null : task.id)
-                      }
-                      onFocus={() => handleFocus(task.id)}
-                      onEdit={() => {
-                        setTaskToEdit(task);
-                        setShowAddModal(true);
-                      }}
-                      onDelete={async () => {
-                        await deleteTask(task.id);
-                        if (activeTaskId === task.id) setActiveTask(null);
-                      }}
-                      onCompletePomo={() => incrementPomos(task.id)}
-                    />
-                  ))}
+                {activeTasks.map((task) => (
+                  <TaskListCard
+                    key={task.id}
+                    task={task}
+                    isActive={activeTaskId === task.id}
+                    onToggleActive={() =>
+                      setActiveTask(activeTaskId === task.id ? null : task.id)
+                    }
+                    onFocus={() => handleFocus(task.id)}
+                    onEdit={() => {
+                      setTaskToEdit(task);
+                      setShowAddModal(true);
+                    }}
+                    onDelete={async () => {
+                      await deleteTask(task.id);
+                      if (activeTaskId === task.id) setActiveTask(null);
+                    }}
+                    onCompletePomo={() => incrementPomos(task.id)}
+                  />
+                ))}
               </div>
             </div>
           )}
@@ -245,9 +261,7 @@ export function TasksList() {
                       key={task.id}
                       task={task}
                       isActive={false}
-                      onToggleActive={() =>
-                        setActiveTask(task.id)
-                      }
+                      onToggleActive={() => setActiveTask(task.id)}
                       onEdit={() => {
                         setTaskToEdit(task);
                         setShowAddModal(true);
@@ -267,5 +281,3 @@ export function TasksList() {
     </div>
   );
 }
-
-
