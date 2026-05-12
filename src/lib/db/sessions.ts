@@ -9,7 +9,7 @@ export async function addSession(
 ): Promise<void> {
   const database = await getDb();
   await database.execute(
-    "INSERT INTO sessions (task_id, phase, duration_sec, completed, ended_at) VALUES ($1, $2, $3, $4, datetime('now', 'localtime'))",
+    "INSERT INTO sessions (task_id, phase, duration_sec, completed, ended_at) VALUES ($1, $2, MAX(0, $3), $4, datetime('now', 'localtime'))",
     [taskId, phase, durationSec, completed ? 1 : 0],
   );
 }
@@ -54,7 +54,7 @@ export async function finishSession(
       `
       UPDATE sessions
       SET ended_at = datetime('now', 'localtime'),
-          duration_sec = CAST(strftime('%s', 'now', 'localtime') - strftime('%s', started_at, 'localtime') AS INTEGER),
+          duration_sec = MAX(0, CAST(strftime('%s', 'now', 'localtime') - strftime('%s', started_at) AS INTEGER)),
           completed = 1,
           mood = $2,
           notes = $3

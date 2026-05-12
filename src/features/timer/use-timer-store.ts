@@ -197,10 +197,11 @@ export const useTimerStore = create<TimerStore>((set, get) => {
       } = state;
 
       const completed = secondsRemaining <= 0 || overtimeSeconds > 0;
+      const elapsed = Math.max(0, totalSeconds - secondsRemaining + overtimeSeconds);
       SessionService.recordSkip(
         activeTaskId,
         phase,
-        totalSeconds - secondsRemaining + overtimeSeconds,
+        elapsed,
         completed,
       );
 
