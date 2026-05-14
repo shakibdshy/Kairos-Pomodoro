@@ -8,6 +8,7 @@ import { useHotkeys } from "@/features/system/use-hotkeys";
 import { ThemeProvider } from "@/components/providers/theme-provider";
 import { UpdateProvider } from "@/components/providers/update-provider";
 import { useNotificationStore } from "@/features/notifications/use-notification-store";
+import { LazyMotion, domAnimation } from "framer-motion";
 
 interface ProvidersProps {
   children: ReactNode;
@@ -35,6 +36,12 @@ function useDbInit() {
         ]);
       })
       .then(() => {
+        const { settings } = useSettingsStore.getState();
+        useTimerStore.getState().setDurations(
+          settings.workDuration,
+          settings.shortBreakDuration,
+          settings.longBreakDuration,
+        );
         setState({ loading: false, error: null });
       })
       .catch((err) => {
@@ -46,31 +53,8 @@ function useDbInit() {
   return state;
 }
 
-function useApplyTimerDurations() {
-  const settings = useSettingsStore((s) => s.settings);
-  const loaded = useSettingsStore((s) => s.loaded);
-  const setDurations = useTimerStore((s) => s.setDurations);
-
-  useEffect(() => {
-    if (loaded) {
-      setDurations(
-        settings.workDuration,
-        settings.shortBreakDuration,
-        settings.longBreakDuration,
-      );
-    }
-  }, [
-    loaded,
-    settings.workDuration,
-    settings.shortBreakDuration,
-    settings.longBreakDuration,
-    setDurations,
-  ]);
-}
-
 export function Providers({ children }: ProvidersProps) {
   const { loading, error } = useDbInit();
-  useApplyTimerDurations();
   useNativeUI();
   useHotkeys();
 
@@ -78,9 +62,9 @@ export function Providers({ children }: ProvidersProps) {
     return (
       <div className="flex items-center justify-center h-screen bg-sahara-bg">
         <div className="flex flex-col items-center gap-4">
-          <div className="w-8 h-8 border-2 border-sahara-primary border-t-transparent rounded-full animate-spin" />
+          <div className="size-8 border-2 border-sahara-primary border-t-transparent rounded-full animate-spin" />
           <p className="text-sahara-text-muted text-sm tracking-widest uppercase font-bold">
-            Loading...
+            Loading…
           </p>
         </div>
       </div>
@@ -106,9 +90,11 @@ export function Providers({ children }: ProvidersProps) {
 
   return (
     <ThemeProvider>
-      <UpdateProvider>
-        {children}
-      </UpdateProvider>
+      <LazyMotion features={domAnimation} strict>
+        <UpdateProvider>
+          {children}
+        </UpdateProvider>
+      </LazyMotion>
     </ThemeProvider>
   );
 }
