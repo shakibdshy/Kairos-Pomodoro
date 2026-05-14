@@ -12,11 +12,13 @@ export function SettingsPrivacySection() {
     try {
       const Database = (await import("@tauri-apps/plugin-sql")).default;
       const db = await Database.load("sqlite:Kairos-pomodoro.db");
-      await db.execute("DELETE FROM sessions");
-      await db.execute("DELETE FROM tasks");
-      await db.execute("DELETE FROM categories");
-      await db.execute("DELETE FROM settings");
-      await db.execute("DELETE FROM _schema_meta");
+      await Promise.all([
+        db.execute("DELETE FROM sessions"),
+        db.execute("DELETE FROM tasks"),
+        db.execute("DELETE FROM categories"),
+        db.execute("DELETE FROM settings"),
+        db.execute("DELETE FROM _schema_meta"),
+      ]);
       setCleared(true);
     } catch {}
     setClearing(false);
@@ -47,7 +49,7 @@ export function SettingsPrivacySection() {
               onClick={handleClearAllData}
               className="gap-2 text-[11px]"
             >
-              {clearing ? "Clearing..." : "Clear All Data"}
+              {clearing ? "Clearing…" : "Clear All Data"}
             </Button>
           )}
         </div>
