@@ -33,7 +33,7 @@ export function SettingsSidebar({
         >
           <tab.icon
             className={cn(
-              "w-4.5 h-4.5 shrink-0",
+              "size-4.5 shrink-0",
               activeTab === tab.id ? "text-white" : "",
             )}
           />

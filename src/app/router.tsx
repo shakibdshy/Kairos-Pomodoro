@@ -22,7 +22,7 @@ function OnboardingGuard() {
   if (!loaded) {
     return (
       <div className="flex items-center justify-center h-screen bg-sahara-bg">
-        <div className="w-6 h-6 border-2 border-sahara-primary border-t-transparent rounded-full animate-spin" />
+        <div className="size-6 border-2 border-sahara-primary border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }

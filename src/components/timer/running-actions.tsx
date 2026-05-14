@@ -39,7 +39,7 @@ export function RunningActions({
           onClick={pause}
           className="gap-1.5 md:gap-2 text-[10px] md:text-xs"
         >
-          <Pause className="w-3.5 h-3.5 md:w-4 md:h-4 fill-current" />
+          <Pause className="size-3.5 md:w-4 md:h-4 fill-current" />
           PAUSE
         </Button>
       ) : (
@@ -51,7 +51,7 @@ export function RunningActions({
           onClick={resume}
           className="gap-1.5 md:gap-2 text-[10px] md:text-xs"
         >
-          <Play className="w-3.5 h-3.5 md:w-4 md:h-4 fill-current ml-0.5" />
+          <Play className="size-3.5 md:w-4 md:h-4 fill-current ml-0.5" />
           RESUME
         </Button>
       )}
@@ -66,7 +66,7 @@ export function RunningActions({
         onClick={onFinish}
         className="gap-1 md:gap-1.5 text-[10px]"
       >
-        <CheckCircle2 className="w-3.5 h-3.5 md:w-4 md:h-4" />
+        <CheckCircle2 className="size-3.5 md:w-4 md:h-4" />
         Finish
       </Button>
 
@@ -78,7 +78,7 @@ export function RunningActions({
         onClick={onAbandon}
         className="gap-1 md:gap-1.5 text-[10px]"
       >
-        <XCircle className="w-3.5 h-3.5 md:w-4 md:h-4" />
+        <XCircle className="size-3.5 md:w-4 md:h-4" />
         Abandon
       </Button>
 
@@ -93,7 +93,7 @@ export function RunningActions({
         onClick={reset}
         className="border-sahara-border/30 text-sahara-text-secondary p-2 md:p-3"
       >
-        <RotateCcw className="w-3.5 h-3.5 md:w-4 md:h-4" />
+        <RotateCcw className="size-3.5 md:w-4 md:h-4" />
       </Button>
 
       <Separator />

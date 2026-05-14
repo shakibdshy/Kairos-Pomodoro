@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { getCategoryBreakdown, type CategoryBreakdown } from "@/lib/db";
 import { CategoryBreakdown as CategoryBreakdownBars } from "@/components/base/category-breakdown";
 
@@ -9,20 +9,20 @@ interface AnalyticsCategoryBreakdownProps {
 
 export function AnalyticsCategoryBreakdown({ startDate, endDate }: AnalyticsCategoryBreakdownProps) {
   const [breakdowns, setBreakdowns] = useState<CategoryBreakdown[]>([]);
-  const [loading, setLoading] = useState(true);
+  const loadingRef = useRef(true);
 
   useEffect(() => {
-    setLoading(true);
+    loadingRef.current = true;
     getCategoryBreakdown(startDate, endDate)
       .then(setBreakdowns)
       .catch(() => setBreakdowns([]))
-      .finally(() => setLoading(false));
+      .finally(() => { loadingRef.current = false; });
   }, [startDate, endDate]);
 
-  if (loading) {
+  if (loadingRef.current) {
     return (
       <div className="bg-sahara-surface border border-sahara-border/20 rounded-xl md:rounded-2xl p-3.5 md:p-5">
-        <p className="text-xs text-sahara-text-muted">Loading...</p>
+        <p className="text-xs text-sahara-text-muted">Loading…</p>
       </div>
     );
   }

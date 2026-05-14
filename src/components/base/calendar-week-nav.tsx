@@ -39,7 +39,7 @@ export function CalendarWeekNav({
         onClick={onPrev}
         className="border-sahara-border/30"
       >
-        <ChevronLeft className="w-4 h-4" />
+        <ChevronLeft className="size-4" />
       </Button>
 
       <div className="text-center min-w-30 sm:min-w-40">
@@ -56,7 +56,7 @@ export function CalendarWeekNav({
         onClick={onNext}
         className="border-sahara-border/30"
       >
-        <ChevronRight className="w-4 h-4" />
+        <ChevronRight className="size-4" />
       </Button>
 
       <Button

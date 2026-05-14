@@ -49,19 +49,19 @@ export function TaskSelector({ disabled = false }: TaskSelectorProps) {
       >
         {activeTask ? (
           <>
-            <CheckCircle2 className="w-3.5 h-3.5 text-sahara-primary shrink-0" />
+            <CheckCircle2 className="size-3.5 text-sahara-primary shrink-0" />
             <span className="text-xs font-bold text-sahara-text tracking-wide truncate">
               {activeTask.name}
             </span>
-            <ChevronDown className="w-3 h-3 text-sahara-text-muted shrink-0" />
+            <ChevronDown className="size-3 text-sahara-text-muted shrink-0" />
           </>
         ) : (
           <>
-            <ListTodo className="w-3.5 h-3.5 text-sahara-text-muted shrink-0" />
+            <ListTodo className="size-3.5 text-sahara-text-muted shrink-0" />
             <span className="text-[11px] font-medium text-sahara-text-muted tracking-wide truncate">
               Select Task
             </span>
-            <ChevronDown className="w-3 h-3 text-sahara-text-muted shrink-0" />
+            <ChevronDown className="size-3 text-sahara-text-muted shrink-0" />
           </>
         )}
       </Button>
@@ -102,7 +102,7 @@ export function TaskSelector({ disabled = false }: TaskSelectorProps) {
             )}
           >
             <div className="flex items-center gap-3">
-              <div className="w-3 h-3 rounded-full border-2 border-sahara-text-muted shrink-0" />
+              <div className="size-3 rounded-full border-2 border-sahara-text-muted shrink-0" />
               <span
                 className={cn(
                   "text-sm font-medium",

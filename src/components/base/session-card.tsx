@@ -43,9 +43,9 @@ export function SessionCard({ session }: SessionCardProps) {
 
       <div className="flex-1 flex items-center justify-between px-4 md:px-5 py-3.5 md:py-4 min-w-0">
         <div className="flex items-center gap-3 md:gap-4 min-w-0">
-          <div className="flex items-center justify-center w-8 h-8 md:w-9 md:h-9 rounded-full bg-sahara-card/50 border border-sahara-border/10 shrink-0">
+          <div className="flex items-center justify-center size-8 md:w-9 md:h-9 rounded-full bg-sahara-card/50 border border-sahara-border/10 shrink-0">
             <CheckCircle2
-              className="w-4 h-4 md:w-5 md:h-5 shrink-0 transition-transform group-hover:scale-110 duration-300"
+              className="size-4 md:w-5 md:h-5 shrink-0 transition-transform group-hover:scale-110 duration-300"
               style={{ color: accentColor }}
             />
           </div>
@@ -87,7 +87,7 @@ export function SessionCard({ session }: SessionCardProps) {
               </p>
               {session.task_name && (
                 <>
-                  <span className="w-1 h-1 rounded-full bg-sahara-border/60" />
+                  <span className="size-1 rounded-full bg-sahara-border/60" />
                   <p className="text-xs md:text-sm text-sahara-text-secondary font-medium truncate max-w-32 md:max-w-48">
                     {session.task_name}
                   </p>

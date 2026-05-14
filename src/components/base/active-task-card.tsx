@@ -12,8 +12,8 @@ export function ActiveTaskCard({ task, taskTimeToday }: ActiveTaskCardProps) {
   if (!task) {
     return (
       <div className="bg-sahara-surface/40 backdrop-blur-sm border-2 border-dashed border-sahara-border/30 rounded-3xl p-6 md:p-8 flex flex-col items-center justify-center text-center gap-4 group transition-all duration-300 hover:border-sahara-primary/20">
-        <div className="w-12 h-12 md:w-14 md:h-14 rounded-2xl bg-sahara-surface flex items-center justify-center text-sahara-text-muted/40 shadow-sm border border-sahara-border/5 group-hover:scale-110 transition-transform duration-300">
-          <Target className="w-6 h-6 md:w-7 md:h-7" />
+        <div className="size-12 md:w-14 md:h-14 rounded-2xl bg-sahara-surface flex items-center justify-center text-sahara-text-muted/40 shadow-sm border border-sahara-border/5 group-hover:scale-110 transition-transform duration-300">
+          <Target className="size-6 md:w-7 md:h-7" />
         </div>
         <div className="max-w-xs">
           <p className="text-sm md:text-base font-black text-sahara-text-secondary tracking-tight">
@@ -38,16 +38,16 @@ export function ActiveTaskCard({ task, taskTimeToday }: ActiveTaskCardProps) {
   return (
     <div className="group relative bg-sahara-surface border border-sahara-border/15 rounded-3xl p-4 md:p-6 flex items-center gap-4 md:gap-6 cursor-pointer hover:border-sahara-primary/30 hover:shadow-xl hover:shadow-sahara-primary/5 transition-all duration-300 overflow-hidden">
       {/* Decorative background element */}
-      <div className="absolute -right-4 -bottom-4 w-32 h-32 bg-sahara-primary/5 rounded-full blur-3xl group-hover:bg-sahara-primary/10 transition-colors duration-500" />
+      <div className="absolute -right-4 -bottom-4 size-32 bg-sahara-primary/5 rounded-full blur-3xl group-hover:bg-sahara-primary/10 transition-colors duration-500" />
 
-      <div className="w-12 h-12 md:w-16 md:h-16 rounded-2xl bg-sahara-primary/10 flex items-center justify-center text-sahara-primary shrink-0 transition-all duration-300 group-hover:scale-105 group-hover:bg-sahara-primary/15 shadow-sm border border-sahara-primary/5">
-        <Target className="w-6 h-6 md:w-8 md:h-8" />
+      <div className="size-12 md:w-16 md:h-16 rounded-2xl bg-sahara-primary/10 flex items-center justify-center text-sahara-primary shrink-0 transition-all duration-300 group-hover:scale-105 group-hover:bg-sahara-primary/15 shadow-sm border border-sahara-primary/5">
+        <Target className="size-6 md:w-8 md:h-8" />
       </div>
 
       <div className="flex-1 min-w-0 z-10">
         <div className="flex items-start justify-between gap-4">
           <div className="min-w-0">
-            <h4 className="font-serif text-lg md:text-xl text-sahara-text truncate font-black tracking-tight leading-tight">
+            <h4 className="font-serif text-lg md:text-xl text-sahara-text truncate font-semibold tracking-tight leading-tight">
               {task.name}
             </h4>
             <div className="flex items-center gap-2 mt-1.5 flex-wrap">
@@ -56,13 +56,13 @@ export function ActiveTaskCard({ task, taskTimeToday }: ActiveTaskCardProps) {
               </span>
               {taskTimeToday > 0 && (
                 <span className="inline-flex items-center gap-1.5 text-[10px] md:text-xs font-bold text-sahara-text-secondary bg-sahara-card/60 px-2 py-0.5 rounded-md border border-sahara-border/10">
-                  <Clock className="w-3 h-3 text-sahara-primary" />
+                  <Clock className="size-3 text-sahara-primary" />
                   {formatDuration(taskTimeToday)} today
                 </span>
               )}
             </div>
           </div>
-          <ChevronRight className="w-5 h-5 text-sahara-text-muted/40 group-hover:text-sahara-primary group-hover:translate-x-1 transition-all shrink-0 mt-1" />
+          <ChevronRight className="size-5 text-sahara-text-muted/40 group-hover:text-sahara-primary group-hover:translate-x-1 transition-all shrink-0 mt-1" />
         </div>
 
         <div className="mt-4 md:mt-6">

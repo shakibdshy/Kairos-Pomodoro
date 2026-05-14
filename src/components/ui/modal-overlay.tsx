@@ -1,4 +1,4 @@
-import { useEffect, type ReactNode } from "react";
+import { useEffect, useEffectEvent, type ReactNode } from "react";
 import { X } from "lucide-react";
 import { useEscapeClose } from "@/hooks/use-escape-close";
 import { cn } from "@/lib/cn";
@@ -22,14 +22,16 @@ export function ModalOverlay({
 }: ModalOverlayProps) {
   useEscapeClose(open, onClose);
 
+  const onCloseEvent = useEffectEvent(() => { onClose(); });
+
   useEffect(() => {
     if (!open) return;
     const handler = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
+      if (e.key === "Escape") onCloseEvent();
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [open, onClose]);
+  }, [open]);
 
   if (!open) return null;
 
@@ -37,7 +39,10 @@ export function ModalOverlay({
     <div className="fixed inset-0 z-100 flex items-center justify-center p-4">
       <div
         className={cn("absolute inset-0 backdrop-blur-sm", backdropClassName)}
+        role="button"
+        tabIndex={-1}
         onClick={onClose}
+        onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onClose(); } }}
       />
       <div
         className={cn(
@@ -50,7 +55,7 @@ export function ModalOverlay({
             onClick={onClose}
             className="absolute top-4 right-4 z-10 p-2 text-sahara-text-muted hover:text-sahara-text hover:bg-sahara-card rounded-full transition-colors"
           >
-            <X className="w-5 h-5" />
+            <X className="size-5" />
           </button>
         )}
         {children}

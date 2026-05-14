@@ -30,7 +30,7 @@ export function FocusCompleteActions({
         onClick={onStartBreak}
         className="gap-1.5 md:gap-2 text-[10px] md:text-xs"
       >
-        <Coffee className="w-3.5 h-3.5 md:w-4 md:h-4" />
+        <Coffee className="size-3.5 md:w-4 md:h-4" />
         {isWorkPhase ? "Start Break" : "Back to Work"}
       </Button>
 
@@ -42,7 +42,7 @@ export function FocusCompleteActions({
         onClick={() => endWithoutBreak()}
         className="gap-1 md:gap-1.5 text-[10px]"
       >
-        <Flag className="w-3.5 h-3.5 md:w-4 md:h-4" />
+        <Flag className="size-3.5 md:w-4 md:h-4" />
         End Session
       </Button>
 
@@ -57,7 +57,7 @@ export function FocusCompleteActions({
           onClick={pause}
           className="gap-1.5 md:gap-2 text-[10px] md:text-xs"
         >
-          <Pause className="w-3.5 h-3.5 md:w-4 md:h-4 fill-current" />
+          <Pause className="size-3.5 md:w-4 md:h-4 fill-current" />
           Pause Overtime
         </Button>
       )}

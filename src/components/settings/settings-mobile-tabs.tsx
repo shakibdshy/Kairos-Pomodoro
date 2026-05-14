@@ -26,7 +26,7 @@ export function SettingsMobileTabs({
                 : "bg-sahara-card text-sahara-text-muted hover:text-sahara-text-secondary border border-sahara-border/20",
             )}
           >
-            <tab.icon className="w-3.5 h-3.5" />
+            <tab.icon className="size-3.5" />
             {tab.label}
           </button>
         ))}

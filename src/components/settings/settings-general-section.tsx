@@ -68,7 +68,7 @@ export function SettingsGeneralSection({
                 : "bg-sahara-surface border-sahara-border/20 text-sahara-text-muted hover:border-sahara-primary/30",
             )}
           >
-            <theme.icon className="w-5 h-5 md:w-6 md:h-6" />
+            <theme.icon className="size-5 md:w-6 md:h-6" />
             <span className="text-[9px] md:text-[10px] font-bold tracking-widest uppercase">
               {theme.label}
             </span>
@@ -97,7 +97,7 @@ export function SettingsGeneralSection({
                   : "bg-sahara-surface border-sahara-border/20 text-sahara-text-muted hover:border-sahara-primary/30",
               )}
             >
-              <style.icon className="w-5 h-5 md:w-6 md:h-6" />
+              <style.icon className="size-5 md:w-6 md:h-6" />
               <span className="text-[9px] md:text-[10px] font-bold tracking-widest uppercase">
                 {style.label}
               </span>

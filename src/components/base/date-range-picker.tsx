@@ -33,13 +33,13 @@ export function DateRangePicker({ value, onChange }: DateRangePickerProps) {
       >
         {activeLabel}
         <ChevronDown
-          className={`w-3.5 h-3.5 transition-transform ${open ? "rotate-180" : ""}`}
+          className={`size-3.5 transition-transform ${open ? "rotate-180" : ""}`}
         />
       </Button>
 
       {open && (
         <>
-          <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
+          <div className="fixed inset-0 z-10" role="button" tabIndex={-1} onClick={() => setOpen(false)} onKeyDown={(e) => { if (e.key === "Escape") setOpen(false); }} />
           <div className="absolute right-0 top-full mt-1 z-20 bg-sahara-surface border border-sahara-border/20 rounded-xl shadow-lg p-1 w-36 animate-in fade-in slide-in-from-top-2 duration-150">
             {PERIOD_OPTIONS.map((opt) => (
               <Button

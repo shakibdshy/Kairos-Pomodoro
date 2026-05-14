@@ -45,11 +45,11 @@ export function AnalyticsPage() {
               title="Export analytics as PDF"
             >
               {exporting ? (
-                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                <Loader2 className="size-3.5 animate-spin" />
               ) : (
-                <Download className="w-3.5 h-3.5" />
+                <Download className="size-3.5" />
               )}
-              {exporting ? "EXPORTING..." : "EXPORT PDF"}
+              {exporting ? "EXPORTING…" : "EXPORT PDF"}
             </Button>
           </div>
         </header>

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useReducer } from "react";
 import { X, Plus, Check, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useCategoriesStore } from "@/features/categories/use-categories-store";
@@ -8,6 +8,56 @@ interface CategoryManagerProps {
   open: boolean;
   onClose: () => void;
   onSelect: (category: Category) => void;
+}
+
+interface UIState {
+  editingId: number | null;
+  editName: string;
+  isAddingNew: boolean;
+  newName: string;
+  deleteConfirmId: number | null;
+}
+
+type UIAction =
+  | { type: "START_EDIT"; id: number; name: string }
+  | { type: "SET_EDIT_NAME"; name: string }
+  | { type: "END_EDIT" }
+  | { type: "START_ADD" }
+  | { type: "SET_NEW_NAME"; name: string }
+  | { type: "CANCEL_ADD" }
+  | { type: "FINISH_ADD" }
+  | { type: "CONFIRM_DELETE"; id: number }
+  | { type: "CANCEL_DELETE" };
+
+const INITIAL_UI: UIState = {
+  editingId: null,
+  editName: "",
+  isAddingNew: false,
+  newName: "",
+  deleteConfirmId: null,
+};
+
+function uiReducer(state: UIState, action: UIAction): UIState {
+  switch (action.type) {
+    case "START_EDIT":
+      return { ...state, editingId: action.id, editName: action.name };
+    case "SET_EDIT_NAME":
+      return { ...state, editName: action.name };
+    case "END_EDIT":
+      return { ...state, editingId: null, editName: "" };
+    case "START_ADD":
+      return { ...state, isAddingNew: true };
+    case "SET_NEW_NAME":
+      return { ...state, newName: action.name };
+    case "CANCEL_ADD":
+      return { ...state, isAddingNew: false, newName: "" };
+    case "FINISH_ADD":
+      return { ...INITIAL_UI };
+    case "CONFIRM_DELETE":
+      return { ...state, deleteConfirmId: action.id };
+    case "CANCEL_DELETE":
+      return { ...state, deleteConfirmId: null };
+  }
 }
 
 export function CategoryManager({
@@ -20,31 +70,26 @@ export function CategoryManager({
   const updateCategory = useCategoriesStore((s) => s.updateCategory);
   const deleteCategory = useCategoriesStore((s) => s.deleteCategory);
 
-  const [editingId, setEditingId] = useState<number | null>(null);
-  const [editName, setEditName] = useState("");
-  const [isAddingNew, setIsAddingNew] = useState(false);
-  const [newName, setNewName] = useState("");
-  const [deleteConfirmId, setDeleteConfirmId] = useState<number | null>(null);
+  const [ui, dispatch] = useReducer(uiReducer, INITIAL_UI);
 
   const handleDelete = async (id: number) => {
     await deleteCategory(id);
-    setDeleteConfirmId(null);
+    dispatch({ type: "CANCEL_DELETE" });
   };
 
   if (!open) return null;
 
   const handleSaveEdit = async (id: number, currentColor: string) => {
-    if (!editName.trim()) return;
-    await updateCategory(id, editName.trim(), currentColor);
-    setEditingId(null);
+    if (!ui.editName.trim()) return;
+    await updateCategory(id, ui.editName.trim(), currentColor);
+    dispatch({ type: "END_EDIT" });
   };
 
   const handleAddNew = async () => {
-    if (!newName.trim()) return;
-    const category = await addCategory(newName.trim());
+    if (!ui.newName.trim()) return;
+    const category = await addCategory(ui.newName.trim());
     onSelect(category);
-    setIsAddingNew(false);
-    setNewName("");
+    dispatch({ type: "FINISH_ADD" });
     onClose();
   };
 
@@ -52,15 +97,18 @@ export function CategoryManager({
     <div className="fixed inset-0 z-100 flex items-center justify-center p-4">
       <div
         className="absolute inset-0 bg-black/20 backdrop-blur-sm"
+        role="button"
+        tabIndex={-1}
         onClick={onClose}
+        onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onClose(); } }}
       />
       <div className="relative w-full max-w-lg bg-sahara-surface rounded-3xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-5 border-b border-sahara-border/20">
           <h2 className="font-serif text-xl text-sahara-text">
-            {isAddingNew
+            {ui.isAddingNew
               ? "New Category"
-              : editingId
+              : ui.editingId
                 ? "Edit Category"
                 : "Categories"}
           </h2>
@@ -72,31 +120,27 @@ export function CategoryManager({
             onClick={onClose}
             className="text-sahara-text-muted hover:text-sahara-text"
           >
-            <X className="w-5 h-5" />
+            <X className="size-5" />
           </Button>
         </div>
 
-        {isAddingNew ? (
+        {ui.isAddingNew ? (
           /* Add New Form */
           <div className="px-6 py-5 space-y-4">
             <input
               type="text"
               placeholder="Category name..."
-              value={newName}
-              onChange={(e) => setNewName(e.target.value)}
+              value={ui.newName}
+              onChange={(e) => dispatch({ type: "SET_NEW_NAME", name: e.target.value })}
               onKeyDown={(e) => e.key === "Enter" && handleAddNew()}
               className="w-full px-4 py-3 rounded-xl border border-sahara-border/30 bg-sahara-bg/50 text-sm font-medium focus:outline-none focus:border-sahara-primary/50"
-              autoFocus
             />
             <div className="flex gap-3 pt-2">
               <Button
                 variant="outline"
                 size="md"
                 fullWidth
-                onClick={() => {
-                  setIsAddingNew(false);
-                  setNewName("");
-                }}
+                onClick={() => dispatch({ type: "CANCEL_ADD" })}
               >
                 Cancel
               </Button>
@@ -106,10 +150,10 @@ export function CategoryManager({
                 size="md"
                 fullWidth
                 onClick={handleAddNew}
-                disabled={!newName.trim()}
+                disabled={!ui.newName.trim()}
                 className="gap-2"
               >
-                <Plus className="w-4 h-4" /> Create Category
+                <Plus className="size-4" /> Create Category
               </Button>
             </div>
           </div>
@@ -124,19 +168,18 @@ export function CategoryManager({
               )}
               {categories.map((category) => (
                 <div key={category.id}>
-                  {editingId === category.id ? (
+                  {ui.editingId === category.id ? (
                     /* Edit Inline Form */
                     <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-sahara-bg/50 mb-2">
                       <input
                         type="text"
-                        value={editName}
-                        onChange={(e) => setEditName(e.target.value)}
+                        value={ui.editName}
+                        onChange={(e) => dispatch({ type: "SET_EDIT_NAME", name: e.target.value })}
                         onKeyDown={(e) =>
                           e.key === "Enter" &&
                           handleSaveEdit(category.id, category.color)
                         }
                         className="flex-1 px-3 py-2 rounded-lg border border-sahara-border/30 text-sm font-medium focus:outline-none focus:border-sahara-primary"
-                        autoFocus
                       />
                       <Button
                         variant="solid"
@@ -147,7 +190,7 @@ export function CategoryManager({
                           handleSaveEdit(category.id, category.color)
                         }
                       >
-                        <Check className="w-3.5 h-3.5" />
+                        <Check className="size-3.5" />
                       </Button>
                     </div>
                   ) : (
@@ -155,7 +198,7 @@ export function CategoryManager({
                     <div className="group flex items-center justify-between px-4 py-3 rounded-xl mb-1 hover:bg-sahara-card transition-colors">
                       <div className="flex items-center gap-3">
                         <div
-                          className="w-3 h-3 rounded-full shrink-0"
+                          className="size-3 rounded-full shrink-0"
                           style={{ backgroundColor: category.color }}
                         />
                         <span className="text-base font-medium text-sahara-text">
@@ -163,7 +206,7 @@ export function CategoryManager({
                         </span>
                       </div>
                       <div className="flex items-center gap-1">
-                        {deleteConfirmId === category.id ? (
+                        {ui.deleteConfirmId === category.id ? (
                           <div className="flex items-center gap-1.5 bg-red-50 dark:bg-red-950/30 px-2 py-1 rounded-lg">
                             <span className="text-sm font-semibold text-red-600 dark:text-red-400 whitespace-nowrap">
                               Delete?
@@ -175,7 +218,7 @@ export function CategoryManager({
                               Confirm
                             </button>
                             <button
-                              onClick={() => setDeleteConfirmId(null)}
+                              onClick={() => dispatch({ type: "CANCEL_DELETE" })}
                               className="text-sm cursor-pointer font-medium text-sahara-text-muted hover:text-sahara-text px-1.5 py-0.5 rounded hover:bg-sahara-border/20 transition-colors"
                             >
                               Cancel
@@ -187,20 +230,19 @@ export function CategoryManager({
                               variant="ghost"
                               size="icon-sm"
                               onClick={() => {
-                                setEditingId(category.id);
-                                setEditName(category.name);
+                                dispatch({ type: "START_EDIT", id: category.id, name: category.name });
                               }}
                               className="opacity-0 group-hover:opacity-100 text-sahara-text-muted hover:text-sahara-text-secondary"
                             >
-                              <Pencil className="w-3.5 h-3.5" />
+                              <Pencil className="size-3.5" />
                             </Button>
                             <Button
                               variant="ghost"
                               size="icon-sm"
-                              onClick={() => setDeleteConfirmId(category.id)}
+                              onClick={() => dispatch({ type: "CONFIRM_DELETE", id: category.id })}
                               className="opacity-0 group-hover:opacity-100 text-sahara-text-muted hover:text-red-500"
                             >
-                              <Trash2 className="w-3.5 h-3.5" />
+                              <Trash2 className="size-3.5" />
                             </Button>
                           </>
                         )}
@@ -217,10 +259,10 @@ export function CategoryManager({
                 variant="solid"
                 intent="green"
                 fullWidth
-                onClick={() => setIsAddingNew(true)}
+                onClick={() => dispatch({ type: "START_ADD" })}
                 className="gap-2 bg-green-500/90 hover:bg-green-500"
               >
-                <Plus className="w-4 h-4" />
+                <Plus className="size-4" />
                 ADD NEW CATEGORY
               </Button>
             </div>

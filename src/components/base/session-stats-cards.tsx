@@ -73,11 +73,11 @@ export function SessionStatsCards({ sessions }: SessionStatsCardsProps) {
           >
             <div
               className={cn(
-                "w-10 h-10 md:w-12 md:h-12 lg:w-11 lg:h-11 rounded-xl flex items-center justify-center mb-2.5 md:mb-3 lg:mb-2.5 transition-transform duration-300 group-hover:scale-110 shadow-sm",
+                "size-10 md:w-12 md:h-12 lg:w-11 lg:h-11 rounded-xl flex items-center justify-center mb-2.5 md:mb-3 lg:mb-2.5 transition-transform duration-300 group-hover:scale-110 shadow-sm",
                 stat.bg,
               )}
             >
-              <Icon className={cn("w-5 h-5 md:w-6 md:h-6 lg:w-5.5 lg:h-5.5", stat.color)} />
+              <Icon className={cn("size-5 md:w-6 md:h-6 lg:w-5.5 lg:h-5.5", stat.color)} />
             </div>
             <p className="text-lg md:text-xl lg:text-lg font-black tabular-nums text-sahara-text tracking-tight">
               {stat.value}

@@ -1,6 +1,7 @@
-import { useState, useEffect } from "react";
+import { useReducer } from "react";
 import { Button } from "@/components/ui/button";
 import { useSettingsStore } from "@/features/settings/use-settings-store";
+import { useTimerStore } from "@/features/timer/use-timer-store";
 import { Save } from "lucide-react";
 
 const DURATION_CONFIGS = [
@@ -27,44 +28,58 @@ const DURATION_CONFIGS = [
   },
 ];
 
+interface FocusState {
+  workMin: number;
+  shortBreakMin: number;
+  longBreakMin: number;
+}
+
+type FocusAction =
+  | { type: "SYNC"; payload: FocusState }
+  | { type: "SET_FIELD"; field: keyof FocusState; value: number };
+
+function focusReducer(_state: FocusState, action: FocusAction): FocusState {
+  switch (action.type) {
+    case "SYNC":
+      return action.payload;
+    case "SET_FIELD":
+      return { ..._state, [action.field]: action.value };
+  }
+}
+
 export function SettingsFocusSection() {
   const settings = useSettingsStore((s) => s.settings);
   const loaded = useSettingsStore((s) => s.loaded);
   const updateSetting = useSettingsStore((s) => s.updateSetting);
 
-  const [workMin, setWorkMin] = useState(25);
-  const [shortBreakMin, setShortBreakMin] = useState(5);
-  const [longBreakMin, setLongBreakMin] = useState(15);
+  const setDurations = useTimerStore((s) => s.setDurations);
 
-  useEffect(() => {
-    if (loaded) {
-      setWorkMin(Math.round(settings.workDuration / 60));
-      setShortBreakMin(Math.round(settings.shortBreakDuration / 60));
-      setLongBreakMin(Math.round(settings.longBreakDuration / 60));
-    }
-  }, [
-    loaded,
-    settings.workDuration,
-    settings.shortBreakDuration,
-    settings.longBreakDuration,
-  ]);
+  const [state, dispatch] = useReducer(focusReducer, {
+    workMin: Math.round(settings.workDuration / 60),
+    shortBreakMin: Math.round(settings.shortBreakDuration / 60),
+    longBreakMin: Math.round(settings.longBreakDuration / 60),
+  });
+
+  if (loaded && state.workMin !== Math.round(settings.workDuration / 60)) {
+    dispatch({
+      type: "SYNC",
+      payload: {
+        workMin: Math.round(settings.workDuration / 60),
+        shortBreakMin: Math.round(settings.shortBreakDuration / 60),
+        longBreakMin: Math.round(settings.longBreakDuration / 60),
+      },
+    });
+  }
 
   const handleSave = async () => {
     if (!loaded) return;
     await Promise.all([
-      updateSetting("workDuration", workMin * 60),
-      updateSetting("shortBreakDuration", shortBreakMin * 60),
-      updateSetting("longBreakDuration", longBreakMin * 60),
+      updateSetting("workDuration", state.workMin * 60),
+      updateSetting("shortBreakDuration", state.shortBreakMin * 60),
+      updateSetting("longBreakDuration", state.longBreakMin * 60),
     ]);
+    setDurations(state.workMin * 60, state.shortBreakMin * 60, state.longBreakMin * 60);
   };
-
-  const setters = {
-    workMin: setWorkMin,
-    shortBreakMin: setShortBreakMin,
-    longBreakMin: setLongBreakMin,
-  };
-
-  const values = { workMin, shortBreakMin, longBreakMin };
 
   return (
     <section>
@@ -79,7 +94,7 @@ export function SettingsFocusSection() {
           onClick={handleSave}
           className="gap-2"
         >
-          <Save className="w-3.5 h-3.5 md:w-4 md:h-4" />
+          <Save className="size-3.5 md:w-4 md:h-4" />
           <span className="text-[9px] md:text-[10px] font-bold tracking-widest uppercase hidden sm:inline">
             Save Changes
           </span>
@@ -93,7 +108,7 @@ export function SettingsFocusSection() {
             className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-4 group"
           >
             <div>
-              <h4 className="font-bold text-sahara-text-secondary text-sm">
+              <h4 className="font-semibold text-sahara-text-secondary text-sm">
                 {label}
               </h4>
               <p className="text-xs text-sahara-text-muted mt-0.5">{desc}</p>
@@ -103,14 +118,13 @@ export function SettingsFocusSection() {
                 type="number"
                 min={1}
                 max={max}
-                value={values[key]}
+                value={state[key]}
                 onChange={(e) =>
-                  setters[key](
-                    Math.min(
-                      max,
-                      Math.max(1, parseInt(e.target.value, 10) || 1),
-                    ),
-                  )
+                  dispatch({
+                    type: "SET_FIELD",
+                    field: key,
+                    value: Math.min(max, Math.max(1, parseInt(e.target.value, 10) || 1)),
+                  })
                 }
                 className="w-18 bg-sahara-card border border-sahara-border/20 rounded-xl px-3 md:px-4 py-2 text-center text-sm font-bold text-sahara-primary outline-none focus:border-sahara-primary/40 transition-colors"
               />

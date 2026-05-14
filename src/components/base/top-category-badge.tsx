@@ -17,9 +17,10 @@ export function TopCategoryBadge({ sessions }: TopCategoryBadgeProps) {
     {} as Record<string, number>,
   );
 
-  const topCategory = Object.entries(categoryCounts).sort(
-    (a, b) => b[1] - a[1],
-  )[0];
+  const topCategory = Object.entries(categoryCounts).reduce(
+    (max, entry) => (entry[1] > (max?.[1] ?? -1) ? entry : max),
+    null as [string, number] | null,
+  );
 
   if (!topCategory) return null;
 
@@ -29,8 +30,8 @@ export function TopCategoryBadge({ sessions }: TopCategoryBadgeProps) {
         "flex items-center gap-3 mb-6 px-5 py-3.5 rounded-2xl bg-linear-to-r from-sahara-primary/10 via-sahara-primary/5 to-transparent border border-sahara-primary/15 shadow-sm shadow-sahara-primary/5",
       )}
     >
-      <div className="w-8 h-8 rounded-full bg-sahara-primary/20 flex items-center justify-center shrink-0">
-        <Flame className="w-4 h-4 text-sahara-primary" />
+      <div className="size-8 rounded-full bg-sahara-primary/20 flex items-center justify-center shrink-0">
+        <Flame className="size-4 text-sahara-primary" />
       </div>
       <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
         <span className="text-xs md:text-sm font-black text-sahara-text-secondary uppercase tracking-widest">

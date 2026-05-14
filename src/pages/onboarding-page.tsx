@@ -63,8 +63,8 @@ export function OnboardingPage() {
         {/* Left Side: Brand — full-width on mobile, half on desktop */}
         <div className="bg-sahara-primary p-6 sm:p-10 md:p-16 flex flex-col justify-between text-white relative order-last md:order-first">
           <div className="absolute inset-0 opacity-10 pointer-events-none hidden md:block">
-            <div className="absolute top-[-10%] right-[-10%] w-[60%] h-[60%] rounded-full border-40 border-white"></div>
-            <div className="absolute bottom-[10%] left-[-20%] w-[80%] h-[80%] rounded-full border-20 border-white"></div>
+            <div className="absolute top-[-10%] right-[-10%] size-[60%] rounded-full border-40 border-white"></div>
+            <div className="absolute bottom-[10%] left-[-20%] size-[80%] rounded-full border-20 border-white"></div>
           </div>
 
           <div>
@@ -86,9 +86,9 @@ export function OnboardingPage() {
           </div>
 
           <div className="flex gap-1.5 md:gap-2">
-            {steps.map((_, i) => (
+            {steps.map((s, i) => (
               <div
-                key={i}
+                key={s.title}
                 className={cn(
                   "h-1 rounded-full transition-all duration-300",
                   i === step
@@ -117,11 +117,11 @@ export function OnboardingPage() {
           <div className="space-y-5 md:space-y-8">
             <div
               className={cn(
-                "w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 rounded-2xl md:rounded-3xl flex items-center justify-center shadow-lg shadow-sahara-primary/10",
+                "size-14 sm:w-16 sm:h-16 md:w-20 md:h-20 rounded-2xl md:rounded-3xl flex items-center justify-center shadow-lg shadow-sahara-primary/10",
                 STEP_ICON_COLOR,
               )}
             >
-              <currentStep.icon className="w-7 h-7 sm:w-8 sm:h-8 md:w-10 md:h-10" />
+              <currentStep.icon className="size-7 sm:w-8 sm:h-8 md:w-10 md:h-10" />
             </div>
 
             <div className="space-y-3 md:space-y-4">
@@ -146,7 +146,7 @@ export function OnboardingPage() {
                 step === 0 && "text-sahara-border",
               )}
             >
-              <ChevronLeft className="w-3.5 h-3.5 md:w-4 md:h-4" />
+              <ChevronLeft className="size-3.5 md:w-4 md:h-4" />
               BACK
             </Button>
 
@@ -173,7 +173,7 @@ export function OnboardingPage() {
                 className="gap-1.5 md:gap-2 shadow-lg shadow-sahara-primary/20 hover:shadow-xl hover:shadow-sahara-primary/30 group text-[10px] sm:text-xs tracking-widest font-bold uppercase px-5 md:px-7 py-2.5 md:py-3 transition-all"
               >
                 CONTINUE
-                <ChevronRight className="w-3.5 h-3.5 md:w-4 md:h-4 transition-transform group-hover:translate-x-1" />
+                <ChevronRight className="size-3.5 md:w-4 md:h-4 transition-transform group-hover:translate-x-1" />
               </Button>
             )}
           </div>

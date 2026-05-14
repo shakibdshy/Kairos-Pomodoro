@@ -15,36 +15,26 @@ const ICON_STYLES = {
   timer: "bg-[#c45c4a]/15 text-[#c45c4a]",
 } as const;
 
-export function FocusSummaryBar({
-  sessions,
-  topCategory,
-}: FocusSummaryBarProps) {
-  const workSessions = sessions.filter((s) => s.phase === "work");
-  const totalFocusSec = workSessions.reduce(
-    (sum, s) => sum + s.duration_sec,
-    0,
-  );
-  const sessionCount = workSessions.length;
-
-  const StatBox = ({
-    label,
-    value,
-    icon: Icon,
-    styleKey,
-    extra,
-    iconColor,
-  }: {
-    label: string;
-    value: React.ReactNode;
-    icon: any;
-    styleKey: keyof typeof ICON_STYLES;
-    extra?: React.ReactNode;
-    iconColor?: string;
-  }) => (
+function StatBox({
+  label,
+  value,
+  icon: Icon,
+  styleKey,
+  extra,
+  iconColor,
+}: {
+  label: string;
+  value: React.ReactNode;
+  icon: any;
+  styleKey: keyof typeof ICON_STYLES;
+  extra?: React.ReactNode;
+  iconColor?: string;
+}) {
+  return (
     <div className="group relative bg-sahara-surface/40 backdrop-blur-md rounded-2xl border border-sahara-border/10 p-3.5 md:p-4 flex items-center gap-3.5 transition-all duration-300 hover:border-sahara-primary/30 hover:bg-sahara-surface/60 shadow-sm">
       <div
         className={cn(
-          "w-10 h-10 md:w-11 md:h-11 rounded-xl flex items-center justify-center shrink-0 transition-transform duration-300 group-hover:scale-110",
+          "size-10 md:size-11 rounded-xl flex items-center justify-center shrink-0 transition-transform duration-300 group-hover:scale-110",
           styleKey === "flame" && iconColor ? "" : ICON_STYLES[styleKey],
         )}
         style={
@@ -53,7 +43,7 @@ export function FocusSummaryBar({
             : {}
         }
       >
-        <Icon className="w-5 h-5 md:w-5.5 md:h-5.5" />
+        <Icon className="size-5 md:size-5.5" />
       </div>
 
       <div className="min-w-0 flex-1">
@@ -69,6 +59,18 @@ export function FocusSummaryBar({
       </div>
     </div>
   );
+}
+
+export function FocusSummaryBar({
+  sessions,
+  topCategory,
+}: FocusSummaryBarProps) {
+  const workSessions = sessions.filter((s) => s.phase === "work");
+  const totalFocusSec = workSessions.reduce(
+    (sum, s) => sum + s.duration_sec,
+    0,
+  );
+  const sessionCount = workSessions.length;
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
@@ -95,7 +97,7 @@ export function FocusSummaryBar({
         extra={topCategory && (
           <div className="flex items-center gap-1">
              <span
-                className="w-1.5 h-1.5 rounded-full"
+                className="size-1.5 rounded-full"
                 style={{ backgroundColor: topCategory.color }}
               />
               <span className="text-[9px] font-bold text-sahara-text-muted tabular-nums uppercase">

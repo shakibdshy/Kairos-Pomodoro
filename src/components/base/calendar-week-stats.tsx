@@ -58,11 +58,11 @@ export function CalendarWeekStats({ summary }: CalendarWeekStatsProps) {
           >
             <div
               className={cn(
-                "w-8 h-8 rounded-lg flex items-center justify-center mb-2",
+                "size-8 rounded-lg flex items-center justify-center mb-2",
                 stat.bg,
               )}
             >
-              <Icon className={cn("w-4 h-4", stat.color)} />
+              <Icon className={cn("size-4", stat.color)} />
             </div>
             <p className="text-[9px] font-semibold text-sahara-text-muted uppercase tracking-wider">
               {stat.label}

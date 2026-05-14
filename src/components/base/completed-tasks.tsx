@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { CheckCircle2, ClipboardList } from "lucide-react";
 import { getCompletedTasksForPeriod, type CompletedTaskEntry } from "@/lib/db";
 import { formatTotalTime } from "@/lib/session-utils";
@@ -10,20 +10,20 @@ interface CompletedTasksProps {
 
 export function CompletedTasks({ startDate, endDate }: CompletedTasksProps) {
   const [tasks, setTasks] = useState<CompletedTaskEntry[]>([]);
-  const [loading, setLoading] = useState(true);
+  const loadingRef = useRef(true);
 
   useEffect(() => {
-    setLoading(true);
+    loadingRef.current = true;
     getCompletedTasksForPeriod(startDate, endDate)
       .then(setTasks)
       .catch(() => setTasks([]))
-      .finally(() => setLoading(false));
+      .finally(() => { loadingRef.current = false; });
   }, [startDate, endDate]);
 
-  if (loading) {
+  if (loadingRef.current) {
     return (
       <div className="bg-sahara-surface border border-sahara-border/20 rounded-xl md:rounded-2xl p-3.5 md:p-5">
-        <p className="text-xs text-sahara-text-muted">Loading...</p>
+        <p className="text-xs text-sahara-text-muted">Loading…</p>
       </div>
     );
   }
@@ -36,7 +36,7 @@ export function CompletedTasks({ startDate, endDate }: CompletedTasksProps) {
 
       {tasks.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-8 gap-2">
-          <ClipboardList className="w-8 h-8 text-sahara-text-muted/40" />
+          <ClipboardList className="size-8 text-sahara-text-muted/40" />
           <p className="text-[15px] text-sahara-text-muted text-center">
             No tasks in this period
           </p>
@@ -62,8 +62,8 @@ export function CompletedTasks({ startDate, endDate }: CompletedTasksProps) {
                 key={task.task_id}
                 className="group flex items-center gap-3 md:gap-4 bg-sahara-bg/30 border border-sahara-border/10 rounded-xl p-3 md:p-3.5 hover:border-sahara-border/25 transition-all"
               >
-                <div className="w-9 h-9 md:w-10 md:h-10 rounded-lg bg-sahara-primary-light/60 flex items-center justify-center shrink-0">
-                  <CheckCircle2 className="w-4.5 h-4.5 text-sahara-primary" />
+                <div className="size-9 md:w-10 md:h-10 rounded-lg bg-sahara-primary-light/60 flex items-center justify-center shrink-0">
+                  <CheckCircle2 className="size-4.5 text-sahara-primary" />
                 </div>
 
                 <div className="flex-1 min-w-0">
@@ -74,7 +74,7 @@ export function CompletedTasks({ startDate, endDate }: CompletedTasksProps) {
                     {task.category_name && (
                       <div className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full border border-sahara-border/20 bg-sahara-surface shrink-0">
                         <span
-                          className="w-1.75 h-1.75 rounded-full"
+                          className="size-1.75 rounded-full"
                           style={{
                             backgroundColor: task.category_color ?? "#94a3b8",
                           }}

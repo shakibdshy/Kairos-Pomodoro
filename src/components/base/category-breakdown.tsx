@@ -23,7 +23,7 @@ export function CategoryBreakdown({ breakdowns }: CategoryBreakdownProps) {
             <div className="flex items-center justify-between mb-2.5">
               <div className="flex items-center gap-3 min-w-0">
                 <div 
-                  className="w-2.5 h-2.5 rounded-full ring-offset-0 transition-all duration-300 group-hover:scale-125"
+                  className="size-2.5 rounded-full ring-offset-0 transition-all duration-300 group-hover:scale-125"
                   style={{ 
                     backgroundColor: color, 
                     boxShadow: `0 0 0 4px ${color}20` 
@@ -46,7 +46,7 @@ export function CategoryBreakdown({ breakdowns }: CategoryBreakdownProps) {
             <div className="relative h-2.5 w-full bg-sahara-bg/50 rounded-full overflow-hidden border border-sahara-border/5">
               <div
                 className={cn(
-                  "h-full rounded-full transition-all duration-1000 ease-out relative",
+                  "h-full rounded-full transition-all duration-500 ease-out relative",
                   "group-hover:brightness-110 shadow-[0_0_10px_rgba(0,0,0,0.05)]"
                 )}
                 style={{
@@ -60,7 +60,7 @@ export function CategoryBreakdown({ breakdowns }: CategoryBreakdownProps) {
                   style={{ 
                     maskImage: 'linear-gradient(to right, transparent, white, transparent)',
                     maskSize: '200% 100%',
-                    animation: 'shimmer 3s infinite linear'
+                    animation: 'shimmer 800ms infinite linear'
                   }}
                 />
               </div>
