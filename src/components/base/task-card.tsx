@@ -38,7 +38,15 @@ export function TaskCard({
 
   return (
     <div
+      role="button"
+      tabIndex={0}
       onClick={() => !menuOpen && onToggleActive()}
+      onKeyDown={(e) => {
+        if ((e.key === "Enter" || e.key === " ") && !menuOpen) {
+          e.preventDefault();
+          onToggleActive();
+        }
+      }}
       className={cn(
         "group relative bg-sahara-surface border rounded-2xl p-6 transition-all cursor-pointer hover:shadow-md border-l-4",
         isComplete
@@ -52,7 +60,7 @@ export function TaskCard({
       <div className="flex items-start justify-between mb-4">
         <div
           className={cn(
-            "w-5 h-5 rounded-md border-2 flex items-center justify-center transition-colors shrink-0",
+            "size-5 rounded-md border-2 flex items-center justify-center transition-colors shrink-0",
             isComplete
               ? "bg-green-500 border-green-500 text-white"
               : isActive
@@ -60,9 +68,9 @@ export function TaskCard({
                 : "border-sahara-border/40 group-hover:border-sahara-primary/40",
           )}
         >
-          {isComplete && <CheckCircle2 className="w-4 h-4" />}
+          {isComplete && <CheckCircle2 className="size-4" />}
           {isActive && !isComplete && (
-            <Target className="w-3 h-3 text-sahara-primary" />
+            <Target className="size-3 text-sahara-primary" />
           )}
         </div>
 
@@ -76,16 +84,24 @@ export function TaskCard({
             }}
             className="text-sahara-text-muted hover:text-sahara-text"
           >
-            <MoreVertical className="w-4 h-4" />
+            <MoreVertical className="size-4" />
           </Button>
 
           {menuOpen && (
             <>
               <div
                 className="fixed inset-0 z-10"
+                role="button"
+                tabIndex={-1}
                 onClick={(e) => {
                   e.stopPropagation();
                   setMenuOpen(false);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.stopPropagation();
+                    setMenuOpen(false);
+                  }
                 }}
               />
               <div className="absolute right-0 top-8 z-20 bg-sahara-surface border border-sahara-border/20 rounded-xl shadow-lg py-1 w-36 animate-in fade-in slide-in-from-top-2 duration-150">
@@ -102,7 +118,7 @@ export function TaskCard({
                     }}
                     className="gap-2 text-xs font-medium text-sahara-text-secondary hover:bg-sahara-bg/50"
                   >
-                    <Edit3 className="w-3.5 h-3.5" /> Edit
+                    <Edit3 className="size-3.5" /> Edit
                   </Button>
                 )}
                 {onDelete && (
@@ -118,7 +134,7 @@ export function TaskCard({
                     }}
                     className="gap-2 text-xs font-medium hover:bg-red-50"
                   >
-                    <Trash2 className="w-3.5 h-3.5" /> Delete
+                    <Trash2 className="size-3.5" /> Delete
                   </Button>
                 )}
               </div>
@@ -164,7 +180,7 @@ export function TaskCard({
 
       <div className="flex items-center justify-between mt-6 pt-4 border-t border-sahara-border/10">
         <div className="flex items-center gap-2">
-          <Clock className="w-3.5 h-3.5 text-sahara-text-muted" />
+          <Clock className="size-3.5 text-sahara-text-muted" />
           <span className="text-xs font-bold text-sahara-text-secondary tabular-nums">
             {task.completed_pomos}/{task.estimated_pomos}{" "}
             <span className="text-[10px] text-sahara-text-muted uppercase tracking-widest ml-1">
@@ -175,7 +191,7 @@ export function TaskCard({
 
         {isActive ? (
           <div className="flex items-center gap-1.5 text-sahara-primary">
-            <Target className="w-3.5 h-3.5" />
+            <Target className="size-3.5" />
             <span className="text-[10px] font-bold tracking-widest uppercase">
               Active
             </span>
@@ -193,7 +209,7 @@ export function TaskCard({
                 <div
                   key={i}
                   className={cn(
-                    "w-2 h-2 rounded-full transition-colors",
+                    "size-2 rounded-full transition-colors",
                     i < task.completed_pomos
                       ? "bg-green-400"
                       : "bg-sahara-border/25",

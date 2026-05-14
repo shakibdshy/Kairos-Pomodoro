@@ -4,7 +4,7 @@ import { TodayFocus } from "@/components/containers/today-focus";
 import { TodaySessions } from "@/components/containers/today-sessions";
 import { Text } from "@/components/ui/text";
 import { useUIStore } from "@/features/ui/use-ui-store";
-import { motion, AnimatePresence } from "framer-motion";
+import { m, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/cn";
 
 export function TimerPage() {
@@ -12,7 +12,7 @@ export function TimerPage() {
 
   return (
     <MainLayout>
-      <motion.div
+      <m.div
         layout
         transition={{
           type: "spring",
@@ -28,7 +28,7 @@ export function TimerPage() {
 
         <AnimatePresence mode="popLayout">
           {!isFullscreenFocus && (
-            <motion.div
+            <m.div
               key="stats-section"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -46,10 +46,10 @@ export function TimerPage() {
               <div className="mt-8">
                 <TodaySessions />
               </div>
-            </motion.div>
+            </m.div>
           )}
         </AnimatePresence>
-      </motion.div>
+      </m.div>
     </MainLayout>
   );
 }

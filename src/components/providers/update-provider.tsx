@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback, useRef, type ReactNode } from "react";
 import type { Update } from "@tauri-apps/plugin-updater";
+import { relaunch } from "@tauri-apps/plugin-process";
 import { isTauri } from "@/lib/tauri";
 import { X, Download, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -62,8 +63,6 @@ export function UpdateProvider({ children }: UpdateProviderProps) {
     setDownloading(true);
     setInstallError(null);
     try {
-      const { relaunch } = await import("@tauri-apps/plugin-process");
-
       await pendingUpdate.downloadAndInstall((event) => {
         switch (event.event) {
           case "Started":
@@ -100,8 +99,8 @@ export function UpdateProvider({ children }: UpdateProviderProps) {
         <div className="bg-sahara-surface border border-sahara-border/30 rounded-2xl shadow-xl p-5 space-y-4">
           <div className="flex items-start justify-between gap-3">
             <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-full bg-sahara-primary-light flex items-center justify-center">
-                <Download className="w-4 h-4 text-sahara-primary" />
+              <div className="size-8 rounded-full bg-sahara-primary-light flex items-center justify-center">
+                <Download className="size-4 text-sahara-primary" />
               </div>
               <div>
                 <p className="text-sm font-bold text-sahara-text">
@@ -117,7 +116,7 @@ export function UpdateProvider({ children }: UpdateProviderProps) {
               aria-label="Dismiss update"
               className="p-1 rounded-lg text-sahara-text-muted hover:text-sahara-text hover:bg-sahara-card transition-colors cursor-pointer"
             >
-              <X className="w-4 h-4" />
+              <X className="size-4" />
             </button>
           </div>
 
@@ -129,7 +128,7 @@ export function UpdateProvider({ children }: UpdateProviderProps) {
 
           {installError && (
             <div className="flex items-start gap-2 p-2.5 bg-red-500/10 border border-red-500/20 rounded-xl">
-              <AlertCircle className="w-3.5 h-3.5 text-red-400 shrink-0 mt-0.5" />
+              <AlertCircle className="size-3.5 text-red-400 shrink-0 mt-0.5" />
               <p className="text-[11px] text-red-400 leading-relaxed">
                 Update failed. Please try again or download manually from GitHub.
               </p>
@@ -146,8 +145,8 @@ export function UpdateProvider({ children }: UpdateProviderProps) {
               disabled={downloading}
               className="gap-1.5 text-[10px] flex-1"
             >
-              <Download className="w-3 h-3" />
-              {downloading ? "Downloading..." : installError ? "Retry Update" : "Install Update"}
+              <Download className="size-3" />
+              {downloading ? "Downloading…" : installError ? "Retry Update" : "Install Update"}
             </Button>
             <Button
               variant="outline"

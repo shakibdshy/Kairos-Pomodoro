@@ -19,13 +19,13 @@ export function BadgeCard({ title, description, earned }: BadgeCardProps) {
     >
       <div
         className={cn(
-          "w-10 h-10 md:w-12 md:h-12 rounded-xl flex items-center justify-center shrink-0",
+          "size-10 md:w-12 md:h-12 rounded-xl flex items-center justify-center shrink-0",
           earned
             ? "bg-sahara-primary text-white shadow-md shadow-sahara-primary/30"
             : "bg-sahara-card text-sahara-text-muted",
         )}
       >
-        <Award className="w-5 h-5 md:w-6 md:h-6" />
+        <Award className="size-5 md:w-6 md:h-6" />
       </div>
       <div>
         <h4

@@ -55,9 +55,9 @@ export function TodaySessions() {
             </span>
           )}
           {isCollapsed ? (
-            <ChevronDown className="w-4 h-4 md:w-5 md:h-5 text-sahara-text-muted group-hover:text-sahara-text-secondary transition-colors" />
+            <ChevronDown className="size-4 md:w-5 md:h-5 text-sahara-text-muted group-hover:text-sahara-text-secondary transition-colors" />
           ) : (
-            <ChevronUp className="w-4 h-4 md:w-5 md:h-5 text-sahara-text-muted group-hover:text-sahara-text-secondary transition-colors" />
+            <ChevronUp className="size-4 md:w-5 md:h-5 text-sahara-text-muted group-hover:text-sahara-text-secondary transition-colors" />
           )}
         </div>
       </button>

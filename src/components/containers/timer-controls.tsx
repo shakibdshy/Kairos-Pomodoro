@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { m, AnimatePresence } from "framer-motion";
 import { useTimerStore } from "@/features/timer/use-timer-store";
 import { TimerDisplay } from "@/components/base/timer-display";
 import { IntentionSelector } from "@/components/intention-selector";
@@ -68,7 +68,7 @@ export function TimerControls() {
   };
 
   return (
-    <motion.div
+    <m.div
       layout="position"
       transition={{ type: "spring", damping: 30, stiffness: 200 }}
       className="flex flex-col items-center gap-5 md:gap-8 w-full"
@@ -79,7 +79,7 @@ export function TimerControls() {
       {/* Top Controls Group */}
       <AnimatePresence>
         {!isFullscreenFocus && (
-          <motion.div
+          <m.div
             initial={{ opacity: 0, height: 0, y: -20 }}
             animate={{ opacity: 1, height: "auto", y: 0 }}
             exit={{ opacity: 0, height: 0, y: -20 }}
@@ -126,12 +126,12 @@ export function TimerControls() {
                 disabled={status !== "idle"}
               />
             </div>
-          </motion.div>
+          </m.div>
         )}
       </AnimatePresence>
 
       {/* Timer Display */}
-      <motion.div layout="position">
+      <m.div layout="position">
         <TimerDisplay
           secondsRemaining={secondsRemaining}
           totalSeconds={totalSeconds}
@@ -141,10 +141,10 @@ export function TimerControls() {
           onDurationChange={setDurationForCurrentPhase}
           style={timerStyle}
         />
-      </motion.div>
+      </m.div>
 
       {/* Duration Adjuster with Time Range */}
-      <motion.div
+      <m.div
         layout="position"
         className="flex items-center gap-2 md:gap-3"
       >
@@ -156,14 +156,14 @@ export function TimerControls() {
           onClick={() => adjustDuration(-5)}
           className="border-sahara-border/30 text-sahara-text-secondary hover:border-sahara-primary/40 hover:text-sahara-primary shrink-0"
         >
-          <Minus className="w-3 h-3 md:w-3.5 md:h-3.5" />
+          <Minus className="size-3 md:w-3.5 md:h-3.5" />
         </Button>
 
         <div className="inline-flex items-center gap-1.5 md:gap-2.5 px-2.5 sm:px-4 py-1.5 md:py-2 rounded-full border border-sahara-border/30 bg-sahara-surface shadow-sm">
           <span className="text-xs md:text-sm font-semibold text-sahara-text tabular-nums tracking-wide">
             {startTimeAmPm}
           </span>
-          <ArrowRight className="w-2.5 h-2.5 md:w-3.5 md:h-3.5 text-sahara-text-muted" />
+          <ArrowRight className="size-2.5 md:w-3.5 md:h-3.5 text-sahara-text-muted" />
           <span className="text-xs md:text-sm font-semibold text-sahara-text tabular-nums tracking-wide">
             {endTimeAmPm}
           </span>
@@ -177,12 +177,12 @@ export function TimerControls() {
           onClick={() => adjustDuration(5)}
           className="border-sahara-border/30 text-sahara-text-secondary hover:border-sahara-primary/40 hover:text-sahara-primary shrink-0"
         >
-          <Plus className="w-3 h-3 md:w-3.5 md:h-3.5" />
+          <Plus className="size-3 md:w-3.5 md:h-3.5" />
         </Button>
-      </motion.div>
+      </m.div>
 
       {/* Action Buttons */}
-      <motion.div
+      <m.div
         layout="position"
         className="flex items-center gap-2 md:gap-4 flex-wrap justify-center max-w-lg md:max-w-none"
       >
@@ -214,7 +214,7 @@ export function TimerControls() {
             onAbandon={() => abandonSession()}
           />
         )}
-      </motion.div>
+      </m.div>
 
       <FinishSessionModal
         open={showFinishModal}
@@ -223,6 +223,6 @@ export function TimerControls() {
         category={selectedCategory}
         durationMinutes={durationMinutes}
       />
-    </motion.div>
+    </m.div>
   );
 }

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useCategoriesStore } from "@/features/categories/use-categories-store";
 import { Button } from "@/components/ui/button";
 import { Plus, ChevronDown } from "lucide-react";
@@ -25,10 +25,6 @@ export function IntentionSelector({
   const categories = useCategoriesStore((s) => s.categories);
   const loadCategories = useCategoriesStore((s) => s.loadCategories);
 
-  useEffect(() => {
-    if (isOpen) loadCategories();
-  }, [isOpen, loadCategories]);
-
   const filteredCategories = categories.filter((c) =>
     c.name.toLowerCase().includes(searchQuery.toLowerCase()),
   );
@@ -47,7 +43,7 @@ export function IntentionSelector({
         size="sm"
         shape="rounded-full"
         active={!!selectedCategory}
-        onClick={() => !disabled && setIsOpen(true)}
+        onClick={() => { if (!disabled) { loadCategories(); setIsOpen(true); } }}
         disabled={disabled}
         className={cn(
           "text-left gap-1.5",
@@ -58,20 +54,20 @@ export function IntentionSelector({
         {selectedCategory ? (
           <>
             <div
-              className="w-2.5 h-2.5 rounded-full shrink-0"
+              className="size-2.5 rounded-full shrink-0"
               style={{ backgroundColor: selectedCategory.color }}
             />
             <span className="text-xs font-bold text-sahara-text tracking-wide">
               {selectedCategory.name}
             </span>
-            <ChevronDown className="w-3 h-3 text-sahara-text-muted" />
+            <ChevronDown className="size-3 text-sahara-text-muted" />
           </>
         ) : (
           <>
             <span className="text-[11px] font-medium text-sahara-text-muted tracking-wide">
               Set Intention
             </span>
-            <ChevronDown className="w-3 h-3 text-sahara-text-muted" />
+            <ChevronDown className="size-3 text-sahara-text-muted" />
           </>
         )}
       </Button>
@@ -115,7 +111,7 @@ export function IntentionSelector({
             >
               <div className="flex items-center gap-3">
                 <div
-                  className="w-3 h-3 rounded-full shrink-0"
+                  className="size-3 rounded-full shrink-0"
                   style={{ backgroundColor: category.color }}
                 />
                 <span
@@ -155,7 +151,7 @@ export function IntentionSelector({
             }}
             className="gap-2 bg-green-500/90 hover:bg-green-500"
           >
-            <Plus className="w-4 h-4" />
+            <Plus className="size-4" />
             MANAGE CATEGORIES
           </Button>
         </div>

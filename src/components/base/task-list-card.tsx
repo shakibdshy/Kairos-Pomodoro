@@ -25,7 +25,15 @@ export function TaskListCard({
 
   return (
     <div
+      role="button"
+      tabIndex={0}
       onClick={() => !isDone && onToggleActive()}
+      onKeyDown={(e) => {
+        if ((e.key === "Enter" || e.key === " ") && !isDone) {
+          e.preventDefault();
+          onToggleActive();
+        }
+      }}
       className={cn(
         "group relative bg-sahara-surface border border-sahara-border/15 rounded-xl md:rounded-2xl p-3.5 md:p-5 transition-all cursor-pointer",
         isDone
@@ -58,7 +66,7 @@ export function TaskListCard({
                   className="p-1 rounded-lg hover:bg-sahara-primary/10 transition-colors cursor-pointer group/play"
                   title="Start Focus"
                 >
-                  <Play className="w-3.5 h-3.5 text-sahara-primary fill-sahara-primary group-hover/play:scale-110 transition-transform" />
+                  <Play className="size-3.5 text-sahara-primary fill-sahara-primary group-hover/play:scale-110 transition-transform" />
                 </button>
               )}
               <button
@@ -69,7 +77,7 @@ export function TaskListCard({
               className="p-1 rounded-lg hover:bg-sahara-card transition-colors cursor-pointer"
               title="Complete pomodoro"
             >
-              <CheckCircle2 className="w-3.5 h-3.5 text-green-500" />
+              <CheckCircle2 className="size-3.5 text-green-500" />
             </button>
           </>
         )}
@@ -81,7 +89,7 @@ export function TaskListCard({
             className="p-1 rounded-lg hover:bg-sahara-card transition-colors cursor-pointer"
             title="Edit task"
           >
-            <Edit3 className="w-3.5 h-3.5 text-sahara-text-muted hover:text-sahara-text" />
+            <Edit3 className="size-3.5 text-sahara-text-muted hover:text-sahara-text" />
           </button>
           <button
             onClick={(e) => {
@@ -91,7 +99,7 @@ export function TaskListCard({
             className="p-1 rounded-lg hover:bg-red-50 transition-colors cursor-pointer"
             title="Delete task"
           >
-            <Trash2 className="w-3.5 h-3.5 text-red-400" />
+            <Trash2 className="size-3.5 text-red-400" />
           </button>
         </div>
       </div>
@@ -109,7 +117,7 @@ export function TaskListCard({
 
       <div className="flex items-center gap-3 mt-2 md:mt-3 flex-wrap">
         <div className="flex items-center gap-1.5">
-          <Target className="w-3 h-3 md:w-3.5 md:h-3.5 text-sahara-primary" />
+          <Target className="size-3 md:w-3.5 md:h-3.5 text-sahara-primary" />
           <span className="text-[10px] md:text-xs font-bold text-sahara-text-secondary tabular-nums">
             {task.completed_pomos}/{task.estimated_pomos}{" "}
             <span className="text-sahara-text-muted font-normal">
@@ -120,14 +128,14 @@ export function TaskListCard({
 
         {isActive && !isDone && (
           <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-green-500/10 text-green-600 text-[9px] md:text-[10px] font-bold uppercase tracking-wider">
-            <Clock className="w-2.5 h-2.5 md:w-3 md:h-3 animate-pulse" />
+            <Clock className="size-2.5 md:w-3 md:h-3 animate-pulse" />
             Active
           </div>
         )}
 
         {isDone && (
           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-sahara-bg text-sahara-text-muted text-[9px] md:text-[10px] font-bold uppercase tracking-wider">
-            <CheckCircle2 className="w-2.5 h-2.5 md:w-3 md:h-3" />
+            <CheckCircle2 className="size-2.5 md:w-3 md:h-3" />
             Done
           </span>
         )}

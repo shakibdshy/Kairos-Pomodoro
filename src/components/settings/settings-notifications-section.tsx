@@ -65,9 +65,9 @@ export function SettingsNotifications({
       <div className="bg-sahara-bg/50 border border-sahara-border/15 rounded-xl md:rounded-2xl p-4 md:p-5 mb-6">
         <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 mb-4">
           <div className="flex items-center gap-3">
-            <Bell className="w-4 h-4 md:w-5 md:h-5 text-sahara-primary shrink-0" />
+            <Bell className="size-4 md:w-5 md:h-5 text-sahara-primary shrink-0" />
             <div>
-              <h4 className="font-bold text-sahara-text-secondary text-sm">
+              <h4 className="font-semibold text-sahara-text-secondary text-sm">
                 System Notifications
               </h4>
               <p className="text-[10px] md:text-[11px] text-sahara-text-muted mt-0.5">
@@ -78,19 +78,19 @@ export function SettingsNotifications({
           <div className="flex items-center gap-2 shrink-0 self-start">
             {checking && (
               <span className="inline-flex items-center gap-1.5 text-[10px] md:text-[11px] font-bold text-sahara-primary uppercase tracking-wider">
-                <Loader2 className="w-3 h-3 md:w-3.5 md:h-3.5 animate-spin" />
-                Requesting...
+                <Loader2 className="size-3 md:w-3.5 md:h-3.5 animate-spin" />
+                Requesting…
               </span>
             )}
             {!checking && status === "granted" && (
               <span className="inline-flex items-center gap-1.5 text-[10px] md:text-[11px] font-bold text-green-600 uppercase tracking-wider">
-                <CheckCircle2 className="w-3 h-3 md:w-3.5 md:h-3.5" />
+                <CheckCircle2 className="size-3 md:w-3.5 md:h-3.5" />
                 Enabled
               </span>
             )}
             {!checking && status === "denied" && (
               <span className="inline-flex items-center gap-1.5 text-[10px] md:text-[11px] font-bold text-red-500 uppercase tracking-wider">
-                <XCircle className="w-3 h-3 md:w-3.5 md:h-3.5" />
+                <XCircle className="size-3 md:w-3.5 md:h-3.5" />
                 Disabled
               </span>
             )}
@@ -135,11 +135,11 @@ export function SettingsNotifications({
               className="gap-2 text-[10px] md:text-[11px] tracking-wider"
             >
               {checking ? (
-                <Loader2 className="w-3 h-3 md:w-3.5 md:h-3.5 animate-spin" />
+                <Loader2 className="size-3 md:w-3.5 md:h-3.5 animate-spin" />
               ) : (
-                <Bell className="w-3 h-3 md:w-3.5 md:h-3.5" />
+                <Bell className="size-3 md:w-3.5 md:h-3.5" />
               )}
-              {checking ? "Requesting..." : "Enable Notifications"}
+              {checking ? "Requesting…" : "Enable Notifications"}
             </Button>
           )}
 
@@ -154,7 +154,7 @@ export function SettingsNotifications({
               !testing && status !== "granted" && "opacity-40",
             )}
           >
-            <Volume2 className="w-3 h-3 md:w-3.5 md:h-3.5" />
+            <Volume2 className="size-3 md:w-3.5 md:h-3.5" />
             {testing ? "Sent!" : "Test Notification"}
           </Button>
 
@@ -166,7 +166,7 @@ export function SettingsNotifications({
               onClick={openSystemPreferences}
               className="gap-1.5 text-[10px] md:text-[11px] font-medium"
             >
-              <ExternalLink className="w-2.5 h-2.5 md:w-3 md:h-3" />
+              <ExternalLink className="size-2.5 md:w-3 md:h-3" />
               Open Settings
             </Button>
           )}

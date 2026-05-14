@@ -111,7 +111,7 @@ export function FinishSessionModal({
                 {opt.id === "distracted" && (
                   <span className="text-[10px]">&darr;</span>
                 )}
-                {opt.id === "neutral" && <ArrowRight className="w-3 h-3" />}
+                {opt.id === "neutral" && <ArrowRight className="size-3" />}
                 {opt.id === "focused" && (
                   <span className="text-[10px]">&uarr;</span>
                 )}
@@ -130,7 +130,7 @@ export function FinishSessionModal({
             {category ? (
               <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-sahara-border/20 bg-sahara-surface">
                 <span
-                  className="w-2 h-2 rounded-full"
+                  className="size-2 rounded-full"
                   style={{ backgroundColor: category.color }}
                 />
                 <span
@@ -165,7 +165,7 @@ export function FinishSessionModal({
             <span className="text-sm font-medium text-sahara-text tabular-nums">
               {durationMinutes}min
             </span>
-            <ArrowRight className="w-3.5 h-3.5 text-sahara-text-muted ml-auto opacity-40" />
+            <ArrowRight className="size-3.5 text-sahara-text-muted ml-auto opacity-40" />
           </div>
         </div>
 

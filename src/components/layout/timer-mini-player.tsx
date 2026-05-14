@@ -64,7 +64,7 @@ export function TimerMiniPlayer() {
         {/* Progress & Exit */}
         <button
           onClick={() => navigate("/")}
-          className="group relative w-12 h-12 md:w-14 md:h-14 rounded-xl flex items-center justify-center shrink-0 overflow-hidden"
+          className="group relative size-12 md:w-14 md:h-14 rounded-xl flex items-center justify-center shrink-0 overflow-hidden"
         >
           <div
             className="absolute inset-0 bg-sahara-card opacity-40"
@@ -73,7 +73,7 @@ export function TimerMiniPlayer() {
             }}
           />
           <div className="absolute inset-1 bg-sahara-surface rounded-[10px] flex items-center justify-center transition-transform group-hover:scale-95">
-            <Maximize2 className="w-5 h-5 text-sahara-text-secondary group-hover:text-sahara-primary transition-colors" />
+            <Maximize2 className="size-5 text-sahara-text-secondary group-hover:text-sahara-primary transition-colors" />
           </div>
         </button>
 
@@ -91,14 +91,14 @@ export function TimerMiniPlayer() {
             </span>
             {selectedCategory && (
               <div className="flex items-center gap-1 min-w-0">
-                <Hash className="w-3 h-3 text-sahara-text-muted" />
+                <Hash className="size-3 text-sahara-text-muted" />
                 <span className="text-[10px] font-bold text-sahara-text-muted truncate">
                   {selectedCategory.name}
                 </span>
               </div>
             )}
           </div>
-          <h4 className="text-sm md:text-base font-bold text-sahara-text truncate leading-tight">
+          <h4 className="text-sm md:text-base font-semibold text-sahara-text truncate leading-tight">
             {activeTask?.name || "Independent Session"}
           </h4>
         </div>
@@ -127,34 +127,34 @@ export function TimerMiniPlayer() {
             {status === "running" ? (
               <button
                 onClick={pause}
-                className="w-10 h-10 md:w-11 md:h-11 rounded-full bg-sahara-surface border border-sahara-border/10 flex items-center justify-center text-sahara-text hover:bg-sahara-card transition-colors shadow-sm"
+                className="size-10 md:w-11 md:h-11 rounded-full bg-sahara-surface border border-sahara-border/10 flex items-center justify-center text-sahara-text hover:bg-sahara-card transition-colors shadow-sm"
               >
-                <Pause className="w-5 h-5" fill="currentColor" />
+                <Pause className="size-5" fill="currentColor" />
               </button>
             ) : (
               <button
                 onClick={resume}
-                className="w-10 h-10 md:w-11 md:h-11 rounded-full bg-sahara-primary flex items-center justify-center text-white hover:brightness-110 transition-all shadow-lg shadow-sahara-primary/20 scale-105"
+                className="size-10 md:w-11 md:h-11 rounded-full bg-sahara-primary flex items-center justify-center text-white hover:brightness-110 transition-all shadow-lg shadow-sahara-primary/20 scale-105"
               >
-                <Play className="w-5 h-5 ml-0.5" fill="currentColor" />
+                <Play className="size-5 ml-0.5" fill="currentColor" />
               </button>
             )}
 
             {status === "focus_complete" ? (
               <button
                 onClick={() => finishSession()}
-                className="w-10 h-10 md:w-11 md:h-11 rounded-full bg-emerald-500 flex items-center justify-center text-white hover:brightness-110 transition-all shadow-lg shadow-emerald-500/20"
+                className="size-10 md:w-11 md:h-11 rounded-full bg-emerald-500 flex items-center justify-center text-white hover:brightness-110 transition-all shadow-lg shadow-emerald-500/20"
               >
-                <Square className="w-4 h-4 md:w-5 md:h-5" fill="currentColor" />
+                <Square className="size-4 md:w-5 md:h-5" fill="currentColor" />
               </button>
             ) : (
               <button
                 onClick={skip}
-                className="w-10 h-10 md:w-11 md:h-11 rounded-full bg-sahara-surface border border-sahara-border/10 flex items-center justify-center text-sahara-text-muted hover:text-sahara-text hover:bg-sahara-card transition-colors"
+                className="size-10 md:w-11 md:h-11 rounded-full bg-sahara-surface border border-sahara-border/10 flex items-center justify-center text-sahara-text-muted hover:text-sahara-text hover:bg-sahara-card transition-colors"
                 title="Skip Phase"
               >
                 <SkipForward
-                  className="w-4 h-4 md:w-5 md:h-5"
+                  className="size-4 md:w-5 md:h-5"
                   fill="currentColor"
                 />
               </button>

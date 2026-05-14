@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { getMoodDistribution, type MoodStat } from "@/lib/db";
 import { cn } from "@/lib/cn";
 
@@ -15,20 +15,20 @@ interface MoodDistributionProps {
 
 export function MoodDistribution({ startDate, endDate }: MoodDistributionProps) {
   const [moods, setMoods] = useState<MoodStat[]>([]);
-  const [loading, setLoading] = useState(true);
+  const loadingRef = useRef(true);
 
   useEffect(() => {
-    setLoading(true);
+    loadingRef.current = true;
     getMoodDistribution(startDate, endDate)
       .then(setMoods)
       .catch(() => setMoods([]))
-      .finally(() => setLoading(false));
+      .finally(() => { loadingRef.current = false; });
   }, [startDate, endDate]);
 
-  if (loading) {
+  if (loadingRef.current) {
     return (
       <div className="bg-sahara-surface border border-sahara-border/20 rounded-xl md:rounded-2xl p-3.5 md:p-5">
-        <p className="text-[15px] text-sahara-text-muted">Loading...</p>
+        <p className="text-[15px] text-sahara-text-muted">Loading…</p>
       </div>
     );
   }

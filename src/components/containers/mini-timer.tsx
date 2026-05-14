@@ -35,9 +35,9 @@ export function MiniTimer() {
         className="text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-100"
       >
         {status === "running" ? (
-          <Pause className="w-3 h-3" />
+          <Pause className="size-3" />
         ) : (
-          <Play className="w-3 h-3" />
+          <Play className="size-3" />
         )}
       </Button>
     </div>

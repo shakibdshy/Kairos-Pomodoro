@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useReducer } from "react";
 import { Loader2 } from "lucide-react";
 import {
   getWeekSessions,
@@ -45,11 +45,33 @@ function toISODate(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
+interface CalendarData {
+  sessions: WeekSession[];
+  summary: WeekSummary;
+}
+
+const CALENDAR_INIT: CalendarData = {
+  sessions: [],
+  summary: EMPTY_SUMMARY,
+};
+
+type CalendarAction =
+  | { type: "LOADED"; sessions: WeekSession[]; summary: WeekSummary }
+  | { type: "ERROR" };
+
+function calendarReducer(_state: CalendarData, action: CalendarAction): CalendarData {
+  switch (action.type) {
+    case "LOADED":
+      return { sessions: action.sessions, summary: action.summary };
+    case "ERROR":
+      return { sessions: [], summary: EMPTY_SUMMARY };
+  }
+}
+
 export function CalendarDashboard() {
   const [weekOffset, setWeekOffset] = useState(0);
-  const [sessions, setSessions] = useState<WeekSession[]>([]);
-  const [summary, setSummary] = useState<WeekSummary>(EMPTY_SUMMARY);
-  const [loading, setLoading] = useState(true);
+  const [data, dispatch] = useReducer(calendarReducer, CALENDAR_INIT);
+  const loadingRef = useRef(true);
   const loadedRef = useRef<string | null>(null);
 
   const monday = getMonday(new Date(Date.now() + weekOffset * 7 * 86400000));
@@ -63,40 +85,36 @@ export function CalendarDashboard() {
     loadedRef.current = weekKey;
 
     let cancelled = false;
-    setLoading(true);
+    loadingRef.current = true;
 
     const startStr = toISODate(monday);
     const endStr = toISODate(sunday);
 
-    const timeout = new Promise<never>((_, reject) =>
-      setTimeout(() => reject(new Error("timeout")), 5000),
-    );
+    let timeoutId: ReturnType<typeof setTimeout>;
+    const timeout = new Promise<never>((_, reject) => {
+      timeoutId = setTimeout(() => reject(new Error("timeout")), 5000);
+    });
 
     Promise.race([
       Promise.all([
-        getWeekSessions(startStr, endStr).catch(() => []),
+        getWeekSessions(startStr, endStr).catch(() => [] as WeekSession[]),
         getWeekSummary(startStr, endStr).catch(() => EMPTY_SUMMARY),
       ]),
       timeout,
     ])
       .then(([sessData, summaryData]) => {
-        if (!cancelled) {
-          setSessions(sessData);
-          setSummary(summaryData);
-        }
+        if (!cancelled) dispatch({ type: "LOADED", sessions: sessData, summary: summaryData });
       })
       .catch(() => {
-        if (!cancelled) {
-          setSessions([]);
-          setSummary(EMPTY_SUMMARY);
-        }
+        if (!cancelled) dispatch({ type: "ERROR" });
       })
       .finally(() => {
-        if (!cancelled) setLoading(false);
+        if (!cancelled) { loadingRef.current = false; }
       });
 
     return () => {
       cancelled = true;
+      clearTimeout(timeoutId);
     };
   }, [weekKey]);
 
@@ -113,12 +131,12 @@ export function CalendarDashboard() {
     setWeekOffset(0);
   }, []);
 
-  if (loading && sessions.length === 0) {
+  if (loadingRef.current && data.sessions.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center h-full gap-4">
-        <Loader2 className="w-8 h-8 text-sahara-primary animate-spin" />
+        <Loader2 className="size-8 text-sahara-primary animate-spin" />
         <p className="text-xs font-semibold text-sahara-text-muted uppercase tracking-wider">
-          Loading calendar...
+          Loading calendar…
         </p>
       </div>
     );
@@ -146,12 +164,12 @@ export function CalendarDashboard() {
       </div>
 
       {/* Week Stats */}
-      <CalendarWeekStats summary={summary} />
+      <CalendarWeekStats summary={data.summary} />
 
       {/* Calendar Grid */}
       <div className="flex-1 min-h-0 overflow-auto">
         <CalendarGrid
-          sessions={sessions}
+          sessions={data.sessions}
           weekDays={weekDays}
           startHour={START_HOUR}
           endHour={END_HOUR}

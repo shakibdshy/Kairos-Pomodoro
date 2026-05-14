@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Loader2 } from "lucide-react";
 import {
   getWeeklyData,
@@ -22,7 +22,7 @@ interface AnalyticsDashboardProps {
 
 export function AnalyticsDashboard({ period: externalPeriod, onPeriodChange }: AnalyticsDashboardProps) {
   const [weekData, setWeekData] = useState<DayData[]>([]);
-  const [loading, setLoading] = useState(true);
+  const loadingRef = useRef(true);
   const [internalPeriod, setInternalPeriod] = useState<DatePeriod>("last7days");
 
   const period = externalPeriod ?? internalPeriod;
@@ -32,14 +32,14 @@ export function AnalyticsDashboard({ period: externalPeriod, onPeriodChange }: A
 
   useEffect(() => {
     let cancelled = false;
-    setLoading(true);
+    loadingRef.current = true;
 
     Promise.all([
       getWeeklyData(range.startDate, range.endDate).catch(() => []),
     ]).then(([wd]) => {
       if (!cancelled) {
         setWeekData(wd);
-        setLoading(false);
+        loadingRef.current = false;
       }
     });
 
@@ -56,12 +56,12 @@ export function AnalyticsDashboard({ period: externalPeriod, onPeriodChange }: A
     ? Math.round(totalFocusSec / weekData.length)
     : 0;
 
-  if (loading && weekData.length === 0) {
+  if (loadingRef.current && weekData.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center h-64 gap-4">
-        <Loader2 className="w-8 h-8 text-sahara-primary animate-spin" />
+        <Loader2 className="size-8 text-sahara-primary animate-spin" />
         <p className="text-xs font-semibold text-sahara-text-muted uppercase tracking-wider">
-          Loading analytics...
+          Loading analytics…
         </p>
       </div>
     );
@@ -72,7 +72,7 @@ export function AnalyticsDashboard({ period: externalPeriod, onPeriodChange }: A
       {/* Overview Stats */}
       <section>
         <div className="flex items-center justify-between mb-4 md:mb-6">
-          <h2 className="font-serif text-lg font-bold tracking-wide md:text-2xl text-sahara-text">
+          <h2 className="font-serif text-lg font-semibold tracking-wide md:text-2xl text-sahara-text">
             Overview
           </h2>
           <DateRangePicker value={period} onChange={setPeriod} />
@@ -103,7 +103,7 @@ export function AnalyticsDashboard({ period: externalPeriod, onPeriodChange }: A
 
       {/* Weekly Chart */}
       <section>
-        <h2 className="font-serif text-lg font-bold tracking-wide md:text-2xl text-sahara-text mb-4 md:mb-6">
+        <h2 className="font-serif text-lg font-semibold tracking-wide md:text-2xl text-sahara-text mb-4 md:mb-6">
           {range.label}
         </h2>
         <div className="bg-sahara-surface border border-sahara-border/20 rounded-xl md:rounded-2xl p-3.5 md:p-5">
@@ -116,7 +116,7 @@ export function AnalyticsDashboard({ period: externalPeriod, onPeriodChange }: A
 
       {/* Badges */}
       <section>
-        <h2 className="font-serif text-lg font-bold tracking-wide md:text-2xl text-sahara-text mb-4 md:mb-6">
+        <h2 className="font-serif text-lg font-semibold tracking-wide md:text-2xl text-sahara-text mb-4 md:mb-6">
           Achievements
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
@@ -142,13 +142,13 @@ export function AnalyticsDashboard({ period: externalPeriod, onPeriodChange }: A
       <section>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
           <div>
-            <h2 className="font-serif text-lg font-bold tracking-wide md:text-2xl text-sahara-text mb-4 md:mb-6">
+            <h2 className="font-serif text-lg font-semibold tracking-wide md:text-2xl text-sahara-text mb-4 md:mb-6">
               Category Breakdown
             </h2>
             <AnalyticsCategoryBreakdown startDate={range.startDate} endDate={range.endDate} />
           </div>
           <div>
-            <h2 className="font-serif text-lg font-bold tracking-wide md:text-2xl text-sahara-text mb-4 md:mb-6">
+            <h2 className="font-serif text-lg font-semibold tracking-wide md:text-2xl text-sahara-text mb-4 md:mb-6">
               Tasks
             </h2>
             <CompletedTasks startDate={range.startDate} endDate={range.endDate} />
@@ -158,7 +158,7 @@ export function AnalyticsDashboard({ period: externalPeriod, onPeriodChange }: A
 
       {/* Mood Distribution */}
       <section>
-        <h2 className="font-serif text-lg font-bold tracking-wide md:text-2xl text-sahara-text mb-4 md:mb-6">
+        <h2 className="font-serif text-lg font-semibold tracking-wide md:text-2xl text-sahara-text mb-4 md:mb-6">
           Mood Insights
         </h2>
         <MoodDistribution startDate={range.startDate} endDate={range.endDate} />
@@ -166,7 +166,7 @@ export function AnalyticsDashboard({ period: externalPeriod, onPeriodChange }: A
 
       {/* Session Notes */}
       <section>
-        <h2 className="font-serif text-lg font-bold tracking-wide md:text-2xl text-sahara-text mb-4 md:mb-6">
+        <h2 className="font-serif text-lg font-semibold tracking-wide md:text-2xl text-sahara-text mb-4 md:mb-6">
           Session Notes
         </h2>
         <SessionNotes startDate={range.startDate} endDate={range.endDate} />

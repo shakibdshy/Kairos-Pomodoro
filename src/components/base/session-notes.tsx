@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { FileText } from "lucide-react";
 import { getSessionNotes, type SessionNoteEntry } from "@/lib/db";
 import { formatDuration } from "@/lib/session-utils";
@@ -32,20 +32,20 @@ interface SessionNotesProps {
 
 export function SessionNotes({ startDate, endDate }: SessionNotesProps) {
   const [notes, setNotes] = useState<SessionNoteEntry[]>([]);
-  const [loading, setLoading] = useState(true);
+  const loadingRef = useRef(true);
 
   useEffect(() => {
-    setLoading(true);
+    loadingRef.current = true;
     getSessionNotes(startDate, endDate)
       .then(setNotes)
       .catch(() => setNotes([]))
-      .finally(() => setLoading(false));
+      .finally(() => { loadingRef.current = false; });
   }, [startDate, endDate]);
 
-  if (loading) {
+  if (loadingRef.current) {
     return (
       <div className="bg-sahara-surface border border-sahara-border/20 rounded-xl md:rounded-2xl p-3.5 md:p-5">
-        <p className="text-[15px] text-sahara-text-muted">Loading...</p>
+        <p className="text-[15px] text-sahara-text-muted">Loading…</p>
       </div>
     );
   }
@@ -58,7 +58,7 @@ export function SessionNotes({ startDate, endDate }: SessionNotesProps) {
 
       {notes.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-8 gap-2">
-          <FileText className="w-8 h-8 text-sahara-text-muted/40" />
+          <FileText className="size-8 text-sahara-text-muted/40" />
           <p className="text-[15px] text-sahara-text-muted text-center">
             No session notes yet
           </p>
@@ -81,7 +81,7 @@ export function SessionNotes({ startDate, endDate }: SessionNotesProps) {
                   {entry.category_name ? (
                     <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full border border-sahara-border/20 bg-sahara-surface">
                       <span
-                        className="w-2 h-2 rounded-full"
+                        className="size-2 rounded-full"
                         style={{ backgroundColor: entry.category_color ?? "#94a3b8" }}
                       />
                       <span

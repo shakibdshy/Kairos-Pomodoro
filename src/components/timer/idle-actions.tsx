@@ -38,7 +38,7 @@ export function IdleActions({
         }}
         className="gap-1.5 md:gap-2 text-xs md:text-xs px-6 md:px-8 py-3 md:py-3.5"
       >
-        <Play className="w-3.5 h-3.5 md:w-4 md:h-4 fill-current ml-0.5" />
+        <Play className="size-3.5 md:w-4 md:h-4 fill-current ml-0.5" />
         START FOCUS
       </Button>
 
@@ -54,7 +54,7 @@ export function IdleActions({
             onClick={reset}
             className="border-sahara-border/30 text-sahara-text-secondary p-2 md:p-3"
           >
-            <RotateCcw className="w-3.5 h-3.5 md:w-4 md:h-4" />
+            <RotateCcw className="size-3.5 md:w-4 md:h-4" />
           </Button>
         </>
       )}
@@ -93,9 +93,9 @@ export function FullscreenButton({
       }
     >
       {isFullscreenFocus ? (
-        <Minimize2 className="w-3.5 h-3.5" />
+        <Minimize2 className="size-3.5" />
       ) : (
-        <Maximize2 className="w-3.5 h-3.5" />
+        <Maximize2 className="size-3.5" />
       )}
     </Button>
   );
