@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTimerStore } from "@/features/timer/use-timer-store";
+import { useTaskStore } from "@/features/tasks/use-task-store";
 import { useSettingsStore } from "@/features/settings/use-settings-store";
 import { TimerDisplay } from "@/components/base/timer-display";
 import { IntentionSelector } from "@/components/intention-selector";
@@ -51,6 +52,9 @@ export function TimerControls() {
   const finishSession = useTimerStore((s) => s.finishSession);
   const abandonSession = useTimerStore((s) => s.abandonSession);
   const selectedCategory = useTimerStore((s) => s.selectedCategory);
+  const activeTaskId = useTimerStore((s) => s.activeTaskId);
+  const tasks = useTaskStore((s) => s.tasks);
+  const activeTask = tasks.find((t) => t.id === activeTaskId);
   const setSelectedCategory = useTimerStore((s) => s.setSelectedCategory);
   const confirmStartNextPhase = useTimerStore((s) => s.confirmStartNextPhase);
   const endWithoutBreak = useTimerStore((s) => s.endWithoutBreak);
@@ -102,6 +106,21 @@ export function TimerControls() {
       transition={{ type: "spring", damping: 30, stiffness: 200 }}
       className="flex flex-col items-center gap-5 md:gap-8 w-full"
     >
+      {/* Task & Category label in fullscreen */}
+      {isFullscreenFocus && (activeTask || selectedCategory) && (
+        <div className="flex items-center gap-2.5 text-sm md:text-base text-sahara-text-secondary">
+          {activeTask && <span className="font-medium">{activeTask.name}</span>}
+          {activeTask && selectedCategory && (
+            <span className="text-sahara-border">--</span>
+          )}
+          {selectedCategory && (
+            <span className="inline-flex items-center rounded-full bg-sahara-primary-light px-2.5 py-0.5 text-[11px] md:text-sm font-semibold tracking-wider text-sahara-primary uppercase">
+              {selectedCategory.name}
+            </span>
+          )}
+        </div>
+      )}
+
       {/* Top Controls Group */}
       <AnimatePresence>
         {!isFullscreenFocus && (
