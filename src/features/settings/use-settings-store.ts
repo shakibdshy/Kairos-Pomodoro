@@ -35,6 +35,7 @@ async function loadSetting<K extends keyof Settings>(
 interface SettingsStore {
   settings: Settings;
   loaded: boolean;
+  error: string | null;
   loadSettings: () => Promise<void>;
   updateSetting: <K extends keyof Settings>(
     key: K,
@@ -45,23 +46,35 @@ interface SettingsStore {
 export const useSettingsStore = create<SettingsStore>((set) => ({
   settings: DEFAULTS,
   loaded: false,
+  error: null,
 
   loadSettings: async () => {
-    const keys = Object.keys(DEFAULTS) as (keyof Settings)[];
-    const entries = await Promise.all(
-      keys.map(async (key) => [key, await loadSetting(key)] as const),
-    );
-    const loaded = Object.fromEntries(entries) as unknown as Settings;
-    set({ settings: loaded, loaded: true });
+    try {
+      const keys = Object.keys(DEFAULTS) as (keyof Settings)[];
+      const entries = await Promise.all(
+        keys.map(async (key) => [key, await loadSetting(key)] as const),
+      );
+      const loaded = Object.fromEntries(entries) as unknown as Settings;
+      set({ settings: loaded, loaded: true, error: null });
+    } catch (err) {
+      console.error("[SettingsStore] Failed to load settings:", err);
+      set({ loaded: true, error: String(err) });
+    }
   },
 
   updateSetting: async <K extends keyof Settings>(
     key: K,
     value: Settings[K],
   ) => {
-    await setSetting(key, String(value));
-    set((state) => ({
-      settings: { ...state.settings, [key]: value },
-    }));
+    try {
+      await setSetting(key, String(value));
+      set((state) => ({
+        settings: { ...state.settings, [key]: value },
+        error: null,
+      }));
+    } catch (err) {
+      console.error("[SettingsStore] Failed to update setting:", err);
+      set({ error: String(err) });
+    }
   },
 }));

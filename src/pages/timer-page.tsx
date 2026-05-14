@@ -3,12 +3,12 @@ import { TimerControls } from "@/components/containers/timer-controls";
 import { TodayFocus } from "@/components/containers/today-focus";
 import { TodaySessions } from "@/components/containers/today-sessions";
 import { Text } from "@/components/ui/text";
-import { useTimerStore } from "@/features/timer/use-timer-store";
+import { useUIStore } from "@/features/ui/use-ui-store";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/cn";
 
 export function TimerPage() {
-  const isFullscreenFocus = useTimerStore((s) => s.isFullscreenFocus);
+  const isFullscreenFocus = useUIStore((s) => s.isFullscreenFocus);
 
   return (
     <MainLayout>

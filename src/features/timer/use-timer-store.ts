@@ -6,19 +6,23 @@ import {
   DEFAULT_WORK_SEC,
   DEFAULT_SHORT_BREAK_SEC,
   DEFAULT_LONG_BREAK_SEC,
-  POMOS_BEFORE_LONG_BREAK,
 } from "@/lib/constants";
 import { getTasks, getCategory } from "@/lib/db";
-import type { Category } from "@/lib/db/types";
-import { sendNotification, playChime } from "@/lib/notifications";
+import type { Category } from "@/lib/db";
+import {
+  getPhaseDuration,
+  getPhaseDurationKey,
+  determineBreakPhase,
+  getNextPhase,
+  type TimerDurations,
+} from "@/features/timer/timer-helpers";
+import { recordPomoCompletion } from "@/features/timer/pomo-tracker";
+import {
+  notifyPhaseComplete,
+  notifySessionComplete,
+  notifySkipped,
+} from "@/features/timer/timer-notifications";
 import { useSettingsStore } from "@/features/settings/use-settings-store";
-import { useTaskStore } from "@/features/tasks/use-task-store";
-
-interface TimerDurations {
-  work: number;
-  short: number;
-  long: number;
-}
 
 interface TimerStore {
   phase: TimerPhase;
@@ -48,44 +52,6 @@ interface TimerStore {
   confirmStartNextPhase: (mood?: string, notes?: string) => Promise<void>;
   addFiveMinutes: () => void;
   endWithoutBreak: () => Promise<void>;
-  isFullscreenFocus: boolean;
-  setFullscreenFocus: (active: boolean) => void;
-}
-
-function getPhaseDuration(
-  phase: TimerPhase,
-  durations: TimerDurations,
-): number {
-  return durations[
-    phase === "work" ? "work" : phase === "short_break" ? "short" : "long"
-  ];
-}
-
-function getPhaseDurationKey(phase: TimerPhase): keyof TimerDurations {
-  return phase === "work" ? "work" : phase === "short_break" ? "short" : "long";
-}
-
-function determineBreakPhase(
-  durationSec: number,
-  durations: TimerDurations,
-): TimerPhase {
-  const longDelta = Math.abs(durationSec - durations.long);
-  const shortDelta = Math.abs(durationSec - durations.short);
-  return longDelta <= shortDelta ? "long_break" : "short_break";
-}
-
-function getNextPhase(
-  currentPhase: TimerPhase,
-  pomosCompleted: number,
-  durations: TimerDurations,
-): { phase: TimerPhase; duration: number } {
-  if (currentPhase === "work") {
-    if (pomosCompleted % POMOS_BEFORE_LONG_BREAK === 0) {
-      return { phase: "long_break", duration: durations.long };
-    }
-    return { phase: "short_break", duration: durations.short };
-  }
-  return { phase: "work", duration: durations.work };
 }
 
 const engine = new TimerEngine();
@@ -93,33 +59,17 @@ const engine = new TimerEngine();
 export const useTimerStore = create<TimerStore>((set, get) => {
   function onTimerDone() {
     const state = get();
-    const { phase } = state;
-
-    playChime();
+    const durationMin = Math.round(state.totalSeconds / 60);
+    notifyPhaseComplete(state.phase, durationMin);
 
     const settings = useSettingsStore.getState().settings;
-    const isWorkPhase = phase === "work";
-
-    if (isWorkPhase && settings.autoStartBreaks) {
+    if (state.phase === "work" && settings.autoStartBreaks) {
       state.skip();
       return;
     }
 
     engine.startOvertime(0);
-
-    const phaseLabel = isWorkPhase ? "focus" : phase.replace("_", " ");
-    const durationMin = Math.round(state.totalSeconds / 60);
-
-    sendNotification(
-      isWorkPhase ? "focus-complete" : "break-over",
-      `Your ${durationMin}m ${phaseLabel} is complete. You're now in overtime.`,
-    );
-
-    set({
-      status: "focus_complete",
-      secondsRemaining: 0,
-      overtimeSeconds: 0,
-    });
+    set({ status: "focus_complete", secondsRemaining: 0, overtimeSeconds: 0 });
   }
 
   engine.setCallbacks({
@@ -143,14 +93,11 @@ export const useTimerStore = create<TimerStore>((set, get) => {
       short: DEFAULT_SHORT_BREAK_SEC,
       long: DEFAULT_LONG_BREAK_SEC,
     },
-    isFullscreenFocus: false,
-    setFullscreenFocus: (active) => set({ isFullscreenFocus: active }),
 
     start: async (duration?: number) => {
       const state = get();
       const secs = duration ?? getPhaseDuration(state.phase, state.durations);
 
-      // Auto-detect break phase based on actual duration
       let resolvedPhase = state.phase;
       if (resolvedPhase === "short_break" || resolvedPhase === "long_break") {
         resolvedPhase = determineBreakPhase(secs, state.durations);
@@ -187,43 +134,20 @@ export const useTimerStore = create<TimerStore>((set, get) => {
 
     skip: () => {
       const state = get();
-      const {
-        phase,
-        secondsRemaining,
-        totalSeconds,
-        activeTaskId,
-        completedPomos,
-        overtimeSeconds,
-      } = state;
+      const { phase, secondsRemaining, totalSeconds, activeTaskId, completedPomos, overtimeSeconds } = state;
 
       const completed = secondsRemaining <= 0 || overtimeSeconds > 0;
       const elapsed = Math.max(0, totalSeconds - secondsRemaining + overtimeSeconds);
-      SessionService.recordSkip(
-        activeTaskId,
-        phase,
-        elapsed,
-        completed,
-      );
-
-      if (phase === "work" && completed && activeTaskId) {
-        useTaskStore.getState().incrementPomos(activeTaskId);
-      }
+      SessionService.recordSkip(activeTaskId, phase, elapsed, completed);
 
       if (completed) {
-        const notifType =
-          phase === "work"
-            ? ("session-complete" as const)
-            : ("break-over" as const);
-        sendNotification(
-          notifType,
-          `Your ${phase.replace("_", " ")} has ended.`,
-        );
+        recordPomoCompletion(phase, activeTaskId);
+        notifySkipped(phase);
       }
 
       engine.terminate();
 
-      const newPomos =
-        phase === "work" && completed ? completedPomos + 1 : completedPomos;
+      const newPomos = phase === "work" && completed ? completedPomos + 1 : completedPomos;
       const next = getNextPhase(phase, newPomos, state.durations);
 
       set({
@@ -243,24 +167,13 @@ export const useTimerStore = create<TimerStore>((set, get) => {
     reset: () => {
       engine.terminate();
       const duration = getPhaseDuration(get().phase, get().durations);
-      set({
-        status: "idle",
-        secondsRemaining: duration,
-        totalSeconds: duration,
-        overtimeSeconds: 0,
-      });
+      set({ status: "idle", secondsRemaining: duration, totalSeconds: duration, overtimeSeconds: 0 });
     },
 
     setPhase: (phase: TimerPhase) => {
       engine.terminate();
       const duration = getPhaseDuration(phase, get().durations);
-      set({
-        phase,
-        status: "idle",
-        secondsRemaining: duration,
-        totalSeconds: duration,
-        overtimeSeconds: 0,
-      });
+      set({ phase, status: "idle", secondsRemaining: duration, totalSeconds: duration, overtimeSeconds: 0 });
     },
 
     setActiveTask: async (taskId: number | null) => {
@@ -276,11 +189,7 @@ export const useTimerStore = create<TimerStore>((set, get) => {
             set({ selectedCategory: null });
           }
         } catch (err) {
-          console.error(
-            "[TimerStore] Failed to load category for task:",
-            taskId,
-            err,
-          );
+          console.error("[TimerStore] Failed to load category for task:", taskId, err);
         }
       } else {
         set({ selectedCategory: null });
@@ -304,11 +213,7 @@ export const useTimerStore = create<TimerStore>((set, get) => {
       const nextDuration = Math.max(1, Math.floor(seconds));
       const key = getPhaseDurationKey(phase);
       const nextDurations = { ...durations, [key]: nextDuration };
-      set({
-        durations: nextDurations,
-        secondsRemaining: nextDuration,
-        totalSeconds: nextDuration,
-      });
+      set({ durations: nextDurations, secondsRemaining: nextDuration, totalSeconds: nextDuration });
     },
 
     adjustDuration: (minutes: number) => {
@@ -320,11 +225,7 @@ export const useTimerStore = create<TimerStore>((set, get) => {
         const currentDuration = durations[key];
         const newDuration = Math.max(60, currentDuration + deltaSec);
         const newDurations = { ...durations, [key]: newDuration };
-        set({
-          durations: newDurations,
-          secondsRemaining: newDuration,
-          totalSeconds: newDuration,
-        });
+        set({ durations: newDurations, secondsRemaining: newDuration, totalSeconds: newDuration });
       } else {
         set((s) => {
           const newTotal = Math.max(60, s.totalSeconds + deltaSec);
@@ -344,13 +245,8 @@ export const useTimerStore = create<TimerStore>((set, get) => {
 
       if (currentSessionId) {
         await SessionService.finish(currentSessionId, undefined, mood, notes);
-        sendNotification(
-          "session-complete",
-          "Great work! Your focus session has been recorded.",
-        );
-        if (phase === "work" && activeTaskId) {
-          useTaskStore.getState().incrementPomos(activeTaskId);
-        }
+        notifySessionComplete();
+        recordPomoCompletion(phase, activeTaskId);
       }
 
       const duration = getPhaseDuration("work", state.durations);
@@ -362,17 +258,15 @@ export const useTimerStore = create<TimerStore>((set, get) => {
         currentSessionId: null,
         completedPomos: get().completedPomos + (phase === "work" ? 1 : 0),
         overtimeSeconds: 0,
-        isFullscreenFocus: false,
       });
     },
 
     abandonSession: async () => {
       const state = get();
-      const { currentSessionId } = state;
       engine.terminate();
 
-      if (currentSessionId) {
-        await SessionService.abandon(currentSessionId);
+      if (state.currentSessionId) {
+        await SessionService.abandon(state.currentSessionId);
       }
 
       const duration = getPhaseDuration(state.phase, state.durations);
@@ -382,7 +276,6 @@ export const useTimerStore = create<TimerStore>((set, get) => {
         totalSeconds: duration,
         currentSessionId: null,
         overtimeSeconds: 0,
-        isFullscreenFocus: false,
       });
     },
 
@@ -392,32 +285,16 @@ export const useTimerStore = create<TimerStore>((set, get) => {
 
     confirmStartNextPhase: async (mood?: string, notes?: string) => {
       const state = get();
-      const {
-        currentSessionId,
-        activeTaskId,
-        phase,
-        totalSeconds,
-        overtimeSeconds,
-      } = state;
+      const { currentSessionId, activeTaskId, phase, totalSeconds, overtimeSeconds } = state;
       engine.terminate();
 
       if (currentSessionId) {
         const actualDuration = totalSeconds + overtimeSeconds;
-        await SessionService.finish(
-          currentSessionId,
-          actualDuration,
-          mood,
-          notes,
-        );
-        if (phase === "work" && activeTaskId) {
-          useTaskStore.getState().incrementPomos(activeTaskId);
-        }
+        await SessionService.finish(currentSessionId, actualDuration, mood, notes);
+        recordPomoCompletion(phase, activeTaskId);
       }
 
-      const newPomos =
-        state.phase === "work"
-          ? state.completedPomos + 1
-          : state.completedPomos;
+      const newPomos = phase === "work" ? state.completedPomos + 1 : state.completedPomos;
       const next = getNextPhase(state.phase, newPomos, state.durations);
 
       set({
@@ -452,21 +329,13 @@ export const useTimerStore = create<TimerStore>((set, get) => {
 
     endWithoutBreak: async () => {
       const state = get();
-      const {
-        currentSessionId,
-        activeTaskId,
-        phase,
-        totalSeconds,
-        overtimeSeconds,
-      } = state;
+      const { currentSessionId, activeTaskId, phase, totalSeconds, overtimeSeconds } = state;
       engine.terminate();
 
       if (currentSessionId) {
         const actualDuration = totalSeconds + overtimeSeconds;
         await SessionService.finish(currentSessionId, actualDuration);
-        if (phase === "work" && activeTaskId) {
-          useTaskStore.getState().incrementPomos(activeTaskId);
-        }
+        recordPomoCompletion(phase, activeTaskId);
       }
 
       const duration = getPhaseDuration("work", state.durations);
@@ -478,7 +347,6 @@ export const useTimerStore = create<TimerStore>((set, get) => {
         currentSessionId: null,
         completedPomos: get().completedPomos + (phase === "work" ? 1 : 0),
         overtimeSeconds: 0,
-        isFullscreenFocus: false,
       });
     },
   };
