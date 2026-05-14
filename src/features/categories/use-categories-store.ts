@@ -11,6 +11,7 @@ import { generateCategoryColor } from "@/lib/category-colors";
 interface CategoriesStore {
   categories: Category[];
   isLoading: boolean;
+  error: string | null;
   loadCategories: () => Promise<void>;
   addCategory: (name: string, color?: string) => Promise<Category>;
   updateCategory: (id: number, name: string, color: string) => Promise<void>;
@@ -20,45 +21,66 @@ interface CategoriesStore {
 export const useCategoriesStore = create<CategoriesStore>((set) => ({
   categories: [],
   isLoading: false,
+  error: null,
 
   loadCategories: async () => {
     set({ isLoading: true });
     try {
       const categories = await getCategories();
-      set({ categories, isLoading: false });
-    } catch {
-      set({ isLoading: false });
+      set({ categories, isLoading: false, error: null });
+    } catch (err) {
+      console.error("[CategoriesStore] Failed to load categories:", err);
+      set({ isLoading: false, error: String(err) });
     }
   },
 
   addCategory: async (name: string, color?: string) => {
-    const categoryColor = color || generateCategoryColor();
-    const id = await addCategory(name, categoryColor);
-    const newCategory: Category = {
-      id,
-      name,
-      color: categoryColor,
-      created_at: new Date().toISOString(),
-    };
-    set((state) => ({
-      categories: [...state.categories, newCategory],
-    }));
-    return newCategory;
+    try {
+      const categoryColor = color || generateCategoryColor();
+      const id = await addCategory(name, categoryColor);
+      const newCategory: Category = {
+        id,
+        name,
+        color: categoryColor,
+        created_at: new Date().toISOString(),
+      };
+      set((state) => ({
+        categories: [...state.categories, newCategory],
+        error: null,
+      }));
+      return newCategory;
+    } catch (err) {
+      console.error("[CategoriesStore] Failed to add category:", err);
+      set({ error: String(err) });
+      throw err;
+    }
   },
 
   updateCategory: async (id: number, name: string, color: string) => {
-    await updateCategory(id, name, color);
-    set((state) => ({
-      categories: state.categories.map((c) =>
-        c.id === id ? { ...c, name, color } : c
-      ),
-    }));
+    try {
+      await updateCategory(id, name, color);
+      set((state) => ({
+        categories: state.categories.map((c) =>
+          c.id === id ? { ...c, name, color } : c,
+        ),
+        error: null,
+      }));
+    } catch (err) {
+      console.error("[CategoriesStore] Failed to update category:", err);
+      set({ error: String(err) });
+    }
   },
 
   deleteCategory: async (id: number) => {
-    await deleteCategory(id);
-    set((state) => ({
-      categories: state.categories.filter((c) => c.id !== id),
-    }));
+    try {
+      await deleteCategory(id);
+      set((state) => ({
+        categories: state.categories.filter((c) => c.id !== id),
+        error: null,
+      }));
+    } catch (err) {
+      console.error("[CategoriesStore] Failed to delete category:", err);
+      set({ error: String(err) });
+    }
   },
 }));

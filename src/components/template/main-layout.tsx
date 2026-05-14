@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { useTimerStore } from "@/features/timer/use-timer-store";
+import { useUIStore } from "@/features/ui/use-ui-store";
 import { motion, AnimatePresence } from "framer-motion";
 
 interface MainLayoutProps {
@@ -35,7 +36,7 @@ export function MainLayout({ children }: MainLayoutProps) {
   const status = useTimerStore((s) => s.status);
   const start = useTimerStore((s) => s.start);
   const isRunning = status === "running";
-  const isFullscreenFocus = useTimerStore((s) => s.isFullscreenFocus);
+  const isFullscreenFocus = useUIStore((s) => s.isFullscreenFocus);
 
   return (
     <div className="flex h-screen bg-sahara-bg text-sahara-text font-sans overflow-hidden">
@@ -258,7 +259,7 @@ export function MainLayout({ children }: MainLayoutProps) {
                 size="icon-lg"
                 intent="default"
                 shape="rounded-full"
-                onClick={() => useTimerStore.getState().setFullscreenFocus(false)}
+                onClick={() => useUIStore.getState().setFullscreenFocus(false)}
                 className="bg-sahara-surface/80 backdrop-blur-md shadow-xl border-sahara-border/40 hover:text-sahara-primary hover:border-sahara-primary/40 group"
                 title="Exit Focus Mode"
               >
