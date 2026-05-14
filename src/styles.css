@@ -15,6 +15,7 @@
   --color-sahara-card: #f6f0e8;
   --color-sahara-surface: #ffffff;
   --color-sahara-ring-track: #f0e8df;
+  --color-sahara-ring-track-active: #faf5ee;
   --color-sahara-ring-complete: #c17767;
 }
 
@@ -30,6 +31,7 @@
   --color-sahara-card: #242019;
   --color-sahara-surface: #201c17;
   --color-sahara-ring-track: #2e2820;
+  --color-sahara-ring-track-active: #1a1714;
   --color-sahara-ring-complete: #c17767;
 }
 

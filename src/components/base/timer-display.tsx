@@ -59,21 +59,21 @@ function WavyRing({
   cy,
   r,
   progress,
-  isRunning,
   style,
   strokeWidth,
   className,
   showDot,
+  isRunning,
 }: {
   cx: number;
   cy: number;
   r: number;
   progress: number;
-  isRunning: boolean;
   style: string;
   strokeWidth: string;
   className: string;
   showDot?: boolean;
+  isRunning?: boolean;
 }) {
   const pathRef = useRef<SVGPathElement>(null);
   const dotRef = useRef<SVGCircleElement>(null);
@@ -84,8 +84,7 @@ function WavyRing({
   useAnimationFrame((time) => {
     if (!pathRef.current) return;
 
-    // Slither phase
-    const phase = style === "zigzag" && isRunning ? -(time / 400) : 0;
+    const phase = isRunning && style === "zigzag" ? -(time / 400) : 0;
     pathRef.current.setAttribute(
       "d",
       generateWavyCirclePath(cx, cy, r, amplitude, frequency, phase),
@@ -125,7 +124,7 @@ function WavyRing({
         strokeLinecap="round"
         style={{ transition: "stroke-dashoffset 300ms ease" }}
       />
-      {showDot && progress > 0 && progress < 100 && (
+      {showDot && isRunning && progress > 0 && progress < 100 && (
         <circle
           ref={dotRef}
           cx={cx + r * Math.cos((progress / 100) * 2 * Math.PI)}
@@ -192,23 +191,34 @@ export function TimerDisplay({
         height={SIZE_DESKTOP}
         className="-rotate-90 hidden md:block"
       >
+        {/* Full faded track — static */}
         <WavyRing
           cx={CENTER_DESKTOP}
           cy={CENTER_DESKTOP}
           r={RADIUS_DESKTOP}
           progress={100}
-          isRunning={isRunning}
           style={style}
           strokeWidth="1"
           className="stroke-sahara-ring-track"
           showDot={false}
         />
+        {/* White progress track — static, shows behind the animated ring */}
         <WavyRing
           cx={CENTER_DESKTOP}
           cy={CENTER_DESKTOP}
           r={RADIUS_DESKTOP}
           progress={progress}
-          isRunning={isRunning}
+          style={style}
+          strokeWidth={style === "zigzag" ? "6" : "4"}
+          className="stroke-sahara-ring-track-active"
+          showDot={false}
+        />
+        {/* Animated progress ring */}
+        <WavyRing
+          cx={CENTER_DESKTOP}
+          cy={CENTER_DESKTOP}
+          r={RADIUS_DESKTOP}
+          progress={progress}
           style={style}
           strokeWidth={style === "zigzag" ? "6" : "4"}
           className={cn(
@@ -217,6 +227,7 @@ export function TimerDisplay({
               : "stroke-sahara-primary",
           )}
           showDot={true}
+          isRunning={isRunning}
         />
       </svg>
 
@@ -226,27 +237,39 @@ export function TimerDisplay({
         height={SIZE_MOBILE}
         className="-rotate-90 md:hidden"
       >
+        {/* Full faded track — static */}
         <WavyRing
           cx={CENTER_MOBILE}
           cy={CENTER_MOBILE}
           r={RADIUS_MOBILE}
           progress={100}
-          isRunning={isRunning}
           style={style}
           strokeWidth="1"
           className="stroke-sahara-ring-track"
           showDot={false}
         />
+        {/* White progress track — static, shows behind the animated ring */}
         <WavyRing
           cx={CENTER_MOBILE}
           cy={CENTER_MOBILE}
           r={RADIUS_MOBILE}
           progress={progress}
-          isRunning={isRunning}
+          style={style}
+          strokeWidth={style === "zigzag" ? "5" : "3"}
+          className="stroke-sahara-ring-track-active"
+          showDot={false}
+        />
+        {/* Animated progress ring */}
+        <WavyRing
+          cx={CENTER_MOBILE}
+          cy={CENTER_MOBILE}
+          r={RADIUS_MOBILE}
+          progress={progress}
           style={style}
           strokeWidth={style === "zigzag" ? "5" : "3"}
           className={cn(isComplete ? "stroke-sahara-ring-complete" : "stroke-sahara-primary")}
           showDot={true}
+          isRunning={isRunning}
         />
       </svg>
 
