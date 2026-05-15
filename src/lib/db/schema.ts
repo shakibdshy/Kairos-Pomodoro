@@ -1,11 +1,19 @@
 import Database from "@tauri-apps/plugin-sql";
 import { DEFAULT_CATEGORY_COLOR } from "@/lib/constants";
 
+const DB_NAME = import.meta.env.DEV
+  ? "sqlite:Kairos-Pomodoro-dev.db"
+  : "sqlite:Kairos-Pomodoro.db";
+
 let db: Database | null = null;
+
+export function getDbName(): string {
+  return DB_NAME;
+}
 
 export async function getDb(): Promise<Database> {
   if (!db) {
-    db = await Database.load("sqlite:Kairos-Pomodoro.db");
+    db = await Database.load(DB_NAME);
   }
   return db;
 }

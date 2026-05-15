@@ -15,6 +15,12 @@
 
 <br />
 
+<h1 align="center">Demo</h1>
+
+<p align="center">
+  <video src="./public/doc/video/Kairos_Demo.mp4" alt="Kairos-Pomodoro Demo" width="720" controls />
+</p>
+
 <h1 align="center">Download</h1>
 
 <p align="center">

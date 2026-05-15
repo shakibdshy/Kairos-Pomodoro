@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { getDb } from "@/lib/db";
 import { isTauri } from "@/lib/tauri";
 
 export function SettingsPrivacySection() {
@@ -10,8 +11,7 @@ export function SettingsPrivacySection() {
     if (!isTauri()) return;
     setClearing(true);
     try {
-      const Database = (await import("@tauri-apps/plugin-sql")).default;
-      const db = await Database.load("sqlite:Kairos-pomodoro.db");
+      const db = await getDb();
       await Promise.all([
         db.execute("DELETE FROM sessions"),
         db.execute("DELETE FROM tasks"),
