@@ -24,13 +24,13 @@
 <h1 align="center">Download</h1>
 
 <p align="center">
-  <a href="https://github.com/shakibdshy/Kairos-Pomodoro/releases/download/v1.1.0/Kairos-Pomodoro_aarch64_signed.dmg">
+  <a href="https://github.com/shakibdshy/Kairos-Pomodoro/releases/download/v1.2.0/Kairos-Pomodoro_1.2.0_aarch64.dmg">
     <img alt="Download for macOS" src="https://img.shields.io/badge/macOS-Apple%20Silicon-000?style=for-the-badge&logo=apple&logoColor=white">
   </a>
-  <a href="https://github.com/shakibdshy/Kairos-Pomodoro/releases/download/v1.1.0/Kairos-Pomodoro_1.1.0_x64-setup.exe">
+  <a href="https://github.com/shakibdshy/Kairos-Pomodoro/releases/download/v1.2.0/Kairos-Pomodoro_1.2.0_x64-setup.exe">
     <img alt="Download for Windows" src="https://img.shields.io/badge/Windows-x64%20Setup-0078D6?style=for-the-badge&logo=windows&logoColor=white">
   </a>
-  <a href="https://github.com/shakibdshy/Kairos-Pomodoro/releases/download/v1.1.0/Kairos-Pomodoro_1.1.0_amd64.AppImage">
+  <a href="https://github.com/shakibdshy/Kairos-Pomodoro/releases/download/v1.2.0/Kairos-Pomodoro_1.2.0_amd64.AppImage">
     <img alt="Download for Linux" src="https://img.shields.io/badge/Linux-AppImage-FCC624?style=for-the-badge&logo=linux&logoColor=black">
   </a>
 </p>
