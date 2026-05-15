@@ -173,6 +173,10 @@ jobs:
     permissions:
       contents: write
     steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
       - name: Download all artifacts
         uses: actions/download-artifact@v4
         with:
@@ -185,58 +189,31 @@ jobs:
           echo "=== Release files ==="
           ls -lh release-files/
 
-      - name: Generate release notes
-        id: release_notes
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
         run: |
           TAG="${GITHUB_REF_NAME}"
-          NOTES_FILE="/tmp/release-notes.md"
 
-          {
-            echo "## Kairos-Pomodoro ${TAG}"
-            echo ""
-            echo "### Downloads"
-            echo ""
-            echo "| Platform | File |"
-            echo "|----------|------|"
-            for f in release-files/*.{dmg,exe,AppImage,msix}; do
-              if [ -f "$f" ]; then
-                filename=$(basename "$f")
-                size=$(du -h "$f" | cut -f1)
-                echo "| \`${filename}\` | ${size} |"
-              fi
-            done
-            echo ""
-            echo "---"
-            echo ""
-            echo "**MIT Licensed. Built with Tauri + React + TypeScript.**"
-            echo ""
-            echo "### macOS Users — First Launch"
-            echo ""
-            echo "If you see a security warning on first launch:"
-            echo '```sh'
-            echo "xattr -cr /Applications/Kairos-Pomodoro.app"
-            echo '```'
-            echo ""
-            echo "Or right-click the app → **Open** (instead of double-clicking)."
-            echo ""
-            echo "### Verify Integrity"
-            echo '```sh'
-            echo "sha256sum *.dmg *.exe *.AppImage *.msix 2>/dev/null || true"
-            echo '```'
-          } > "${NOTES_FILE}"
-
-          {
-            echo "notes<<RELEASE_NOTES_EOF"
-            cat "${NOTES_FILE}"
-            echo "RELEASE_NOTES_EOF"
-          } >> "$GITHUB_OUTPUT"
-
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
-        with:
-          body: ${{ steps.release_notes.outputs.notes }}
-          draft: false
-          prerelease: ${{ contains(github.ref, '-beta') || contains(github.ref, '-rc') }}
-          files: release-files/*
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          if gh release view "${TAG}" &>/dev/null 2>&1; then
+            echo "Release ${TAG} exists — uploading assets only..."
+            gh release upload "${TAG}" release-files/* --clobber
+          else
+            echo "Creating release ${TAG}..."
+            PREV_TAG="$(git tag --sort=-creatordate | head -2 | tail -1)"
+            IS_PRERELEASE="false"
+            if [[ "${TAG}" == *-beta* || "${TAG}" == *-rc* ]]; then
+              IS_PRERELEASE="true"
+            fi
+            NOTES_ARGS=()
+            if [ -n "$PREV_TAG" ]; then
+              NOTES_ARGS+=(--notes-start-tag "$PREV_TAG")
+            fi
+            gh release create "${TAG}" \
+              release-files/* \
+              --title "Kairos-Pomodoro ${TAG}" \
+              --generate-notes \
+              "${NOTES_ARGS[@]}" \
+              --prerelease "${IS_PRERELEASE}"
+          fi
