@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useSettingsStore } from "@/features/settings/use-settings-store";
 import { useNotificationStore } from "@/features/notifications/use-notification-store";
-import { Monitor, Zap, Bell, Keyboard, Shield } from "lucide-react";
+import { Monitor, Zap, Bell, Keyboard, Shield, DatabaseBackup } from "lucide-react";
 
 import { MainLayout } from "@/components/template/main-layout";
 import { SettingsSidebar } from "@/components/settings/settings-sidebar";
@@ -12,12 +12,14 @@ import { SettingsFocusSection } from "@/components/settings/settings-focus-secti
 import { SettingsNotifications } from "@/components/settings/settings-notifications-section";
 import { SettingsHotkeysSection } from "@/components/settings/settings-hotkeys-section";
 import { SettingsPrivacySection } from "@/components/settings/settings-privacy-section";
+import { SettingsBackupSection } from "@/components/settings/settings-backup-section";
 
 const TABS: SidebarTab[] = [
   { id: "general", label: "General", icon: Monitor },
   { id: "focus", label: "Focus Rhythm", icon: Zap },
   { id: "notifications", label: "Notifications", icon: Bell },
   { id: "hotkeys", label: "Hotkeys", icon: Keyboard },
+  { id: "backup", label: "Backup & Restore", icon: DatabaseBackup },
   { id: "privacy", label: "Privacy & Data", icon: Shield },
 ];
 
@@ -94,6 +96,8 @@ export function SettingsPage() {
               )}
 
               {activeTab === "hotkeys" && <SettingsHotkeysSection />}
+
+              {activeTab === "backup" && <SettingsBackupSection />}
 
               {activeTab === "privacy" && <SettingsPrivacySection />}
             </div>
