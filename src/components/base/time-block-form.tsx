@@ -84,7 +84,7 @@ export function TimeBlockForm({
         task_id: taskId ? Number(taskId) : null,
         category_id: categoryId ? Number(categoryId) : null,
         color: categoryId
-          ? categories.find((c) => c.id === Number(categoryId))?.color ?? null
+          ? (categories.find((c) => c.id === Number(categoryId))?.color ?? null)
           : null,
       };
       await onSubmit(input);
@@ -120,7 +120,7 @@ export function TimeBlockForm({
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder="e.g. Deep work on report"
-            className="w-full mt-2 px-4 py-3 rounded-xl border border-sahara-border/30 bg-sahara-bg/50 text-sm font-medium placeholder:text-sahara-text-muted focus:outline-none focus:border-sahara-primary/50 focus:ring-2 focus:ring-sahara-primary/10 transition-all"
+            className="w-full mt-2 px-4 py-3 bg-sahara-bg/40 border border-sahara-border/20 rounded-xl text-sm text-sahara-text placeholder:text-sahara-text-muted/50 focus:outline-none focus:border-sahara-primary/50 focus:ring-2 focus:ring-sahara-primary/10 transition-all"
           />
         </div>
 
@@ -134,7 +134,7 @@ export function TimeBlockForm({
               type="datetime-local"
               value={start}
               onChange={(e) => setStart(e.target.value)}
-              className="w-full mt-2 px-3 py-3 rounded-xl border border-sahara-border/30 bg-sahara-bg/50 text-sm font-medium text-sahara-text focus:outline-none focus:border-sahara-primary/50 focus:ring-2 focus:ring-sahara-primary/10 transition-all"
+              className="w-full mt-2 px-4 py-3 rounded-xl border border-sahara-border/30 bg-sahara-bg/40 text-sm font-medium text-sahara-text focus:outline-none focus:border-sahara-primary/50 focus:ring-2 focus:ring-sahara-primary/10 transition-all"
             />
           </div>
           <div>
@@ -145,7 +145,7 @@ export function TimeBlockForm({
               type="datetime-local"
               value={end}
               onChange={(e) => setEnd(e.target.value)}
-              className="w-full mt-2 px-3 py-3 rounded-xl border border-sahara-border/30 bg-sahara-bg/50 text-sm font-medium text-sahara-text focus:outline-none focus:border-sahara-primary/50 focus:ring-2 focus:ring-sahara-primary/10 transition-all"
+              className="w-full mt-2 px-4 py-3 rounded-xl border border-sahara-border/30 bg-sahara-bg/40 text-sm font-medium text-sahara-text focus:outline-none focus:border-sahara-primary/50 focus:ring-2 focus:ring-sahara-primary/10 transition-all"
             />
           </div>
         </div>
@@ -159,7 +159,7 @@ export function TimeBlockForm({
             <select
               value={taskId}
               onChange={(e) => setTaskId(e.target.value)}
-              className="w-full mt-2 px-3 py-3 rounded-xl border border-sahara-border/30 bg-sahara-bg/50 text-sm font-medium text-sahara-text focus:outline-none focus:border-sahara-primary/50 transition-all"
+              className="w-full mt-2 px-4 py-3 bg-sahara-bg/40 border border-sahara-border/20 rounded-xl text-sm text-sahara-text focus:outline-none focus:border-sahara-primary/50 focus:ring-2 focus:ring-sahara-primary/10 transition-all appearance-none cursor-pointer"
             >
               <option value="">None</option>
               {tasks.map((t) => (
