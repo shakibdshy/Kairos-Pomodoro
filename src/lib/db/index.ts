@@ -38,6 +38,9 @@ export {
   getMoodDistribution,
   getSessionNotes,
   getCompletedTasksForPeriod,
+  getDailyScore,
+  getEarnedBadges,
 } from "./analytics";
+export type { BadgeAward } from "./analytics";
 export { getPresets, addPreset, updatePreset, deletePreset } from "./presets";
 export type { TimerPreset } from "./presets";

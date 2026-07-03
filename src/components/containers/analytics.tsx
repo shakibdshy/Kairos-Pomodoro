@@ -2,11 +2,18 @@ import { useState, useEffect, useRef } from "react";
 import { Loader2 } from "lucide-react";
 import {
   getWeeklyData,
+  getDailyScore,
+  getEarnedBadges,
+  getCurrentStreak,
+  getBestStreak,
+  getAllTimeStats,
   type DayData,
+  type BadgeAward,
 } from "@/lib/db";
 import { StatCard } from "@/components/base/stat-card";
 import { WeeklyChart } from "@/components/base/weekly-chart";
 import { BadgeCard } from "@/components/base/badge-card";
+import { ScoreRing } from "@/components/base/score-ring";
 import { AnalyticsCategoryBreakdown } from "@/components/base/analytics-category-breakdown";
 import { DateRangePicker } from "@/components/base/date-range-picker";
 import { MoodDistribution } from "@/components/base/mood-distribution";
@@ -22,6 +29,17 @@ interface AnalyticsDashboardProps {
 
 export function AnalyticsDashboard({ period: externalPeriod, onPeriodChange }: AnalyticsDashboardProps) {
   const [weekData, setWeekData] = useState<DayData[]>([]);
+  const [score, setScore] = useState(0);
+  const [badges, setBadges] = useState<BadgeAward[]>([]);
+  const [streaks, setStreaks] = useState({ current: 0, best: 0 });
+  const [allTime, setAllTime] = useState({
+    total_focus_seconds: 0,
+    total_sessions: 0,
+    avg_session_seconds: 0,
+    longest_session_seconds: 0,
+    total_break_seconds: 0,
+    avg_break_seconds: 0,
+  });
   const loadingRef = useRef(true);
   const [internalPeriod, setInternalPeriod] = useState<DatePeriod>("last7days");
 
@@ -36,9 +54,19 @@ export function AnalyticsDashboard({ period: externalPeriod, onPeriodChange }: A
 
     Promise.all([
       getWeeklyData(range.startDate, range.endDate).catch(() => []),
-    ]).then(([wd]) => {
+      getDailyScore().catch(() => 0),
+      getEarnedBadges().catch(() => [] as BadgeAward[]),
+      Promise.all([getCurrentStreak(), getBestStreak()])
+        .then(([current, best]) => ({ current, best }))
+        .catch(() => ({ current: 0, best: 0 })),
+      getAllTimeStats().catch(() => allTime),
+    ]).then(([wd, sc, bd, st, at]) => {
       if (!cancelled) {
         setWeekData(wd);
+        setScore(sc);
+        setBadges(bd);
+        setStreaks(st);
+        setAllTime(at);
         loadingRef.current = false;
       }
     });
@@ -69,6 +97,43 @@ export function AnalyticsDashboard({ period: externalPeriod, onPeriodChange }: A
 
   return (
     <div className="space-y-6 md:space-y-10">
+      {/* Score + Streaks */}
+      <section>
+        <h2 className="font-serif text-lg font-semibold tracking-wide md:text-2xl text-sahara-text mb-4 md:mb-6">
+          Today
+        </h2>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 lg:gap-4">
+          <div className="bg-sahara-surface border border-sahara-border/20 rounded-xl md:rounded-2xl p-5 md:p-6 flex flex-col items-center justify-center">
+            <ScoreRing score={score} />
+            <p className="text-xs text-sahara-text-muted mt-3 text-center">
+              Productivity score
+            </p>
+          </div>
+          <div className="bg-sahara-surface border border-sahara-border/20 rounded-xl md:rounded-2xl p-5 md:p-6 flex flex-col justify-center">
+            <p className="text-[10px] font-bold text-sahara-text-muted uppercase tracking-widest mb-2">
+              Current Streak
+            </p>
+            <p className="font-serif text-4xl md:text-5xl font-bold text-sahara-text tabular-nums leading-none">
+              {streaks.current}
+            </p>
+            <p className="text-xs text-sahara-text-muted mt-1">
+              day{streaks.current === 1 ? "" : "s"} in a row
+            </p>
+          </div>
+          <div className="bg-sahara-surface border border-sahara-border/20 rounded-xl md:rounded-2xl p-5 md:p-6 flex flex-col justify-center">
+            <p className="text-[10px] font-bold text-sahara-text-muted uppercase tracking-widest mb-2">
+              Best Streak
+            </p>
+            <p className="font-serif text-4xl md:text-5xl font-bold text-sahara-text tabular-nums leading-none">
+              {streaks.best}
+            </p>
+            <p className="text-xs text-sahara-text-muted mt-1">
+              all-time longest run
+            </p>
+          </div>
+        </div>
+      </section>
+
       {/* Overview Stats */}
       <section>
         <div className="flex items-center justify-between mb-4 md:mb-6">
@@ -101,6 +166,39 @@ export function AnalyticsDashboard({ period: externalPeriod, onPeriodChange }: A
         </div>
       </section>
 
+      {/* All-time stats */}
+      <section>
+        <h2 className="font-serif text-lg font-semibold tracking-wide md:text-2xl text-sahara-text mb-4 md:mb-6">
+          All-Time
+        </h2>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
+          <StatCard
+            label="Total Focus"
+            value={formatTotalTime(allTime.total_focus_seconds)}
+            icon="clock"
+          />
+          <StatCard
+            label="Sessions"
+            value={String(allTime.total_sessions)}
+            icon="target"
+          />
+          <StatCard
+            label="Longest Session"
+            value={
+              allTime.longest_session_seconds > 0
+                ? formatDuration(allTime.longest_session_seconds)
+                : "0m"
+            }
+            icon="trending"
+          />
+          <StatCard
+            label="Total Breaks"
+            value={formatTotalTime(allTime.total_break_seconds)}
+            icon="flame"
+          />
+        </div>
+      </section>
+
       {/* Weekly Chart */}
       <section>
         <h2 className="font-serif text-lg font-semibold tracking-wide md:text-2xl text-sahara-text mb-4 md:mb-6">
@@ -120,21 +218,22 @@ export function AnalyticsDashboard({ period: externalPeriod, onPeriodChange }: A
           Achievements
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
-          <BadgeCard
-            title="Early Bird"
-            description="Complete a focus session before 7 AM"
-            earned={false}
-          />
-          <BadgeCard
-            title="Marathon Runner"
-            description="Complete 4+ focus sessions in one day"
-            earned={false}
-          />
-          <BadgeCard
-            title="Consistency King"
-            description="Maintain a 7-day streak"
-            earned={false}
-          />
+          {badges.length > 0 ? (
+            badges.map((b) => (
+              <BadgeCard
+                key={b.id}
+                title={b.title}
+                description={b.description}
+                earned={b.earned}
+              />
+            ))
+          ) : (
+            <>
+              <BadgeCard title="Early Bird" description="Complete a focus session before 7 AM" earned={false} />
+              <BadgeCard title="Marathon Runner" description="Complete 4+ focus sessions in one day" earned={false} />
+              <BadgeCard title="Consistency King" description="Maintain a 7-day streak" earned={false} />
+            </>
+          )}
         </div>
       </section>
 
