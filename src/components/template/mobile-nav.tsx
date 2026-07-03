@@ -6,6 +6,7 @@ import {
   Settings,
   Calendar,
   HelpCircle,
+  BookOpen,
 } from "lucide-react";
 import { cn } from "@/lib/cn";
 
@@ -14,6 +15,7 @@ const NAV_ITEMS = [
   { path: "/tasks", label: "Tasks", icon: CheckSquare },
   { path: "/calendar", label: "Calendar", icon: Calendar },
   { path: "/analytics", label: "Analytics", icon: BarChart2 },
+  { path: "/journal", label: "Journal", icon: BookOpen },
 ] as const;
 
 export function MobileNav() {

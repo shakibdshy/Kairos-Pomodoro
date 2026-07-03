@@ -5,6 +5,7 @@ import { TimerPage } from "@/pages/timer-page";
 import { TasksPage } from "@/pages/tasks-page";
 import { CalendarPage } from "@/pages/calendar-page";
 import { AnalyticsPage } from "@/pages/analytics-page";
+import { JournalPage } from "@/pages/journal-page";
 import { SettingsPage } from "@/pages/settings-page";
 import { OnboardingPage } from "@/pages/onboarding-page";
 import { useOnboardingStore } from "@/features/onboarding/use-onboarding-store";
@@ -45,6 +46,7 @@ export function Router() {
           <Route path="/tasks" element={<TasksPage />} />
           <Route path="/calendar" element={<CalendarPage />} />
           <Route path="/analytics" element={<AnalyticsPage />} />
+          <Route path="/journal" element={<JournalPage />} />
           <Route path="/settings" element={<SettingsPage />} />
         </Route>
         <Route path="/onboarding" element={<OnboardingPage />} />
