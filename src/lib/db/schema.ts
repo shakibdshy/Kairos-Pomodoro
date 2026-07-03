@@ -14,12 +14,17 @@ export function getDbName(): string {
 export async function getDb(): Promise<Database> {
   if (!db) {
     db = await Database.load(DB_NAME);
+    // Set busy timeout to 10 seconds to avoid SQLITE_BUSY errors
+    await db.execute("PRAGMA busy_timeout = 10000");
   }
   return db;
 }
 
 export async function initDb(): Promise<void> {
   const database = await getDb();
+
+  // Wait up to 10s for locks instead of failing immediately with SQLITE_BUSY.
+  await database.execute("PRAGMA busy_timeout = 10000");
 
   await database.execute(`
     CREATE TABLE IF NOT EXISTS tasks (

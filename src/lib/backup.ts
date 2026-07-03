@@ -156,25 +156,18 @@ function validateBackup(payload: unknown): asserts payload is BackupFile {
   if (p.app !== BACKUP_APP_ID) {
     throw new Error("Invalid backup file: not a Kairos backup.");
   }
-  if (typeof p.formatVersion !== "number") {
-    throw new Error("Invalid backup file: missing format version.");
-  }
-  if (p.formatVersion <= 0 || p.formatVersion < BACKUP_FORMAT_VERSION) {
+  // Accept any formatVersion <= BACKUP_FORMAT_VERSION (backward compatible), default to 0
+  const formatVersion = typeof p.formatVersion === "number" ? p.formatVersion : 0;
+  if (formatVersion > BACKUP_FORMAT_VERSION) {
     throw new Error(
-      `Invalid backup file: unsupported format version v${p.formatVersion}.`,
+      `Backup was created by a newer version of Kairos (format v${formatVersion}). This build only supports up to v${BACKUP_FORMAT_VERSION}.`,
     );
   }
-  if (p.formatVersion > BACKUP_FORMAT_VERSION) {
+  // Default schemaVersion to 0 if not present (for old backups)
+  const schemaVersion = typeof p.schemaVersion === "number" ? p.schemaVersion : 0;
+  if (schemaVersion > BACKUP_SCHEMA_VERSION) {
     throw new Error(
-      `Backup was created by a newer version of Kairos (format v${p.formatVersion}). This build only supports up to v${BACKUP_FORMAT_VERSION}.`,
-    );
-  }
-  if (typeof p.schemaVersion !== "number") {
-    throw new Error("Invalid backup file: missing schema version.");
-  }
-  if (p.schemaVersion > BACKUP_SCHEMA_VERSION) {
-    throw new Error(
-      `Backup schema version ${p.schemaVersion} is newer than supported ${BACKUP_SCHEMA_VERSION}. Update the app to restore this backup.`,
+      `Backup schema version ${schemaVersion} is newer than supported ${BACKUP_SCHEMA_VERSION}. Update the app to restore this backup.`,
     );
   }
   if (typeof p.data !== "object" || p.data === null) {
@@ -215,54 +208,143 @@ export async function importBackup(): Promise<BackupResult> {
     // foreign-key references (sessions→tasks, etc.) clear cleanly.
     const counts: Record<string, number> = {};
 
-    await db.execute("BEGIN TRANSACTION");
-    try {
-      for (const table of [...TABLES].reverse()) {
+    // Background polling (today focus every 10s, analytics load, etc.) competes
+    // with the restore for the SQLite lock. Strategy: a generous busy_timeout
+    // makes concurrent readers wait rather than fail immediately; we retry the
+    // whole transaction a few times with exponential backoff as a safety net.
+    const isBusyError = (e: unknown) =>
+      /database is locked|SQLITE_BUSY|code: 5/i.test(String((e as Error)?.message ?? e));
+
+    // Set pragmas once, outside the retry loop — re-running journal_mode
+    // switches inside retries was itself a source of contention.
+    await db.execute("PRAGMA busy_timeout = 15000").catch(() => {});
+    await db.execute("PRAGMA foreign_keys = OFF").catch(() => {});
+
+    const MAX_RETRIES = 5;
+    let lastError: unknown = null;
+    for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+      try {
+        // Deferred BEGIN acquires the write lock lazily (on first write),
+        // which is less likely to conflict with in-flight readers than
+        // BEGIN IMMEDIATE.
+        await db.execute("BEGIN");
         try {
-          await db.execute(`DELETE FROM ${table}`);
+          for (const table of [...TABLES].reverse()) {
+            try {
+              await db.execute(`DELETE FROM ${table}`);
+            } catch (e) {
+              const msg = (e as Error)?.message ?? "";
+              if (!msg.toLowerCase().includes("no such table")) {
+                throw e;
+              }
+              // table may not exist pre-migration; ignore
+            }
+          }
+
+          for (const table of TABLES) {
+            const rows = payload.data[table] ?? [];
+            counts[table] = 0;
+            if (rows.length === 0) continue;
+
+            const allowedCols = TABLE_COLUMNS[table] ?? [];
+            const validRows = rows.filter(row => {
+              const cols = Object.keys(row).filter(c => allowedCols.includes(c));
+              return cols.length > 0;
+            });
+
+            if (validRows.length === 0) continue;
+
+            // Get common columns from first row
+            const cols = Object.keys(validRows[0]).filter(c => allowedCols.includes(c));
+
+            // Batch up to 500 rows per insert
+            const BATCH_SIZE = 500;
+            for (let i = 0; i < validRows.length; i += BATCH_SIZE) {
+              const batch = validRows.slice(i, i + BATCH_SIZE);
+              const allValues: unknown[] = [];
+              const rowPlaceholders: string[] = [];
+              let paramIndex = 1;
+
+              for (const row of batch) {
+                const placeholders = cols.map(() => `$${paramIndex++}`);
+                rowPlaceholders.push(`(${placeholders.join(", ")})`);
+                for (const col of cols) {
+                  // Coerce missing properties to null — JSON may have dropped
+                  // null/empty values, or rows genuinely have different shapes.
+                  // Passing JS `undefined` to the SQL binding breaks the param
+                  // count, so normalize to null here.
+                  const val = (row as Record<string, unknown>)[col];
+                  allValues.push(val === undefined ? null : val);
+                }
+              }
+
+              try {
+                await db.execute(
+                  `INSERT INTO ${table} (${cols.join(", ")}) VALUES ${rowPlaceholders.join(", ")}`,
+                  allValues,
+                );
+                counts[table] += batch.length;
+              } catch (e) {
+                // If batch fails, try inserting one-by-one to skip only bad rows
+                console.warn(`[backup] Batch insert for ${table} failed, trying one-by-one`, (e as Error)?.message);
+                for (const row of batch) {
+                  try {
+                    const singlePlaceholders = cols.map((_, idx) => `$${idx + 1}`);
+                    const singleValues = cols.map(col => {
+                      const v = (row as Record<string, unknown>)[col];
+                      return v === undefined ? null : v;
+                    });
+                    await db.execute(
+                      `INSERT INTO ${table} (${cols.join(", ")}) VALUES (${singlePlaceholders.join(", ")})`,
+                      singleValues,
+                    );
+                    counts[table]++;
+                  } catch (singleErr) {
+                    console.warn(`[backup] Skipped ${table} row:`, (singleErr as Error)?.message);
+                  }
+                }
+              }
+            }
+          }
+
+          await db.execute("COMMIT");
         } catch (e) {
-          const msg = (e as Error)?.message ?? "";
-          if (!msg.toLowerCase().includes("no such table")) {
-            throw e;
-          }
-          // table may not exist pre-migration; ignore
+          await db.execute("ROLLBACK").catch(() => {
+            // ignore rollback failures
+          });
+          throw e;
         }
-      }
 
-      for (const table of TABLES) {
-        const rows = payload.data[table] ?? [];
-        counts[table] = 0;
-        if (rows.length === 0) continue;
-
-        const allowedCols = TABLE_COLUMNS[table] ?? [];
-        for (const row of rows) {
-          const cols = Object.keys(row).filter((c) => allowedCols.includes(c));
-          if (cols.length === 0) continue;
-          const placeholders = cols.map((_, i) => `$${i + 1}`).join(", ");
-          const values = cols.map((c) => (row as Record<string, unknown>)[c]);
-          try {
-            await db.execute(
-              `INSERT INTO ${table} (${cols.join(", ")}) VALUES (${placeholders})`,
-              values,
-            );
-            counts[table]++;
-          } catch (e) {
-            // Skip rows that violate constraints (e.g. duplicate keys), keep going.
-            console.warn(`[backup] Skipped ${table} row:`, (e as Error)?.message);
-          }
+        lastError = null;
+        break;
+      } catch (e) {
+        lastError = e;
+        if (!isBusyError(e) || attempt === MAX_RETRIES) {
+          throw e;
         }
+        const delay = attempt * 800;
+        console.warn(`[backup] Import busy on attempt ${attempt}, retrying in ${delay}ms...`);
+        await new Promise(r => setTimeout(r, delay));
       }
+    }
 
-      await db.execute("COMMIT");
-    } catch (e) {
-      await db.execute("ROLLBACK").catch(() => {
-        // ignore rollback failures
-      });
-      throw e;
+    // Restore FK enforcement regardless of outcome.
+    await db.execute("PRAGMA foreign_keys = ON").catch(() => {});
+
+    if (lastError) {
+      throw lastError;
     }
 
     return { ok: true, path: filePath, counts };
   } catch (e) {
-    return { ok: false, path: filePath ?? undefined, error: (e as Error)?.message ?? "Unknown error" };
+    console.error("[backup] Import failed:", e);
+    const err = e as Error;
+    return { 
+      ok: false, 
+      path: filePath ?? undefined, 
+      error: err?.message 
+        ? `${err.message} (see dev console for details)` 
+        : "Unknown error (see dev console for details)" 
+    };
   }
 }
