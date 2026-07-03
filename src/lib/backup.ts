@@ -69,6 +69,48 @@ const TABLE_COLUMNS: Record<string, string[]> = {
   journal_entries: ["id", "date", "content", "created_at", "updated_at"],
 };
 
+/**
+ * Per-column fallbacks applied when a backup row has NULL/undefined for a
+ * NOT NULL column, or for a column the read path relies on. Without these,
+ * such rows violate constraints and get silently skipped during restore —
+ * which is why tasks appeared not to restore: a NULL `archived` makes
+ * getTasks()'s `WHERE archived = 0` filter hide the row, and NULL
+ * estimated/completed_pomos violate NOT NULL.
+ */
+const COLUMN_DEFAULTS: Record<string, Record<string, unknown>> = {
+  tasks: {
+    estimated_pomos: 1,
+    completed_pomos: 0,
+    archived: 0,
+    name: "Untitled",
+  },
+  sessions: {
+    phase: "work",
+    duration_sec: 0,
+    completed: 0,
+  },
+  categories: {
+    name: "Untitled",
+    color: "#c2652a",
+  },
+};
+
+/**
+ * Resolve a cell value for insert: undefined → default (if any) → null.
+ * Defaults keep NOT NULL columns valid and ensure columns the read path
+ * depends on (e.g. tasks.archived, used by `WHERE archived = 0`) are set.
+ */
+export function resolveValue(
+  table: string,
+  col: string,
+  raw: unknown,
+): unknown {
+  if (raw !== undefined && raw !== null) return raw;
+  const defaults = COLUMN_DEFAULTS[table];
+  if (defaults && col in defaults) return defaults[col];
+  return null;
+}
+
 export interface BackupFile {
   app: string;
   formatVersion: number;
@@ -276,12 +318,7 @@ export async function importBackup(): Promise<BackupResult> {
             const placeholders = cols.map(() => `$${paramIndex++}`);
             rowPlaceholders.push(`(${placeholders.join(", ")})`);
             for (const col of cols) {
-              // Coerce missing properties to null — JSON may have dropped
-              // null/empty values, or rows genuinely have different shapes.
-              // Passing JS `undefined` to the SQL binding breaks the param
-              // count, so normalize to null here.
-              const val = (row as Record<string, unknown>)[col];
-              allValues.push(val === undefined ? null : val);
+              allValues.push(resolveValue(table, col, (row as Record<string, unknown>)[col]));
             }
           }
 
@@ -301,10 +338,9 @@ export async function importBackup(): Promise<BackupResult> {
             for (const row of batch) {
               try {
                 const singlePlaceholders = cols.map((_, idx) => `$${idx + 1}`);
-                const singleValues = cols.map((col) => {
-                  const v = (row as Record<string, unknown>)[col];
-                  return v === undefined ? null : v;
-                });
+                const singleValues = cols.map((col) =>
+                  resolveValue(table, col, (row as Record<string, unknown>)[col]),
+                );
                 await execWithRetry(
                   `INSERT INTO ${table} (${cols.join(", ")}) VALUES (${singlePlaceholders.join(", ")})`,
                   singleValues,
