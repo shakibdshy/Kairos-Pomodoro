@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Loader2 } from "lucide-react";
+import { Loader2, Flame, Trophy } from "lucide-react";
 import {
   getWeeklyData,
   getDailyScore,
@@ -114,38 +114,30 @@ export function AnalyticsDashboard({ period: externalPeriod, onPeriodChange }: A
             </p>
           </div>
           <div className="bg-sahara-card/50 border border-sahara-border/20 rounded-xl p-5 md:p-6 flex flex-col items-center justify-center">
-            <div className="relative flex items-center justify-center" style={{ width: 96, height: 96 }}>
-              <div className="flex flex-col items-center justify-center">
-                <p className="text-[10px] font-bold text-sahara-text-muted uppercase tracking-widest mb-1">
-                  Current
-                </p>
-                <p className="font-serif text-4xl md:text-5xl font-bold text-sahara-text tabular-nums leading-none">
-                  {streaks.current}
-                </p>
-                <p className="text-[8px] md:text-[9px] font-bold text-sahara-text-muted uppercase tracking-widest mt-0.5">
-                  Day{streaks.current === 1 ? "" : "s"}
-                </p>
-              </div>
+            <div className="size-24 rounded-full bg-sahara-primary-light/50 flex flex-col items-center justify-center">
+              <Flame className="size-4 text-sahara-primary mb-0.5" />
+              <p className="font-serif text-3xl md:text-4xl font-bold text-sahara-primary tabular-nums leading-none">
+                {streaks.current}
+              </p>
             </div>
-            <p className="text-xs text-sahara-text-muted mt-3 text-center">
-              days in a row
+            <p className="text-[10px] font-bold text-sahara-text-muted uppercase tracking-widest mt-3">
+              Current streak
+            </p>
+            <p className="text-xs text-sahara-text-muted mt-0.5 text-center">
+              day{streaks.current === 1 ? "" : "s"} in a row
             </p>
           </div>
           <div className="bg-sahara-card/50 border border-sahara-border/20 rounded-xl p-5 md:p-6 flex flex-col items-center justify-center">
-            <div className="relative flex items-center justify-center" style={{ width: 96, height: 96 }}>
-              <div className="flex flex-col items-center justify-center">
-                <p className="text-[10px] font-bold text-sahara-text-muted uppercase tracking-widest mb-1">
-                  Best
-                </p>
-                <p className="font-serif text-4xl md:text-5xl font-bold text-sahara-text tabular-nums leading-none">
-                  {streaks.best}
-                </p>
-                <p className="text-[8px] md:text-[9px] font-bold text-sahara-text-muted uppercase tracking-widest mt-0.5">
-                  Day{streaks.best === 1 ? "" : "s"}
-                </p>
-              </div>
+            <div className="size-24 rounded-full bg-sahara-primary-light/50 flex flex-col items-center justify-center">
+              <Trophy className="size-4 text-sahara-primary mb-0.5" />
+              <p className="font-serif text-3xl md:text-4xl font-bold text-sahara-primary tabular-nums leading-none">
+                {streaks.best}
+              </p>
             </div>
-            <p className="text-xs text-sahara-text-muted mt-3 text-center">
+            <p className="text-[10px] font-bold text-sahara-text-muted uppercase tracking-widest mt-3">
+              Best streak
+            </p>
+            <p className="text-xs text-sahara-text-muted mt-0.5 text-center">
               all-time longest run
             </p>
           </div>
