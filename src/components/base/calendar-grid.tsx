@@ -1,15 +1,25 @@
 import { useMemo, useState, useEffect, useRef } from "react";
 import { cn } from "@/lib/cn";
-import type { WeekSession } from "@/lib/db";
+import type { WeekSession, TimeBlockWithMeta } from "@/lib/db";
 import { CalendarSessionBlock } from "./calendar-session-block";
+import { CalendarTimeBlock } from "./calendar-time-block";
 import { CalendarDayPill } from "./calendar-day-pill";
 
 interface CalendarGridProps {
   sessions: WeekSession[];
+  timeBlocks: TimeBlockWithMeta[];
   weekDays: Date[];
   startHour: number;
   endHour: number;
   hourHeight: number;
+  /** Called when the user clicks an empty slot to create a block. */
+  onCreateBlock?: (date: Date, hour: number) => void;
+  /** Called when the user clicks edit on a block. */
+  onEditBlock?: (block: TimeBlockWithMeta) => void;
+  /** Called when the user clicks delete on a block. */
+  onDeleteBlock?: (block: TimeBlockWithMeta) => void;
+  /** Called when the user clicks "start focus" on a block. */
+  onStartFocusFromBlock?: (block: TimeBlockWithMeta) => void;
 }
 
 const DAY_LABELS_FULL = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"];
@@ -41,20 +51,40 @@ function buildSessionsByDay(
   return map;
 }
 
+function buildBlocksByDay(
+  blocks: TimeBlockWithMeta[],
+): Map<string, TimeBlockWithMeta[]> {
+  const map = new Map<string, TimeBlockWithMeta[]>();
+  for (const b of blocks) {
+    const key = toDateString(new Date(b.start_time));
+    if (!map.has(key)) map.set(key, []);
+    map.get(key)!.push(b);
+  }
+  return map;
+}
+
 interface PositionedSession {
   session: WeekSession;
   topPx: number;
   heightPx: number;
 }
 
+interface PositionedBlock {
+  block: TimeBlockWithMeta;
+  topPx: number;
+  heightPx: number;
+}
+
 interface DayLayout {
   positioned: PositionedSession[];
+  positionedBlocks: PositionedBlock[];
   hourTopPx: number[];
   totalHeight: number;
 }
 
 function computeDayLayout(
   daySessions: WeekSession[],
+  dayBlocks: TimeBlockWithMeta[],
   startHour: number,
   endHour: number,
 ): DayLayout {
@@ -83,6 +113,35 @@ function computeDayLayout(
     const heightPx = Math.max((durationMin / 60) * BASE_HOUR_HEIGHT, 100);
 
     positioned.push({ session, topPx, heightPx });
+  }
+
+  // Position planned blocks independently — they sit alongside sessions.
+  const positionedBlocks: PositionedBlock[] = [];
+  const sortedBlocks = dayBlocks.toSorted(
+    (a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime(),
+  );
+  for (const block of sortedBlocks) {
+    const startTime = new Date(block.start_time);
+    const endTime = new Date(block.end_time);
+    const durationMin = Math.max(
+      1,
+      Math.round((endTime.getTime() - startTime.getTime()) / 60000),
+    );
+    const startMin =
+      (startTime.getHours() - startHour) * 60 + startTime.getMinutes();
+
+    let topPx = Math.max((startMin / 60) * BASE_HOUR_HEIGHT, 0);
+
+    for (const existing of positionedBlocks) {
+      const existingEnd = existing.topPx + existing.heightPx;
+      if (topPx < existingEnd) {
+        topPx = existingEnd + 4;
+      }
+    }
+
+    const heightPx = Math.max((durationMin / 60) * BASE_HOUR_HEIGHT, 36);
+
+    positionedBlocks.push({ block, topPx, heightPx });
   }
 
   const hourCount = endHour - startHour + 1;
@@ -119,8 +178,13 @@ function computeDayLayout(
 
   return {
     positioned,
+    positionedBlocks,
     hourTopPx,
-    totalHeight: Math.max(totalContentBottom, hourTopPx[hourCount]),
+    totalHeight: Math.max(
+      totalContentBottom,
+      ...positionedBlocks.map((p) => p.topPx + p.heightPx),
+      hourTopPx[hourCount],
+    ),
   };
 }
 
@@ -133,15 +197,21 @@ interface CalendarMobileViewProps {
   formatHour: (h: number) => string;
   currentTimePos: number | null;
   sessions: WeekSession[];
+  onCreateBlock?: (date: Date, hour: number) => void;
+  onEditBlock?: (block: TimeBlockWithMeta) => void;
+  onDeleteBlock?: (block: TimeBlockWithMeta) => void;
+  onStartFocusFromBlock?: (block: TimeBlockWithMeta) => void;
 }
 
 function CalendarMobileView({
   weekDays, allDayLayouts, selectedMobileDay, onSelectMobileDay,
   hours, formatHour, currentTimePos, sessions,
+  onCreateBlock, onEditBlock, onDeleteBlock, onStartFocusFromBlock,
 }: CalendarMobileViewProps) {
   const layout = allDayLayouts[selectedMobileDay];
   const dayDate = weekDays[selectedMobileDay];
   const today = isToday(dayDate);
+  const hasBlocks = layout.positionedBlocks.length > 0;
 
   return (
     <div className="md:hidden flex flex-col">
@@ -179,7 +249,17 @@ function CalendarMobileView({
             })}
           </div>
 
-          <div className={cn("flex-1 relative", today && "bg-sahara-primary-light/10")} style={{ minHeight: layout.totalHeight }}>
+          <div
+            className={cn("flex-1 relative", today && "bg-sahara-primary-light/10")}
+            style={{ minHeight: layout.totalHeight }}
+            onClick={(e) => {
+              if (!onCreateBlock) return;
+              const target = e.currentTarget.getBoundingClientRect();
+              const y = e.clientY - target.top;
+              const hour = Math.floor(y / BASE_HOUR_HEIGHT) + (hours[0] ?? 6);
+              onCreateBlock(dayDate, hour);
+            }}
+          >
             {hours.map((_, hIdx) => (
               <div
                 key={hIdx}
@@ -192,6 +272,18 @@ function CalendarMobileView({
               <CalendarSessionBlock key={session.id} session={session} topPx={topPx} heightPx={heightPx} />
             ))}
 
+            {layout.positionedBlocks.map(({ block, topPx, heightPx }) => (
+              <CalendarTimeBlock
+                key={`b-${block.id}`}
+                block={block}
+                topPx={topPx}
+                heightPx={heightPx}
+                onEdit={onEditBlock}
+                onDelete={onDeleteBlock}
+                onStartFocus={onStartFocusFromBlock}
+              />
+            ))}
+
             {currentTimePos !== null && today && (
               <div className="absolute left-0 right-0 z-30 pointer-events-none flex items-center" style={{ top: currentTimePos }}>
                 <div className="size-1.5 rounded-full bg-sahara-primary -ml-1 shadow-sm" />
@@ -201,7 +293,7 @@ function CalendarMobileView({
           </div>
         </div>
 
-        {sessions.length === 0 && (
+        {sessions.length === 0 && !hasBlocks && (
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
             <div className="text-center opacity-30">
               <p className="text-xs font-semibold text-sahara-text-muted uppercase tracking-wider">No sessions this day</p>
@@ -223,11 +315,16 @@ interface CalendarDesktopViewProps {
   todayIdx: number;
   desktopGridTotalHeight: number;
   sessions: WeekSession[];
+  onCreateBlock?: (date: Date, hour: number) => void;
+  onEditBlock?: (block: TimeBlockWithMeta) => void;
+  onDeleteBlock?: (block: TimeBlockWithMeta) => void;
+  onStartFocusFromBlock?: (block: TimeBlockWithMeta) => void;
 }
 
 function CalendarDesktopView({
   weekDays, allDayLayouts, hours, formatHour,
   currentTimePos, todayIdx, desktopGridTotalHeight, sessions,
+  onCreateBlock, onEditBlock, onDeleteBlock, onStartFocusFromBlock,
 }: CalendarDesktopViewProps) {
   return (
     <div className="hidden md:flex flex-col flex-1 min-h-0">
@@ -263,12 +360,37 @@ function CalendarDesktopView({
             const layout = allDayLayouts[idx];
             const today = isToday(day);
             return (
-              <div key={day.toDateString()} className={cn("relative border-r last:border-r-0 border-sahara-border/15", today && "bg-sahara-primary-light/30")} style={{ minHeight: layout.totalHeight }}>
+              <div
+                key={day.toDateString()}
+                className={cn(
+                  "relative border-r last:border-r-0 border-sahara-border/15 cursor-pointer",
+                  today && "bg-sahara-primary-light/30",
+                )}
+                style={{ minHeight: layout.totalHeight }}
+                onClick={(e) => {
+                  if (!onCreateBlock) return;
+                  const target = e.currentTarget.getBoundingClientRect();
+                  const y = e.clientY - target.top;
+                  const hour = Math.floor(y / BASE_HOUR_HEIGHT) + (hours[0] ?? 6);
+                  onCreateBlock(day, hour);
+                }}
+              >
                 {hours.map((_, hIdx) => (
                   <div key={hIdx} className="border-b border-sahara-border/10" style={{ height: layout.hourTopPx[hIdx + 1] - layout.hourTopPx[hIdx] }} />
                 ))}
                 {layout.positioned.map(({ session, topPx, heightPx }) => (
                   <CalendarSessionBlock key={session.id} session={session} topPx={topPx} heightPx={heightPx} />
+                ))}
+                {layout.positionedBlocks.map(({ block, topPx, heightPx }) => (
+                  <CalendarTimeBlock
+                    key={`b-${block.id}`}
+                    block={block}
+                    topPx={topPx}
+                    heightPx={heightPx}
+                    onEdit={onEditBlock}
+                    onDelete={onDeleteBlock}
+                    onStartFocus={onStartFocusFromBlock}
+                  />
                 ))}
                 {currentTimePos !== null && idx === todayIdx && (
                   <div className="absolute left-0 right-0 z-30 pointer-events-none flex items-center" style={{ top: currentTimePos }}>
@@ -296,9 +418,14 @@ function CalendarDesktopView({
 
 export function CalendarGrid({
   sessions,
+  timeBlocks,
   weekDays,
   startHour,
   endHour,
+  onCreateBlock,
+  onEditBlock,
+  onDeleteBlock,
+  onStartFocusFromBlock,
 }: CalendarGridProps) {
   const hours = Array.from(
     { length: endHour - startHour + 1 },
@@ -320,6 +447,7 @@ export function CalendarGrid({
   }, []);
 
   const sessionsByDay = useMemo(() => buildSessionsByDay(sessions), [sessions]);
+  const blocksByDay = useMemo(() => buildBlocksByDay(timeBlocks), [timeBlocks]);
 
   const todayIdx = weekDays.findIndex(isToday);
 
@@ -336,11 +464,12 @@ export function CalendarGrid({
       weekDays.map((day) =>
         computeDayLayout(
           sessionsByDay.get(toDateString(day)) ?? [],
+          blocksByDay.get(toDateString(day)) ?? [],
           startHour,
           endHour,
         ),
       ),
-    [sessionsByDay, weekDays, startHour, endHour],
+    [sessionsByDay, blocksByDay, weekDays, startHour, endHour],
   );
 
   function getCurrentTimePosition(): number | null {
@@ -370,6 +499,10 @@ export function CalendarGrid({
         formatHour={formatHour}
         currentTimePos={currentTimePos}
         sessions={sessions}
+        onCreateBlock={onCreateBlock}
+        onEditBlock={onEditBlock}
+        onDeleteBlock={onDeleteBlock}
+        onStartFocusFromBlock={onStartFocusFromBlock}
       />
       <CalendarDesktopView
         weekDays={weekDays}
@@ -380,6 +513,10 @@ export function CalendarGrid({
         todayIdx={todayIdx}
         desktopGridTotalHeight={desktopGridTotalHeight}
         sessions={sessions}
+        onCreateBlock={onCreateBlock}
+        onEditBlock={onEditBlock}
+        onDeleteBlock={onDeleteBlock}
+        onStartFocusFromBlock={onStartFocusFromBlock}
       />
     </div>
   );
