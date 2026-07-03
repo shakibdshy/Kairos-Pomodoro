@@ -50,3 +50,12 @@ export {
   deleteJournalEntry,
   getJournalEntries,
 } from "./journal";
+export {
+  addTimeBlock,
+  updateTimeBlock,
+  deleteTimeBlock,
+  getTimeBlock,
+  getWeekTimeBlocks,
+  markTimeBlockCompleted,
+} from "./time-blocks";
+export type { TimeBlockInput } from "./time-blocks";

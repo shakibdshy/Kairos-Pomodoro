@@ -1,14 +1,24 @@
 import { useState, useEffect, useCallback, useRef, useReducer } from "react";
-import { Loader2 } from "lucide-react";
+import { Loader2, Plus } from "lucide-react";
 import {
   getWeekSessions,
   getWeekSummary,
+  getWeekTimeBlocks,
+  addTimeBlock,
+  updateTimeBlock,
+  deleteTimeBlock,
   type WeekSession,
   type WeekSummary,
+  type TimeBlockWithMeta,
+  type TimeBlockInput,
 } from "@/lib/db";
 import { CalendarWeekNav } from "@/components/base/calendar-week-nav";
 import { CalendarGrid } from "@/components/base/calendar-grid";
 import { CalendarWeekStats } from "@/components/base/calendar-week-stats";
+import { TimeBlockForm } from "@/components/base/time-block-form";
+import { Button } from "@/components/ui/button";
+import { useTimerStore } from "@/features/timer/use-timer-store";
+import { useNavigate } from "react-router-dom";
 
 const START_HOUR = 6;
 const END_HOUR = 22;
@@ -48,23 +58,25 @@ function toISODate(d: Date): string {
 interface CalendarData {
   sessions: WeekSession[];
   summary: WeekSummary;
+  timeBlocks: TimeBlockWithMeta[];
 }
 
 const CALENDAR_INIT: CalendarData = {
   sessions: [],
   summary: EMPTY_SUMMARY,
+  timeBlocks: [],
 };
 
 type CalendarAction =
-  | { type: "LOADED"; sessions: WeekSession[]; summary: WeekSummary }
+  | { type: "LOADED"; sessions: WeekSession[]; summary: WeekSummary; timeBlocks: TimeBlockWithMeta[] }
   | { type: "ERROR" };
 
 function calendarReducer(_state: CalendarData, action: CalendarAction): CalendarData {
   switch (action.type) {
     case "LOADED":
-      return { sessions: action.sessions, summary: action.summary };
+      return { sessions: action.sessions, summary: action.summary, timeBlocks: action.timeBlocks };
     case "ERROR":
-      return { sessions: [], summary: EMPTY_SUMMARY };
+      return { sessions: [], summary: EMPTY_SUMMARY, timeBlocks: [] };
   }
 }
 
@@ -73,6 +85,8 @@ export function CalendarDashboard() {
   const [data, dispatch] = useReducer(calendarReducer, CALENDAR_INIT);
   const loadingRef = useRef(true);
   const loadedRef = useRef<string | null>(null);
+  // Bump to force the data-load effect to re-run (after a block CRUD op).
+  const [reloadNonce, setReloadNonce] = useState(0);
 
   const monday = getMonday(new Date(Date.now() + weekOffset * 7 * 86400000));
   const sunday = new Date(monday);
@@ -99,11 +113,12 @@ export function CalendarDashboard() {
       Promise.all([
         getWeekSessions(startStr, endStr).catch(() => [] as WeekSession[]),
         getWeekSummary(startStr, endStr).catch(() => EMPTY_SUMMARY),
+        getWeekTimeBlocks(startStr, endStr).catch(() => [] as TimeBlockWithMeta[]),
       ]),
       timeout,
     ])
-      .then(([sessData, summaryData]) => {
-        if (!cancelled) dispatch({ type: "LOADED", sessions: sessData, summary: summaryData });
+      .then(([sessData, summaryData, blockData]) => {
+        if (!cancelled) dispatch({ type: "LOADED", sessions: sessData, summary: summaryData, timeBlocks: blockData });
       })
       .catch(() => {
         if (!cancelled) dispatch({ type: "ERROR" });
@@ -116,7 +131,7 @@ export function CalendarDashboard() {
       cancelled = true;
       clearTimeout(timeoutId);
     };
-  }, [weekKey]);
+  }, [weekKey, reloadNonce]);
 
   const handlePrev = useCallback(() => {
     loadedRef.current = null;
@@ -131,7 +146,79 @@ export function CalendarDashboard() {
     setWeekOffset(0);
   }, []);
 
-  if (loadingRef.current && data.sessions.length === 0) {
+  // --- Time-blocking state & handlers ---
+  const navigate = useNavigate();
+  const setActiveTask = useTimerStore((s) => s.setActiveTask);
+  const setSelectedCategory = useTimerStore((s) => s.setSelectedCategory);
+  const setCustomIntention = useTimerStore((s) => s.setCustomIntention);
+
+  const [formOpen, setFormOpen] = useState(false);
+  const [editingBlock, setEditingBlock] = useState<TimeBlockWithMeta | null>(null);
+  const [defaultDate, setDefaultDate] = useState<Date | null>(null);
+  const [defaultHour, setDefaultHour] = useState<number | undefined>(undefined);
+
+  const reload = useCallback(() => {
+    loadedRef.current = null;
+    setReloadNonce((n) => n + 1);
+  }, []);
+
+  const openCreate = useCallback((date: Date, hour: number) => {
+    setEditingBlock(null);
+    setDefaultDate(date);
+    setDefaultHour(hour);
+    setFormOpen(true);
+  }, []);
+
+  const openEdit = useCallback((block: TimeBlockWithMeta) => {
+    setEditingBlock(block);
+    setDefaultDate(null);
+    setDefaultHour(undefined);
+    setFormOpen(true);
+  }, []);
+
+  const handleDelete = useCallback(
+    async (block: TimeBlockWithMeta) => {
+      await deleteTimeBlock(block.id);
+      reload();
+    },
+    [reload],
+  );
+
+  const handleSubmit = useCallback(
+    async (input: TimeBlockInput) => {
+      if (editingBlock) {
+        await updateTimeBlock(editingBlock.id, input);
+      } else {
+        await addTimeBlock(input);
+      }
+      reload();
+    },
+    [editingBlock, reload],
+  );
+
+  const handleStartFocusFromBlock = useCallback(
+    async (block: TimeBlockWithMeta) => {
+      // Configure the timer with the block's task/category/intention, then
+      // navigate to the Timer page so the user hits Start.
+      if (block.task_id) {
+        await setActiveTask(block.task_id);
+      }
+      if (block.category_id) {
+        // setSelectedCategory expects a Category object; we have id/name/color on the block.
+        setSelectedCategory({
+          id: block.category_id,
+          name: block.category_name ?? "",
+          color: block.category_color ?? "#c2652a",
+          created_at: "",
+        });
+      }
+      setCustomIntention(block.title ?? null);
+      navigate("/");
+    },
+    [setActiveTask, setSelectedCategory, setCustomIntention, navigate],
+  );
+
+  if (loadingRef.current && data.sessions.length === 0 && data.timeBlocks.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center h-full gap-4">
         <Loader2 className="size-8 text-sahara-primary animate-spin" />
@@ -154,13 +241,26 @@ export function CalendarDashboard() {
             Your Weekly Timeline
           </h1>
         </div>
-        <CalendarWeekNav
-          weekStart={monday}
-          weekEnd={sunday}
-          onPrev={handlePrev}
-          onNext={handleNext}
-          onToday={handleToday}
-        />
+        <div className="flex items-center gap-2">
+          <Button
+            variant="solid"
+            intent="sahara"
+            size="sm"
+            shape="rounded-full"
+            onClick={() => openCreate(new Date(), 9)}
+            className="gap-1.5 text-[10px] sm:text-xs font-bold tracking-widest uppercase"
+          >
+            <Plus className="size-3.5" />
+            Add Time
+          </Button>
+          <CalendarWeekNav
+            weekStart={monday}
+            weekEnd={sunday}
+            onPrev={handlePrev}
+            onNext={handleNext}
+            onToday={handleToday}
+          />
+        </div>
       </div>
 
       {/* Week Stats */}
@@ -170,12 +270,27 @@ export function CalendarDashboard() {
       <div className="flex-1 min-h-0 overflow-auto">
         <CalendarGrid
           sessions={data.sessions}
+          timeBlocks={data.timeBlocks}
           weekDays={weekDays}
           startHour={START_HOUR}
           endHour={END_HOUR}
           hourHeight={HOUR_HEIGHT}
+          onCreateBlock={openCreate}
+          onEditBlock={openEdit}
+          onDeleteBlock={handleDelete}
+          onStartFocusFromBlock={handleStartFocusFromBlock}
         />
       </div>
+
+      {/* Time block form (create / edit) */}
+      <TimeBlockForm
+        open={formOpen}
+        onClose={() => setFormOpen(false)}
+        block={editingBlock}
+        defaultDate={defaultDate}
+        defaultHour={defaultHour}
+        onSubmit={handleSubmit}
+      />
     </div>
   );
 }
