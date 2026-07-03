@@ -148,10 +148,7 @@ export function Sidebar({ isCollapsed, onToggleCollapse }: SidebarProps) {
           )}
         >
           <Play
-            className={cn(
-              "size-4 fill-current",
-              !isCollapsed && "ml-0.5",
-            )}
+            className={cn("size-4 fill-current", !isCollapsed && "ml-0.5")}
           />
           {!isCollapsed && (
             <span>{isRunning ? "SESSION ACTIVE" : "START SESSION"}</span>
@@ -204,9 +201,7 @@ export function Sidebar({ isCollapsed, onToggleCollapse }: SidebarProps) {
             )}
           />
           {!isCollapsed && (
-            <span className="text-xs tracking-widest font-bold">
-              SETTINGS
-            </span>
+            <span className="text-xs tracking-widest font-bold">SETTINGS</span>
           )}
         </Button>
       </div>
