@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/cn";
 import { Moon, Sun, Monitor, Circle, Activity } from "lucide-react";
-import type { ThemeMode } from "@/features/settings/settings-types";
+import type { ThemeMode, ThemePreset } from "@/features/settings/settings-types";
 
 const THEME_OPTIONS: { id: ThemeMode; label: string; icon: typeof Sun }[] = [
   { id: "light", label: "Light", icon: Sun },
@@ -13,6 +13,14 @@ const THEME_OPTIONS: { id: ThemeMode; label: string; icon: typeof Sun }[] = [
 const TIMER_STYLES: { id: "solid" | "zigzag"; label: string; icon: typeof Activity }[] = [
   { id: "solid", label: "Solid", icon: Circle },
   { id: "zigzag", label: "Zigzag", icon: Activity },
+];
+
+/** Preview swatch colors per preset (primary + bg), shown as a 2-dot chip. */
+const PRESET_OPTIONS: { id: ThemePreset; label: string; primary: string; bg: string }[] = [
+  { id: "sahara", label: "Sahara", primary: "#c2652a", bg: "#faf5ee" },
+  { id: "forest", label: "Forest", primary: "#2f7d5b", bg: "#f3f7f4" },
+  { id: "ocean", label: "Ocean", primary: "#2566a8", bg: "#f1f6fb" },
+  { id: "mono", label: "Mono", primary: "#2f2f2f", bg: "#f6f6f6" },
 ];
 
 interface ToggleItem {
@@ -32,6 +40,8 @@ const TOGGLE_ITEMS: ToggleItem[] = [
 interface SettingsGeneralProps {
   currentTheme: ThemeMode;
   onThemeChange: (theme: ThemeMode) => void;
+  themePreset: ThemePreset;
+  onThemePresetChange: (preset: ThemePreset) => void;
   timerStyle: "solid" | "zigzag";
   onTimerStyleChange: (style: "solid" | "zigzag") => void;
   settings: Record<string, boolean>;
@@ -41,6 +51,8 @@ interface SettingsGeneralProps {
 export function SettingsGeneralSection({
   currentTheme,
   onThemeChange,
+  themePreset,
+  onThemePresetChange,
   timerStyle,
   onTimerStyleChange,
   settings,
@@ -74,6 +86,39 @@ export function SettingsGeneralSection({
             </span>
           </Button>
         ))}
+      </div>
+
+      <div className="mt-12">
+        <h3 className="font-serif text-xl md:text-2xl text-sahara-text mb-2 md:mb-3">
+          Color Theme
+        </h3>
+        <p className="text-xs text-sahara-text-muted mb-6 md:mb-8">
+          Choose the accent palette for the app.
+        </p>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 md:gap-4">
+          {PRESET_OPTIONS.map((preset) => (
+            <button
+              key={preset.id}
+              type="button"
+              onClick={() => onThemePresetChange(preset.id)}
+              className={cn(
+                "flex flex-col items-center gap-3 p-4 md:p-5 rounded-2xl border-2 transition-all",
+                themePreset === preset.id
+                  ? "border-sahara-primary shadow-sm shadow-sahara-primary/10"
+                  : "border-sahara-border/20 hover:border-sahara-primary/30",
+              )}
+              style={{ backgroundColor: preset.bg }}
+            >
+              <span
+                className="size-8 md:size-10 rounded-full shrink-0 shadow-inner"
+                style={{ backgroundColor: preset.primary }}
+              />
+              <span className="text-[9px] md:text-[10px] font-bold tracking-widest uppercase text-sahara-text">
+                {preset.label}
+              </span>
+            </button>
+          ))}
+        </div>
       </div>
 
       <div className="mt-12">

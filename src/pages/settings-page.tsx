@@ -67,6 +67,8 @@ export function SettingsPage() {
                 <SettingsGeneralSection
                   currentTheme={settings.theme}
                   onThemeChange={(t) => updateSetting("theme", t)}
+                  themePreset={settings.themePreset}
+                  onThemePresetChange={(p) => updateSetting("themePreset", p)}
                   timerStyle={settings.timerStyle}
                   onTimerStyleChange={(s) => updateSetting("timerStyle", s)}
                   settings={{
