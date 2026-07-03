@@ -204,135 +204,122 @@ export async function importBackup(): Promise<BackupResult> {
 
     const db = await getDb();
 
-    // Wipe then re-insert, in dependency order. Reverse order for deletes so
-    // foreign-key references (sessions→tasks, etc.) clear cleanly.
     const counts: Record<string, number> = {};
 
-    // Background polling (today focus every 10s, analytics load, etc.) competes
-    // with the restore for the SQLite lock. Strategy: a generous busy_timeout
-    // makes concurrent readers wait rather than fail immediately; we retry the
-    // whole transaction a few times with exponential backoff as a safety net.
-    const isBusyError = (e: unknown) =>
-      /database is locked|SQLITE_BUSY|code: 5/i.test(String((e as Error)?.message ?? e));
-
-    // Set pragmas once, outside the retry loop — re-running journal_mode
-    // switches inside retries was itself a source of contention.
+    // NOTE: We intentionally do NOT use an explicit transaction
+    // (BEGIN/COMMIT/ROLLBACK). The @tauri-apps/plugin-sql connection is a
+    // shared singleton; background polling (TodayFocus 10s, analytics) issues
+    // statements concurrently, and explicit transaction control through this
+    // plugin is unreliable — it produces "cannot start a transaction within a
+    // transaction" when a prior failed rollback left the connection in a
+    // transactional state, or when an interleaved statement auto-begins one.
+    //
+    // Autocommit avoids that entirely: each statement commits and releases the
+    // write lock immediately, so no lock is held across the multi-second
+    // import. That also REDUCES contention with polling vs. a long-held
+    // transaction. Per-statement retry handles momentary SQLITE_BUSY.
     await db.execute("PRAGMA busy_timeout = 15000").catch(() => {});
     await db.execute("PRAGMA foreign_keys = OFF").catch(() => {});
 
-    const MAX_RETRIES = 5;
-    let lastError: unknown = null;
-    for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
-      try {
-        // Deferred BEGIN acquires the write lock lazily (on first write),
-        // which is less likely to conflict with in-flight readers than
-        // BEGIN IMMEDIATE.
-        await db.execute("BEGIN");
+    const isBusyError = (e: unknown) =>
+      /database is locked|SQLITE_BUSY|code: 5/i.test(String((e as Error)?.message ?? e));
+
+    /** Run a write statement, retrying on SQLITE_BUSY with backoff. */
+    const execWithRetry = async (sql: string, params: unknown[] = []) => {
+      for (let attempt = 1; attempt <= 5; attempt++) {
         try {
-          for (const table of [...TABLES].reverse()) {
-            try {
-              await db.execute(`DELETE FROM ${table}`);
-            } catch (e) {
-              const msg = (e as Error)?.message ?? "";
-              if (!msg.toLowerCase().includes("no such table")) {
-                throw e;
-              }
-              // table may not exist pre-migration; ignore
-            }
-          }
-
-          for (const table of TABLES) {
-            const rows = payload.data[table] ?? [];
-            counts[table] = 0;
-            if (rows.length === 0) continue;
-
-            const allowedCols = TABLE_COLUMNS[table] ?? [];
-            const validRows = rows.filter(row => {
-              const cols = Object.keys(row).filter(c => allowedCols.includes(c));
-              return cols.length > 0;
-            });
-
-            if (validRows.length === 0) continue;
-
-            // Get common columns from first row
-            const cols = Object.keys(validRows[0]).filter(c => allowedCols.includes(c));
-
-            // Batch up to 500 rows per insert
-            const BATCH_SIZE = 500;
-            for (let i = 0; i < validRows.length; i += BATCH_SIZE) {
-              const batch = validRows.slice(i, i + BATCH_SIZE);
-              const allValues: unknown[] = [];
-              const rowPlaceholders: string[] = [];
-              let paramIndex = 1;
-
-              for (const row of batch) {
-                const placeholders = cols.map(() => `$${paramIndex++}`);
-                rowPlaceholders.push(`(${placeholders.join(", ")})`);
-                for (const col of cols) {
-                  // Coerce missing properties to null — JSON may have dropped
-                  // null/empty values, or rows genuinely have different shapes.
-                  // Passing JS `undefined` to the SQL binding breaks the param
-                  // count, so normalize to null here.
-                  const val = (row as Record<string, unknown>)[col];
-                  allValues.push(val === undefined ? null : val);
-                }
-              }
-
-              try {
-                await db.execute(
-                  `INSERT INTO ${table} (${cols.join(", ")}) VALUES ${rowPlaceholders.join(", ")}`,
-                  allValues,
-                );
-                counts[table] += batch.length;
-              } catch (e) {
-                // If batch fails, try inserting one-by-one to skip only bad rows
-                console.warn(`[backup] Batch insert for ${table} failed, trying one-by-one`, (e as Error)?.message);
-                for (const row of batch) {
-                  try {
-                    const singlePlaceholders = cols.map((_, idx) => `$${idx + 1}`);
-                    const singleValues = cols.map(col => {
-                      const v = (row as Record<string, unknown>)[col];
-                      return v === undefined ? null : v;
-                    });
-                    await db.execute(
-                      `INSERT INTO ${table} (${cols.join(", ")}) VALUES (${singlePlaceholders.join(", ")})`,
-                      singleValues,
-                    );
-                    counts[table]++;
-                  } catch (singleErr) {
-                    console.warn(`[backup] Skipped ${table} row:`, (singleErr as Error)?.message);
-                  }
-                }
-              }
-            }
-          }
-
-          await db.execute("COMMIT");
+          await db.execute(sql, params);
+          return;
         } catch (e) {
-          await db.execute("ROLLBACK").catch(() => {
-            // ignore rollback failures
-          });
-          throw e;
+          if (!isBusyError(e) || attempt === 5) throw e;
+          await new Promise((r) => setTimeout(r, attempt * 300));
         }
-
-        lastError = null;
-        break;
-      } catch (e) {
-        lastError = e;
-        if (!isBusyError(e) || attempt === MAX_RETRIES) {
-          throw e;
-        }
-        const delay = attempt * 800;
-        console.warn(`[backup] Import busy on attempt ${attempt}, retrying in ${delay}ms...`);
-        await new Promise(r => setTimeout(r, delay));
       }
-    }
+    };
 
-    // Restore FK enforcement regardless of outcome.
-    await db.execute("PRAGMA foreign_keys = ON").catch(() => {});
+    try {
+      // Wipe (reverse dependency order so FK refs clear cleanly).
+      for (const table of [...TABLES].reverse()) {
+        try {
+          await execWithRetry(`DELETE FROM ${table}`);
+        } catch (e) {
+          const msg = (e as Error)?.message ?? "";
+          if (!msg.toLowerCase().includes("no such table")) throw e;
+          // table may not exist pre-migration; ignore
+        }
+      }
 
-    if (lastError) {
-      throw lastError;
+      // Re-insert (forward dependency order).
+      for (const table of TABLES) {
+        const rows = payload.data[table] ?? [];
+        counts[table] = 0;
+        if (rows.length === 0) continue;
+
+        const allowedCols = TABLE_COLUMNS[table] ?? [];
+        const validRows = rows.filter((row) => {
+          const cols = Object.keys(row).filter((c) => allowedCols.includes(c));
+          return cols.length > 0;
+        });
+        if (validRows.length === 0) continue;
+
+        // Common columns from the first valid row.
+        const cols = Object.keys(validRows[0]).filter((c) => allowedCols.includes(c));
+
+        const BATCH_SIZE = 500;
+        for (let i = 0; i < validRows.length; i += BATCH_SIZE) {
+          const batch = validRows.slice(i, i + BATCH_SIZE);
+          const allValues: unknown[] = [];
+          const rowPlaceholders: string[] = [];
+          let paramIndex = 1;
+
+          for (const row of batch) {
+            const placeholders = cols.map(() => `$${paramIndex++}`);
+            rowPlaceholders.push(`(${placeholders.join(", ")})`);
+            for (const col of cols) {
+              // Coerce missing properties to null — JSON may have dropped
+              // null/empty values, or rows genuinely have different shapes.
+              // Passing JS `undefined` to the SQL binding breaks the param
+              // count, so normalize to null here.
+              const val = (row as Record<string, unknown>)[col];
+              allValues.push(val === undefined ? null : val);
+            }
+          }
+
+          try {
+            await execWithRetry(
+              `INSERT INTO ${table} (${cols.join(", ")}) VALUES ${rowPlaceholders.join(", ")}`,
+              allValues,
+            );
+            counts[table] += batch.length;
+          } catch (e) {
+            // Batch failed — fall back to one-by-one so a single bad row
+            // doesn't abort the whole table.
+            console.warn(
+              `[backup] Batch insert for ${table} failed, trying one-by-one`,
+              (e as Error)?.message,
+            );
+            for (const row of batch) {
+              try {
+                const singlePlaceholders = cols.map((_, idx) => `$${idx + 1}`);
+                const singleValues = cols.map((col) => {
+                  const v = (row as Record<string, unknown>)[col];
+                  return v === undefined ? null : v;
+                });
+                await execWithRetry(
+                  `INSERT INTO ${table} (${cols.join(", ")}) VALUES (${singlePlaceholders.join(", ")})`,
+                  singleValues,
+                );
+                counts[table]++;
+              } catch (singleErr) {
+                console.warn(`[backup] Skipped ${table} row:`, (singleErr as Error)?.message);
+              }
+            }
+          }
+        }
+      }
+    } finally {
+      // Restore FK enforcement regardless of outcome.
+      await db.execute("PRAGMA foreign_keys = ON").catch(() => {});
     }
 
     return { ok: true, path: filePath, counts };
