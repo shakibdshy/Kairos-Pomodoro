@@ -100,9 +100,33 @@ export async function initDb(): Promise<void> {
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
       )`,
     ],
+    3: [
+      // Time-blocking: planned focus blocks shown on the calendar.
+      `CREATE TABLE IF NOT EXISTS time_blocks (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        title TEXT,
+        start_time TEXT NOT NULL,
+        end_time TEXT NOT NULL,
+        task_id INTEGER,
+        category_id INTEGER,
+        color TEXT,
+        completed BOOLEAN NOT NULL DEFAULT 0,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (task_id) REFERENCES tasks(id),
+        FOREIGN KEY (category_id) REFERENCES categories(id)
+      )`,
+      // Standalone journal entries (free-form daily reflections).
+      `CREATE TABLE IF NOT EXISTS journal_entries (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        date TEXT NOT NULL,
+        content TEXT NOT NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      )`,
+    ],
   };
 
-  const targetVersion = 2;
+  const targetVersion = 3;
 
   for (let v = currentVersion + 1; v <= targetVersion; v++) {
     const statements = migrations[v];

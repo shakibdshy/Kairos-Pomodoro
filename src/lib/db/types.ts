@@ -91,3 +91,32 @@ export interface CompletedTaskEntry {
   completed_pomos: number;
   estimated_pomos: number;
 }
+
+/** A planned focus block on the calendar (time-blocking). */
+export interface TimeBlock {
+  id: number;
+  title: string | null;
+  start_time: string;
+  end_time: string;
+  task_id: number | null;
+  category_id: number | null;
+  color: string | null;
+  completed: number;
+  created_at: string;
+}
+
+/** A TimeBlock joined with its optional task/category for display. */
+export interface TimeBlockWithMeta extends TimeBlock {
+  task_name: string | null;
+  category_name: string | null;
+  category_color: string | null;
+}
+
+/** A free-form journal entry tied to a calendar day. */
+export interface JournalEntry {
+  id: number;
+  date: string;
+  content: string;
+  created_at: string;
+  updated_at: string;
+}
