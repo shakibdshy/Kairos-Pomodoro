@@ -4,9 +4,8 @@ import {
   getWeekSessions,
   getWeekSummary,
   getWeekTimeBlocks,
-  addTimeBlock,
-  updateTimeBlock,
   deleteTimeBlock,
+  addLoggedSession,
   type WeekSession,
   type WeekSummary,
   type TimeBlockWithMeta,
@@ -186,14 +185,29 @@ export function CalendarDashboard() {
 
   const handleSubmit = useCallback(
     async (input: TimeBlockInput) => {
-      if (editingBlock) {
-        await updateTimeBlock(editingBlock.id, input);
-      } else {
-        await addTimeBlock(input);
+      // "Add Time" creates a completed focus session directly — it shows on the
+      // calendar as a solid block AND counts toward Today Focus, Sessions,
+      // Daily Avg, streak, and the productivity score immediately.
+      const start = new Date(input.start_time);
+      const end = new Date(input.end_time);
+      const durationSec = Math.max(
+        0,
+        Math.round((end.getTime() - start.getTime()) / 1000),
+      );
+      if (durationSec > 0) {
+        await addLoggedSession({
+          taskId: input.task_id ?? null,
+          phase: "work",
+          startedAt: input.start_time,
+          endedAt: input.end_time,
+          durationSec,
+          categoryId: input.category_id ?? null,
+          intention: input.title ?? null,
+        });
       }
       reload();
     },
-    [editingBlock, reload],
+    [reload],
   );
 
   const handleStartFocusFromBlock = useCallback(
