@@ -10,6 +10,7 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   Play,
+  BookOpen,
 } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { useTimerStore } from "@/features/timer/use-timer-store";
@@ -20,6 +21,7 @@ const NAV_ITEMS = [
   { path: "/tasks", label: "Tasks", icon: CheckSquare },
   { path: "/calendar", label: "Calendar", icon: Calendar },
   { path: "/analytics", label: "Analytics", icon: BarChart2 },
+  { path: "/journal", label: "Journal", icon: BookOpen },
 ] as const;
 
 interface SidebarProps {

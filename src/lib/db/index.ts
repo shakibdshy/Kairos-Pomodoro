@@ -44,3 +44,9 @@ export {
 export type { BadgeAward } from "./analytics";
 export { getPresets, addPreset, updatePreset, deletePreset } from "./presets";
 export type { TimerPreset } from "./presets";
+export {
+  addJournalEntry,
+  updateJournalEntry,
+  deleteJournalEntry,
+  getJournalEntries,
+} from "./journal";
