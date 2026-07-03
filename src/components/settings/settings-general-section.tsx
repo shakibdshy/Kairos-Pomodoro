@@ -15,12 +15,20 @@ const TIMER_STYLES: { id: "solid" | "zigzag"; label: string; icon: typeof Activi
   { id: "zigzag", label: "Zigzag", icon: Activity },
 ];
 
-/** Preview swatch colors per preset (primary + bg), shown as a 2-dot chip. */
-const PRESET_OPTIONS: { id: ThemePreset; label: string; primary: string; bg: string }[] = [
-  { id: "sahara", label: "Sahara", primary: "#c2652a", bg: "#faf5ee" },
-  { id: "forest", label: "Forest", primary: "#2f7d5b", bg: "#f3f7f4" },
-  { id: "ocean", label: "Ocean", primary: "#2566a8", bg: "#f1f6fb" },
-  { id: "mono", label: "Mono", primary: "#2f2f2f", bg: "#f6f6f6" },
+/** Preview swatch colors per preset. Each swatch renders in its OWN light-mode
+ * palette so it doubles as a faithful preview — text/bg/primary are bound
+ * directly (not via --color-sahara-*) so they never inherit the active theme. */
+const PRESET_OPTIONS: {
+  id: ThemePreset;
+  label: string;
+  primary: string;
+  bg: string;
+  text: string;
+}[] = [
+  { id: "sahara", label: "Sahara", primary: "#c2652a", bg: "#faf5ee", text: "#3a302a" },
+  { id: "forest", label: "Forest", primary: "#2f7d5b", bg: "#f3f7f4", text: "#243029" },
+  { id: "ocean", label: "Ocean", primary: "#2566a8", bg: "#f1f6fb", text: "#1f2c38" },
+  { id: "mono", label: "Mono", primary: "#2f2f2f", bg: "#f6f6f6", text: "#1a1a1a" },
 ];
 
 interface ToggleItem {
@@ -113,7 +121,10 @@ export function SettingsGeneralSection({
                 className="size-8 md:size-10 rounded-full shrink-0 shadow-inner"
                 style={{ backgroundColor: preset.primary }}
               />
-              <span className="text-[9px] md:text-[10px] font-bold tracking-widest uppercase text-sahara-text">
+              <span
+                className="text-[9px] md:text-[10px] font-bold tracking-widest uppercase"
+                style={{ color: preset.text }}
+              >
                 {preset.label}
               </span>
             </button>
