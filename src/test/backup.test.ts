@@ -4,6 +4,7 @@ import {
   BACKUP_FORMAT_VERSION,
   exportBackup,
   importBackup,
+  resolveValue,
   type BackupFile,
 } from "@/lib/backup";
 
@@ -58,5 +59,40 @@ describe("BackupFile shape contract", () => {
     expect(payload.formatVersion).toBe(BACKUP_FORMAT_VERSION);
     expect(Object.keys(payload.data)).toHaveLength(7);
     expect(payload.data.categories).toHaveLength(1);
+  });
+});
+
+describe("resolveValue (restore NULL handling)", () => {
+  it("returns the raw value when present", () => {
+    expect(resolveValue("tasks", "name", "Write report")).toBe("Write report");
+    expect(resolveValue("tasks", "estimated_pomos", 5)).toBe(5);
+  });
+
+  it("applies NOT NULL defaults for tasks when value is null/undefined", () => {
+    // A task row with NULL archived would be hidden by getTasks()'s
+    // `WHERE archived = 0` filter — resolveValue must default it to 0.
+    expect(resolveValue("tasks", "archived", null)).toBe(0);
+    expect(resolveValue("tasks", "archived", undefined)).toBe(0);
+    expect(resolveValue("tasks", "estimated_pomos", null)).toBe(1);
+    expect(resolveValue("tasks", "completed_pomos", undefined)).toBe(0);
+    expect(resolveValue("tasks", "name", undefined)).toBe("Untitled");
+  });
+
+  it("applies defaults for sessions and categories", () => {
+    expect(resolveValue("sessions", "phase", null)).toBe("work");
+    expect(resolveValue("sessions", "duration_sec", undefined)).toBe(0);
+    expect(resolveValue("categories", "name", null)).toBe("Untitled");
+    expect(resolveValue("categories", "color", undefined)).toBe("#c2652a");
+  });
+
+  it("falls back to null for columns with no configured default", () => {
+    expect(resolveValue("tasks", "project", null)).toBeNull();
+    expect(resolveValue("tasks", "priority", undefined)).toBeNull();
+    expect(resolveValue("sessions", "notes", null)).toBeNull();
+  });
+
+  it("returns null for unknown tables", () => {
+    expect(resolveValue("unknown_table", "anything", undefined)).toBeNull();
+    expect(resolveValue("unknown_table", "anything", "x")).toBe("x");
   });
 });

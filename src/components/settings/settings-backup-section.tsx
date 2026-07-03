@@ -61,9 +61,17 @@ export function SettingsBackupSection() {
       const total = res.counts
         ? Object.values(res.counts).reduce((a, b) => a + b, 0)
         : 0;
+      // Build a brief per-table summary so the user can confirm what landed
+      // (e.g. tasks: 12, sessions: 340). Only lists tables with > 0 rows.
+      const detail = res.counts
+        ? Object.entries(res.counts)
+            .filter(([, n]) => n > 0)
+            .map(([t, n]) => `${t}: ${n}`)
+            .join(" · ")
+        : "";
       setRestoreStatus({
         kind: "success",
-        label: `Restored ${total} records. Restart the app to see all changes.`,
+        label: `Restored ${total} records${detail ? ` (${detail})` : ""}. Restart the app to see all changes.`,
       });
     } else if (res.error === "Cancelled") {
       setRestoreStatus({ kind: "idle" });
