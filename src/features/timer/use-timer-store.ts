@@ -33,6 +33,8 @@ interface TimerStore {
   activeTaskId: number | null;
   currentSessionId: number | null;
   selectedCategory: Category | null;
+  /** Free-text intention for the upcoming session (overrides category name when set). */
+  customIntention: string | null;
   overtimeSeconds: number;
   durations: TimerDurations;
 
@@ -49,6 +51,7 @@ interface TimerStore {
   finishSession: (mood?: string, notes?: string) => Promise<void>;
   abandonSession: () => Promise<void>;
   setSelectedCategory: (category: Category | null) => void;
+  setCustomIntention: (intention: string | null) => void;
   confirmStartNextPhase: (mood?: string, notes?: string) => Promise<void>;
   addFiveMinutes: () => void;
   endWithoutBreak: () => Promise<void>;
@@ -87,6 +90,7 @@ export const useTimerStore = create<TimerStore>((set, get) => {
     activeTaskId: null,
     currentSessionId: null,
     selectedCategory: null,
+    customIntention: null,
     overtimeSeconds: 0,
     durations: {
       work: DEFAULT_WORK_SEC,
@@ -107,7 +111,8 @@ export const useTimerStore = create<TimerStore>((set, get) => {
         state.activeTaskId,
         resolvedPhase,
         state.selectedCategory?.id,
-        state.selectedCategory?.name,
+        // Prefer a free-text intention when set; fall back to the category name.
+        state.customIntention ?? state.selectedCategory?.name,
       );
 
       engine.start(secs);
@@ -281,6 +286,10 @@ export const useTimerStore = create<TimerStore>((set, get) => {
 
     setSelectedCategory: (category: Category | null) => {
       set({ selectedCategory: category });
+    },
+
+    setCustomIntention: (intention: string | null) => {
+      set({ customIntention: intention });
     },
 
     confirmStartNextPhase: async (mood?: string, notes?: string) => {
