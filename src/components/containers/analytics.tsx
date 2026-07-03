@@ -209,10 +209,11 @@ export function AnalyticsDashboard({ period: externalPeriod, onPeriodChange }: A
           {range.label}
         </h2>
         <div className="bg-sahara-surface border border-sahara-border/20 rounded-xl md:rounded-2xl p-3.5 md:p-5">
-          <WeeklyChart data={weekData.map(d => ({
-            day_name: d.day_name || "",
-            focus_seconds: d.total_seconds,
-          }))} />
+          <WeeklyChart
+            data={weekData}
+            startDate={range.startDate}
+            endDate={range.endDate}
+          />
         </div>
       </section>
 
