@@ -21,7 +21,7 @@ export function BadgeCard({ title, description, earned }: BadgeCardProps) {
         className={cn(
           "size-10 md:w-12 md:h-12 rounded-xl flex items-center justify-center shrink-0",
           earned
-            ? "bg-sahara-primary text-white shadow-md shadow-sahara-primary/30"
+            ? "bg-sahara-primary text-sahara-on-primary shadow-md shadow-sahara-primary/30"
             : "bg-sahara-card text-sahara-text-muted",
         )}
       >

@@ -16,7 +16,10 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        solid: "font-bold tracking-widest uppercase shadow-lg text-white",
+        // sahara-intent solids use a theme-aware on-primary token so the label
+        // stays readable when the primary flips (e.g. Mono dark = light primary).
+        // Fixed-color intents (green/red/etc.) keep white since their bg is a constant hex.
+        solid: "font-bold tracking-widest uppercase shadow-lg",
         outline: "border font-bold tracking-wider uppercase",
         ghost: "",
         destructive: "font-bold tracking-wider uppercase shadow-lg text-white",
@@ -64,31 +67,31 @@ const buttonVariants = cva(
         variant: "solid",
         intent: "sahara",
         class:
-          "bg-sahara-primary hover:bg-sahara-primary/90 shadow-[0_4px_16px_rgba(194,101,42,0.25)]",
+          "bg-sahara-primary text-sahara-on-primary hover:bg-sahara-primary/90 shadow-[0_4px_16px_rgba(194,101,42,0.25)]",
       },
       {
         variant: "solid",
         intent: "green",
         class:
-          "bg-[#6b9080] hover:bg-[#5f8071] shadow-[0_4px_16px_rgba(107,144,128,0.25)]",
+          "bg-[#6b9080] text-white hover:bg-[#5f8071] shadow-[0_4px_16px_rgba(107,144,128,0.25)]",
       },
       {
         variant: "solid",
         intent: "emerald",
         class:
-          "bg-[#6b9080] hover:bg-[#5f8071] shadow-[0_4px_16px_rgba(107,144,128,0.25)]",
+          "bg-[#6b9080] text-white hover:bg-[#5f8071] shadow-[0_4px_16px_rgba(107,144,128,0.25)]",
       },
       {
         variant: "solid",
         intent: "amber",
         class:
-          "bg-[#c4956a] hover:bg-[#b8875e] shadow-[0_4px_16px_rgba(196,149,106,0.25)]",
+          "bg-[#c4956a] text-white hover:bg-[#b8875e] shadow-[0_4px_16px_rgba(196,149,106,0.25)]",
       },
       {
         variant: "solid",
         intent: "red",
         class:
-          "bg-[#c45c4a] hover:bg-[#b55040] shadow-[0_4px_16px_rgba(196,92,74,0.25)]",
+          "bg-[#c45c4a] text-white hover:bg-[#b55040] shadow-[0_4px_16px_rgba(196,92,74,0.25)]",
       },
       {
         variant: "solid",

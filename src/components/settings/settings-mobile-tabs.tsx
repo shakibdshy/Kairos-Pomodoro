@@ -22,7 +22,7 @@ export function SettingsMobileTabs({
             className={cn(
               "flex items-center gap-2 px-3 py-2 rounded-xl text-[11px] font-bold uppercase tracking-wider transition-colors cursor-pointer whitespace-nowrap",
               activeTab === tab.id
-                ? "bg-sahara-primary text-white"
+                ? "bg-sahara-primary text-sahara-on-primary"
                 : "bg-sahara-card text-sahara-text-muted hover:text-sahara-text-secondary border border-sahara-border/20",
             )}
           >
