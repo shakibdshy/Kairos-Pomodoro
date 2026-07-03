@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { exportBackup, importBackup, type BackupResult } from "@/lib/backup";
+import { exportBackup, importBackup } from "@/lib/backup";
 import { setSetting, getSetting } from "@/lib/db";
 import { isTauri } from "@/lib/tauri";
 import { Download, Upload, AlertTriangle, CheckCircle2 } from "lucide-react";
@@ -180,28 +180,26 @@ export function SettingsBackupSection() {
   );
 }
 
-function StatusLine({ status }: { status: BackupResult | Status }) {
-  // Normalize: BackupResult from older state isn't passed here, only Status.
-  const s = status as Status;
-  if (s.kind === "idle" || s.kind === "working") {
-    return s.kind === "working" ? (
+function StatusLine({ status }: { status: Status }) {
+  if (status.kind === "idle" || status.kind === "working") {
+    return status.kind === "working" ? (
       <p className="text-xs text-sahara-text-muted uppercase tracking-wider">
-        {s.label}
+        {status.label}
       </p>
     ) : null;
   }
-  if (s.kind === "success") {
+  if (status.kind === "success") {
     return (
       <p className="flex items-start gap-2 text-xs text-green-600 uppercase tracking-wider">
         <CheckCircle2 className="size-3.5 mt-0.5 shrink-0" />
-        <span className="normal-case tracking-normal">{s.label}</span>
+        <span className="normal-case tracking-normal">{status.label}</span>
       </p>
     );
   }
   return (
     <p className="flex items-start gap-2 text-xs text-red-600 uppercase tracking-wider">
       <AlertTriangle className="size-3.5 mt-0.5 shrink-0" />
-      <span className="normal-case tracking-normal">{s.label}</span>
+      <span className="normal-case tracking-normal">{status.label}</span>
     </p>
   );
 }

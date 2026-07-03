@@ -14,10 +14,11 @@ import {
   addTimeBlock,
   updateTimeBlock,
   deleteTimeBlock,
+  getTimeBlock,
   getWeekTimeBlocks,
   markTimeBlockCompleted,
 } from "@/lib/db/time-blocks";
-import type { TimeBlockWithMeta } from "@/lib/db";
+import type { TimeBlock, TimeBlockWithMeta } from "@/lib/db";
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -82,6 +83,41 @@ describe("time-blocks repository", () => {
     const [sql, params] = execute.mock.calls[0];
     expect(sql).toMatch(/DELETE FROM time_blocks WHERE id = \$1/);
     expect(params).toEqual([9]);
+  });
+
+  it("getTimeBlock returns the matching row or null", async () => {
+    const sample: TimeBlock = {
+      id: 7,
+      title: "Found",
+      start_time: "2026-07-03T09:00:00.000Z",
+      end_time: "2026-07-03T09:25:00.000Z",
+      task_id: null,
+      category_id: null,
+      color: null,
+      completed: 0,
+      created_at: "2026-07-03",
+    };
+    select.mockResolvedValueOnce([sample]);
+    const result = await getTimeBlock(7);
+    expect(result).toEqual(sample);
+    const [sql, params] = select.mock.calls[0];
+    expect(sql).toMatch(/SELECT \* FROM time_blocks WHERE id = \$1/);
+    expect(params).toEqual([7]);
+
+    select.mockResolvedValueOnce([]);
+    const missing = await getTimeBlock(99);
+    expect(missing).toBeNull();
+  });
+
+  it("addTimeBlock rejects invalid time ranges", async () => {
+    await expect(
+      addTimeBlock({
+        title: null,
+        start_time: "2026-07-03T10:00:00.000Z",
+        end_time: "2026-07-03T09:00:00.000Z",
+      }),
+    ).rejects.toThrow("end_time must be after start_time");
+    expect(execute).not.toHaveBeenCalled();
   });
 
   it("getWeekTimeBlocks joins tasks + categories and filters by date range", async () => {

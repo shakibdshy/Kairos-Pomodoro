@@ -113,8 +113,10 @@ export async function initDb(): Promise<void> {
         completed BOOLEAN NOT NULL DEFAULT 0,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (task_id) REFERENCES tasks(id),
-        FOREIGN KEY (category_id) REFERENCES categories(id)
+        FOREIGN KEY (category_id) REFERENCES categories(id),
+        CHECK (end_time > start_time)
       )`,
+      `CREATE INDEX IF NOT EXISTS idx_time_blocks_start_date ON time_blocks(date(start_time))`,
       // Standalone journal entries (free-form daily reflections).
       `CREATE TABLE IF NOT EXISTS journal_entries (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -123,6 +125,7 @@ export async function initDb(): Promise<void> {
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
       )`,
+      `CREATE INDEX IF NOT EXISTS idx_journal_entries_date ON journal_entries(date)`,
     ],
   };
 

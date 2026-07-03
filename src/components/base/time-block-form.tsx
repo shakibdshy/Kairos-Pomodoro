@@ -48,6 +48,7 @@ export function TimeBlockForm({
   const [taskId, setTaskId] = useState<string>("");
   const [categoryId, setCategoryId] = useState<string>("");
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!open) return;
@@ -75,6 +76,19 @@ export function TimeBlockForm({
 
   const handleSubmit = async () => {
     if (!start || !end) return;
+    setError(null);
+
+    const startDate = new Date(start);
+    const endDate = new Date(end);
+    if (Number.isNaN(startDate.getTime()) || Number.isNaN(endDate.getTime())) {
+      setError("Please enter valid start and end times.");
+      return;
+    }
+    if (endDate.getTime() <= startDate.getTime()) {
+      setError("End time must be after start time.");
+      return;
+    }
+
     setSaving(true);
     try {
       const input: TimeBlockInput = {
@@ -214,6 +228,12 @@ export function TimeBlockForm({
           )}
         </div>
       </div>
+
+      {error && (
+        <p className="px-6 text-xs text-red-600" role="alert">
+          {error}
+        </p>
+      )}
 
       <div className="px-6 py-4 border-t border-sahara-border/20 flex justify-end gap-2">
         <Button

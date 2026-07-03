@@ -291,7 +291,10 @@ export async function getCompletedTasksForPeriod(
  * vs completed sessions, current streak, and mood distribution, then runs them
  * through the pure computeDailyScore() function.
  */
-export async function getDailyScore(day?: string): Promise<number> {
+export async function getDailyScore(
+  day?: string,
+  streakDays?: number,
+): Promise<number> {
   const database = await getDb();
   const dayClause = day
     ? "date(started_at) = $1"
@@ -328,7 +331,7 @@ export async function getDailyScore(day?: string): Promise<number> {
     distracted: 0,
   };
 
-  const streak = await getCurrentStreak().catch(() => 0);
+  const streak = streakDays ?? await getCurrentStreak().catch(() => 0);
 
   return computeDailyScore({
     focusSeconds: t.focus_seconds,
@@ -352,7 +355,10 @@ export interface BadgeAward {
  * - Marathon: any day with 4+ completed work sessions.
  * - Consistency: a current or historical streak of 7+ days.
  */
-export async function getEarnedBadges(): Promise<BadgeAward[]> {
+export async function getEarnedBadges(streaks?: {
+  currentStreak?: number;
+  bestStreak?: number;
+}): Promise<BadgeAward[]> {
   const database = await getDb();
 
   const earlyBirdRow = await database.select<{ n: number }[]>(
@@ -371,8 +377,9 @@ export async function getEarnedBadges(): Promise<BadgeAward[]> {
   );
   const marathon = (marathonRow[0]?.n ?? 0) >= 4;
 
-  const bestStreak = await getBestStreak().catch(() => 0);
-  const currentStreak = await getCurrentStreak().catch(() => 0);
+  const bestStreak = streaks?.bestStreak ?? await getBestStreak().catch(() => 0);
+  const currentStreak =
+    streaks?.currentStreak ?? await getCurrentStreak().catch(() => 0);
   const consistency = Math.max(bestStreak, currentStreak) >= 7;
 
   return [

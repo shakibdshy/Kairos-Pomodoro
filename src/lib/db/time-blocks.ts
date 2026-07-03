@@ -12,7 +12,14 @@ export interface TimeBlockInput {
   color?: string | null;
 }
 
+function validateRange(start: string, end: string): void {
+  if (new Date(end).getTime() <= new Date(start).getTime()) {
+    throw new Error("Invalid time range: end_time must be after start_time");
+  }
+}
+
 export async function addTimeBlock(input: TimeBlockInput): Promise<number> {
+  validateRange(input.start_time, input.end_time);
   const database = await getDb();
   const result = await database.execute(
     `INSERT INTO time_blocks (title, start_time, end_time, task_id, category_id, color)
@@ -33,6 +40,9 @@ export async function updateTimeBlock(
   id: number,
   input: Partial<TimeBlockInput>,
 ): Promise<void> {
+  if (input.start_time !== undefined && input.end_time !== undefined) {
+    validateRange(input.start_time, input.end_time);
+  }
   const database = await getDb();
   const fields: string[] = [];
   const values: (string | number | null)[] = [];
