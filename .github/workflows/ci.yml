@@ -8,7 +8,7 @@ on:
 
 jobs:
   quality:
-    name: Lint, Typecheck & Test
+    name: Typecheck & Test
     runs-on: ubuntu-22.04
 
     steps:
