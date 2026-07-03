@@ -27,11 +27,15 @@ test.describe("Time-blocking", () => {
 
     await page.getByRole("button", { name: "Log Focus Time" }).click();
 
-    // Modal closes after submit (the session is inserted in the background;
-    // rendering on the calendar can't be asserted here because the e2e db-mock
-    // returns [] for DATE(started_at) queries — see db-mock.ts).
+    // Modal closes after submit.
     await expect(
       page.getByRole("heading", { name: "Log Focus Time" }),
     ).not.toBeVisible();
+
+    // Persistence: navigate away and back; the created block/session still
+    // appears on the calendar (the db-mock now honors DATE(started_at) reads).
+    await page.getByRole("button", { name: "Timer" }).click();
+    await page.getByRole("button", { name: "Calendar" }).click();
+    await expect(page.getByText("Strategy session").first()).toBeAttached();
   });
 });

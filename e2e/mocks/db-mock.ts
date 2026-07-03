@@ -47,7 +47,24 @@ function applyWhereFilters(rows: Row[], sql: string, up: string, params: unknown
   if (up.includes("ARCHIVED = 0")) result = result.filter((r) => r.archived === 0);
   if (up.includes("COMPLETED = 1")) result = result.filter((r) => r.completed === 1);
   if (up.includes("COMPLETED = 0")) result = result.filter((r) => r.completed === 0);
-  if (up.includes("DATE(STARTED_AT)")) result = [];
+
+  // DATE(started_at) range/today filters used by getWeekSessions / getTodaySessions.
+  // Extract the date portion (YYYY-MM-DD) from the row's started_at and compare
+  // against $N params so logged sessions can be read back in e2e.
+  if (up.includes("DATE(STARTED_AT)")) {
+    const rowDate = (r: Row) => String(r.started_at ?? "").slice(0, 10);
+    if (up.includes("DATE('NOW'")) {
+      // today: date(started_at) = date('now', ...)
+      result = result.filter((r) => rowDate(r) === new Date().toISOString().slice(0, 10));
+    } else {
+      // range: date(started_at) >= $1 AND date(started_at) <= $2
+      const dates = params.map(String);
+      result = result.filter((r) => {
+        const d = rowDate(r);
+        return dates.length >= 2 ? d >= dates[0] && d <= dates[1] : true;
+      });
+    }
+  }
 
   const id = parseWhereId(sql, params);
   if (id) result = result.filter((r) => r.id === id);
