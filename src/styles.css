@@ -1,11 +1,24 @@
 @import "tailwindcss";
 
+/* ============================================================================
+   Theme tokens
+   The active palette is selected via [data-theme="<preset>"] on <html>.
+   Sahara is the default (:root). Each preset overrides the same
+   --color-sahara-* tokens for light mode, and again under .dark.
+   Components reference these tokens via Tailwind's bg-sahara-*, text-sahara-*
+   utilities, so swapping [data-theme] re-skins the whole app instantly.
+   ============================================================================ */
+
 @theme {
   --font-sans: "Manrope", "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-serif: "EB Garamond", serif;
-  
+}
+
+/* --- Sahara (default) --- */
+:root,
+[data-theme="sahara"] {
   --color-sahara-primary: #c2652a;
-  
+
   --color-sahara-bg: #faf5ee;
   --color-sahara-primary-light: #fbe8d8;
   --color-sahara-text: #3a302a;
@@ -19,9 +32,8 @@
   --color-sahara-ring-complete: #c17767;
 }
 
-@custom-variant dark (&:where(.dark, .dark *));
-
-@variant dark {
+[data-theme="sahara"].dark,
+.dark[data-theme="sahara"] {
   --color-sahara-bg: #1a1714;
   --color-sahara-primary-light: rgba(194, 101, 42, 0.15);
   --color-sahara-text: #e8e0d8;
@@ -34,6 +46,104 @@
   --color-sahara-ring-track-active: #1a1714;
   --color-sahara-ring-complete: #c17767;
 }
+
+/* --- Forest --- */
+[data-theme="forest"] {
+  --color-sahara-primary: #2f7d5b;
+
+  --color-sahara-bg: #f3f7f4;
+  --color-sahara-primary-light: #dcefe3;
+  --color-sahara-text: #243029;
+  --color-sahara-text-secondary: #4d5b54;
+  --color-sahara-text-muted: #8a958e;
+  --color-sahara-border: #cfddd4;
+  --color-sahara-card: #eaf2ec;
+  --color-sahara-surface: #ffffff;
+  --color-sahara-ring-track: #e3ede6;
+  --color-sahara-ring-track-active: #f3f7f4;
+  --color-sahara-ring-complete: #4a9c75;
+}
+
+[data-theme="forest"].dark,
+.dark[data-theme="forest"] {
+  --color-sahara-bg: #151b18;
+  --color-sahara-primary-light: rgba(47, 125, 91, 0.18);
+  --color-sahara-text: #dde6e0;
+  --color-sahara-text-secondary: #a7b3ac;
+  --color-sahara-text-muted: #6f7b74;
+  --color-sahara-border: #2c3832;
+  --color-sahara-card: #1d2521;
+  --color-sahara-surface: #1a211d;
+  --color-sahara-ring-track: #26302a;
+  --color-sahara-ring-track-active: #151b18;
+  --color-sahara-ring-complete: #4a9c75;
+}
+
+/* --- Ocean --- */
+[data-theme="ocean"] {
+  --color-sahara-primary: #2566a8;
+
+  --color-sahara-bg: #f1f6fb;
+  --color-sahara-primary-light: #d9e8f7;
+  --color-sahara-text: #1f2c38;
+  --color-sahara-text-secondary: #4a5a6a;
+  --color-sahara-text-muted: #8a98a6;
+  --color-sahara-border: #cfdae6;
+  --color-sahara-card: #e7f0f8;
+  --color-sahara-surface: #ffffff;
+  --color-sahara-ring-track: #e1eaf3;
+  --color-sahara-ring-track-active: #f1f6fb;
+  --color-sahara-ring-complete: #4787c9;
+}
+
+[data-theme="ocean"].dark,
+.dark[data-theme="ocean"] {
+  --color-sahara-bg: #131a22;
+  --color-sahara-primary-light: rgba(37, 102, 168, 0.2);
+  --color-sahara-text: #d8e0e8;
+  --color-sahara-text-secondary: #a3afba;
+  --color-sahara-text-muted: #6c7884;
+  --color-sahara-border: #29343f;
+  --color-sahara-card: #1c2530;
+  --color-sahara-surface: #19222c;
+  --color-sahara-ring-track: #232e39;
+  --color-sahara-ring-track-active: #131a22;
+  --color-sahara-ring-complete: #4787c9;
+}
+
+/* --- Mono (high-contrast grayscale) --- */
+[data-theme="mono"] {
+  --color-sahara-primary: #2f2f2f;
+
+  --color-sahara-bg: #f6f6f6;
+  --color-sahara-primary-light: #e4e4e4;
+  --color-sahara-text: #1a1a1a;
+  --color-sahara-text-secondary: #4a4a4a;
+  --color-sahara-text-muted: #8c8c8c;
+  --color-sahara-border: #d4d4d4;
+  --color-sahara-card: #efefef;
+  --color-sahara-surface: #ffffff;
+  --color-sahara-ring-track: #e6e6e6;
+  --color-sahara-ring-track-active: #f6f6f6;
+  --color-sahara-ring-complete: #555555;
+}
+
+[data-theme="mono"].dark,
+.dark[data-theme="mono"] {
+  --color-sahara-bg: #161616;
+  --color-sahara-primary-light: rgba(255, 255, 255, 0.1);
+  --color-sahara-text: #e8e8e8;
+  --color-sahara-text-secondary: #b0b0b0;
+  --color-sahara-text-muted: #767676;
+  --color-sahara-border: #333333;
+  --color-sahara-card: #202020;
+  --color-sahara-surface: #1c1c1c;
+  --color-sahara-ring-track: #2a2a2a;
+  --color-sahara-ring-track-active: #161616;
+  --color-sahara-ring-complete: #b0b0b0;
+}
+
+@custom-variant dark (&:where(.dark, .dark *));
 
 @font-face {
   font-family: "Inter";
