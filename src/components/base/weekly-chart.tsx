@@ -19,6 +19,11 @@ function toISODate(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
+function parseLocalDate(dateStr: string): Date {
+  const [year, month, day] = dateStr.split("-").map(Number);
+  return new Date(year, month - 1, day);
+}
+
 function fillDateRange(
   data: DayData[],
   startDate: string,
@@ -26,8 +31,8 @@ function fillDateRange(
 ): DayData[] {
   const map = new Map(data.map((d) => [d.date, d]));
   const result: DayData[] = [];
-  const start = new Date(startDate);
-  const end = new Date(endDate);
+  const start = parseLocalDate(startDate);
+  const end = parseLocalDate(endDate);
 
   for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
     const iso = toISODate(d);
@@ -37,7 +42,7 @@ function fillDateRange(
     } else {
       result.push({
         date: iso,
-        day_name: new Date(iso).toLocaleDateString("en-US", {
+        day_name: d.toLocaleDateString("en-US", {
           weekday: "short",
         }),
         total_seconds: 0,
@@ -49,7 +54,7 @@ function fillDateRange(
 }
 
 function formatTick(date: string, dayCount: number): string {
-  const d = new Date(date);
+  const d = parseLocalDate(date);
   if (dayCount <= 7) {
     return d.toLocaleDateString("en-US", { weekday: "short" });
   }
