@@ -1,5 +1,6 @@
 import { getDb } from "./schema";
 import type { CategoryBreakdown, DayData, MoodStat, SessionNoteEntry, CompletedTaskEntry } from "./types";
+import { computeDailyScore } from "@/lib/productivity-score";
 
 export async function getCategoryBreakdown(
   startDate?: string,
@@ -283,4 +284,115 @@ export async function getCompletedTasksForPeriod(
     GROUP BY s.task_id
     ORDER BY total_seconds DESC`,
   );
+}
+
+/**
+ * Today's productivity score (0–100). Aggregates today's focus time, started
+ * vs completed sessions, current streak, and mood distribution, then runs them
+ * through the pure computeDailyScore() function.
+ */
+export async function getDailyScore(day?: string): Promise<number> {
+  const database = await getDb();
+  const dayClause = day
+    ? "date(started_at) = $1"
+    : "date(started_at) = date('now', 'localtime')";
+
+  const totals = await database.select<
+    {
+      focus_seconds: number;
+      started: number;
+      completed: number;
+      focused: number;
+      neutral: number;
+      distracted: number;
+    }[]
+  >(
+    `SELECT
+      COALESCE(SUM(CASE WHEN phase = 'work' THEN duration_sec ELSE 0 END), 0) AS focus_seconds,
+      COUNT(*) AS started,
+      COALESCE(SUM(CASE WHEN completed = 1 THEN 1 ELSE 0 END), 0) AS completed,
+      COALESCE(SUM(CASE WHEN mood = 'focused' THEN 1 ELSE 0 END), 0) AS focused,
+      COALESCE(SUM(CASE WHEN mood = 'neutral' THEN 1 ELSE 0 END), 0) AS neutral,
+      COALESCE(SUM(CASE WHEN mood = 'distracted' THEN 1 ELSE 0 END), 0) AS distracted
+    FROM sessions
+    WHERE ${dayClause}`,
+    day ? [day] : [],
+  );
+
+  const t = totals[0] ?? {
+    focus_seconds: 0,
+    started: 0,
+    completed: 0,
+    focused: 0,
+    neutral: 0,
+    distracted: 0,
+  };
+
+  const streak = await getCurrentStreak().catch(() => 0);
+
+  return computeDailyScore({
+    focusSeconds: t.focus_seconds,
+    sessionsStarted: t.started,
+    sessionsCompleted: t.completed,
+    streakDays: streak,
+    moodCounts: { focused: t.focused, neutral: t.neutral, distracted: t.distracted },
+  });
+}
+
+export interface BadgeAward {
+  id: "early_bird" | "marathon" | "consistency";
+  title: string;
+  description: string;
+  earned: boolean;
+}
+
+/**
+ * Evaluate the three achievement badges from real session/streak data.
+ * - Early Bird: any completed work session started before 7 AM.
+ * - Marathon: any day with 4+ completed work sessions.
+ * - Consistency: a current or historical streak of 7+ days.
+ */
+export async function getEarnedBadges(): Promise<BadgeAward[]> {
+  const database = await getDb();
+
+  const earlyBirdRow = await database.select<{ n: number }[]>(
+    `SELECT COUNT(*) AS n FROM sessions
+     WHERE completed = 1 AND phase = 'work'
+       AND CAST(strftime('%H', started_at) AS INTEGER) < 7`,
+  );
+  const earlyBird = (earlyBirdRow[0]?.n ?? 0) > 0;
+
+  const marathonRow = await database.select<{ n: number }[]>(
+    `SELECT MAX(c) AS n FROM (
+       SELECT date(started_at) AS d, COUNT(*) AS c FROM sessions
+       WHERE completed = 1 AND phase = 'work'
+       GROUP BY date(started_at)
+     )`,
+  );
+  const marathon = (marathonRow[0]?.n ?? 0) >= 4;
+
+  const bestStreak = await getBestStreak().catch(() => 0);
+  const currentStreak = await getCurrentStreak().catch(() => 0);
+  const consistency = Math.max(bestStreak, currentStreak) >= 7;
+
+  return [
+    {
+      id: "early_bird",
+      title: "Early Bird",
+      description: "Complete a focus session before 7 AM",
+      earned: earlyBird,
+    },
+    {
+      id: "marathon",
+      title: "Marathon Runner",
+      description: "Complete 4+ focus sessions in one day",
+      earned: marathon,
+    },
+    {
+      id: "consistency",
+      title: "Consistency King",
+      description: "Maintain a 7-day streak",
+      earned: consistency,
+    },
+  ];
 }

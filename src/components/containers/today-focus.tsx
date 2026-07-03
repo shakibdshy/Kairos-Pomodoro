@@ -1,11 +1,14 @@
 import { useState, useEffect, useCallback } from "react";
 import { Text } from "@/components/ui/text";
+import { Flame } from "lucide-react";
 import { useTaskStore } from "@/features/tasks/use-task-store";
 import { useTimerStore } from "@/features/timer/use-timer-store";
 import {
   getTodaySessions,
   getCategoryBreakdown,
   getTaskTimeToday,
+  getCurrentStreak,
+  getDailyScore,
 } from "@/lib/db";
 import type { Session } from "@/lib/db";
 import type { CategoryBreakdown as CategoryBreakdownType } from "@/lib/db";
@@ -18,6 +21,8 @@ export function TodayFocus() {
   const [sessions, setSessions] = useState<Session[]>([]);
   const [breakdowns, setBreakdowns] = useState<CategoryBreakdownType[]>([]);
   const [taskTimeToday, setTaskTimeToday] = useState(0);
+  const [streak, setStreak] = useState(0);
+  const [score, setScore] = useState(0);
 
   const tasks = useTaskStore((s) => s.tasks);
   const activeTaskId = useTimerStore((s) => s.activeTaskId);
@@ -25,12 +30,16 @@ export function TodayFocus() {
   const activeTask = tasks.find((t) => t.id === activeTaskId) ?? null;
 
   const refreshData = useCallback(async () => {
-    const [todaySessions, categoryData] = await Promise.all([
+    const [todaySessions, categoryData, currentStreak, dailyScore] = await Promise.all([
       getTodaySessions().catch(() => []),
       getCategoryBreakdown().catch(() => []),
+      getCurrentStreak().catch(() => 0),
+      getDailyScore().catch(() => 0),
     ]);
     setSessions(todaySessions);
     setBreakdowns(categoryData);
+    setStreak(currentStreak);
+    setScore(dailyScore);
 
     if (activeTaskId) {
       const time = await getTaskTimeToday(activeTaskId).catch(() => 0);
@@ -74,6 +83,24 @@ export function TodayFocus() {
   return (
     <div className="w-full space-y-4 md:space-y-5">
       <FocusSummaryBar sessions={sessions} topCategory={topCategoryEntry} />
+
+      {/* Streak + score retention chips */}
+      <div className="flex items-center gap-2 md:gap-3">
+        <div className="flex items-center gap-2 bg-sahara-surface/40 backdrop-blur-md rounded-xl border border-sahara-border/10 px-3 py-2">
+          <Flame className="size-4 text-[#c4956a]" />
+          <span className="text-xs font-bold text-sahara-text tabular-nums">
+            {streak} day{streak === 1 ? "" : "s"}
+          </span>
+        </div>
+        <div className="flex items-center gap-2 bg-sahara-surface/40 backdrop-blur-md rounded-xl border border-sahara-border/10 px-3 py-2">
+          <span className="text-[10px] font-bold text-sahara-text-muted uppercase tracking-widest">
+            Score
+          </span>
+          <span className="text-xs font-bold text-sahara-primary tabular-nums">
+            {score}
+          </span>
+        </div>
+      </div>
 
       {hasAnyData && (
         <div className="bg-sahara-surface/40 backdrop-blur-md rounded-3xl border border-sahara-border/10 p-5 md:p-7 shadow-sm">
