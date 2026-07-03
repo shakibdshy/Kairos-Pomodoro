@@ -14,6 +14,39 @@ export async function addSession(
   );
 }
 
+/**
+ * Insert a fully-specified completed session — used when logging a calendar
+ * time block as focus time. Unlike addSession(), this takes explicit start/end
+ * timestamps (not "now"), plus category + intention, so the logged session
+ * reflects the block the user planned. Returns the new session id.
+ */
+export async function addLoggedSession(input: {
+  taskId: number | null;
+  phase: string;
+  startedAt: string;
+  endedAt: string;
+  durationSec: number;
+  categoryId?: number | null;
+  intention?: string | null;
+}): Promise<number> {
+  const database = await getDb();
+  const result = await database.execute(
+    `INSERT INTO sessions
+       (task_id, phase, started_at, ended_at, duration_sec, completed, category_id, intention)
+     VALUES ($1, $2, $3, $4, MAX(0, $5), 1, $6, $7)`,
+    [
+      input.taskId,
+      input.phase,
+      input.startedAt,
+      input.endedAt,
+      input.durationSec,
+      input.categoryId ?? null,
+      input.intention ?? null,
+    ],
+  );
+  return result.lastInsertId as number;
+}
+
 export async function startSession(
   taskId: number | null,
   phase: string,

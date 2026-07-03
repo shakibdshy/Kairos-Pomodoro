@@ -116,10 +116,10 @@ export function TimeBlockForm({
     <ModalOverlay open={open} onClose={onClose} showCloseButton>
       <div className="px-6 py-5 border-b border-sahara-border/20">
         <h2 className="font-serif text-xl text-sahara-text">
-          {isEdit ? "Edit Time Block" : "New Time Block"}
+          {isEdit ? "Edit Focus Time" : "Log Focus Time"}
         </h2>
         <p className="text-xs text-sahara-text-muted mt-1">
-          Plan a focus block on your calendar.
+          Add focus time to your calendar. It counts toward today's stats.
         </p>
       </div>
 
@@ -253,7 +253,7 @@ export function TimeBlockForm({
           disabled={saving || !start || !end}
           className="text-[11px]"
         >
-          {saving ? "Saving…" : isEdit ? "Save Changes" : "Create Block"}
+          {saving ? "Saving…" : isEdit ? "Save Changes" : "Log Focus Time"}
         </Button>
       </div>
     </ModalOverlay>

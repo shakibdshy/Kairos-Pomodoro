@@ -12,6 +12,7 @@ export {
 } from "./tasks";
 export {
   addSession,
+  addLoggedSession,
   startSession,
   finishSession,
   abandonSession,

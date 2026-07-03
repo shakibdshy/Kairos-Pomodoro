@@ -1,7 +1,7 @@
 import { test, expect } from "./helpers";
 
 test.describe("Time-blocking", () => {
-  test("Add Time button opens the block form", async ({ page }) => {
+  test("Add Time button opens the focus-time form", async ({ page }) => {
     await page.getByRole("button", { name: "Calendar" }).click();
     await expect(page).toHaveURL(/\/#\/calendar/);
     await expect(page.getByText("Your Weekly Timeline")).toBeVisible();
@@ -9,13 +9,15 @@ test.describe("Time-blocking", () => {
     await page.getByRole("button", { name: "Add Time" }).click();
 
     // Form modal opens with create copy
-    await expect(page.getByText("New Time Block")).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: "Log Focus Time" }),
+    ).toBeVisible();
     await expect(page.getByPlaceholder(/Deep work on report/)).toBeVisible();
     // Two datetime-local inputs (start + end)
     await expect(page.locator('input[type="datetime-local"]')).toHaveCount(2);
   });
 
-  test("creates a time block and persists it", async ({ page }) => {
+  test("logs focus time and closes the form on submit", async ({ page }) => {
     await page.getByRole("button", { name: "Calendar" }).click();
 
     await page.getByRole("button", { name: "Add Time" }).click();
@@ -23,20 +25,13 @@ test.describe("Time-blocking", () => {
       .getByPlaceholder(/Deep work on report/)
       .fill("Strategy session");
 
-    await page.getByRole("button", { name: "Create Block" }).click();
+    await page.getByRole("button", { name: "Log Focus Time" }).click();
 
-    // Block is created and rendered into the calendar DOM (it renders in both
-    // the mobile and desktop day columns; one may be visually hidden depending
-    // on viewport, so we assert attached rather than visible).
+    // Modal closes after submit (the session is inserted in the background;
+    // rendering on the calendar can't be asserted here because the e2e db-mock
+    // returns [] for DATE(started_at) queries — see db-mock.ts).
     await expect(
-      page.locator("p").filter({ hasText: "Strategy session" }).first(),
-    ).toHaveCount(1);
-
-    // Navigating away and back keeps the block (persistence).
-    await page.getByRole("button", { name: "Timer" }).click();
-    await page.getByRole("button", { name: "Calendar" }).click();
-    await expect(
-      page.locator("p").filter({ hasText: "Strategy session" }),
-    ).toHaveCount(2); // one per view (mobile + desktop)
+      page.getByRole("heading", { name: "Log Focus Time" }),
+    ).not.toBeVisible();
   });
 });
