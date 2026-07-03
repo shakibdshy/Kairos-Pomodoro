@@ -167,7 +167,7 @@ export function PresetSelector() {
                     className={cn(
                       "size-10 rounded-xl flex items-center justify-center transition-colors",
                       active
-                        ? "bg-sahara-primary text-white"
+                        ? "bg-sahara-primary text-sahara-on-primary"
                         : "bg-sahara-surface text-sahara-text-muted",
                     )}
                   >

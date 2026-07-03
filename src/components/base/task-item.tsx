@@ -38,7 +38,7 @@ export function TaskItem({
         className={cn(
           "flex h-5 w-5 shrink-0 items-center justify-center rounded border transition-colors",
           isComplete
-            ? "border-sahara-primary bg-sahara-primary text-white"
+            ? "border-sahara-primary bg-sahara-primary text-sahara-on-primary"
             : "border-sahara-border/40",
         )}
       >

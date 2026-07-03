@@ -61,10 +61,10 @@ export function OnboardingPage() {
     <div className="h-screen bg-sahara-bg flex items-center justify-center p-4 md:p-8 overflow-hidden">
       <div className="max-w-3xl md:max-w-4xl w-full grid grid-cols-1 md:grid-cols-2 bg-sahara-surface rounded-3xl md:rounded-[40px] shadow-2xl shadow-sahara-primary/10 overflow-hidden border border-sahara-border/20 min-h-auto md:min-h-150">
         {/* Left Side: Brand — full-width on mobile, half on desktop */}
-        <div className="bg-sahara-primary p-6 sm:p-10 md:p-16 flex flex-col justify-between text-white relative order-last md:order-first">
+        <div className="bg-sahara-primary p-6 sm:p-10 md:p-16 flex flex-col justify-between text-sahara-on-primary relative order-last md:order-first">
           <div className="absolute inset-0 opacity-10 pointer-events-none hidden md:block">
-            <div className="absolute top-[-10%] right-[-10%] size-[60%] rounded-full border-40 border-white"></div>
-            <div className="absolute bottom-[10%] left-[-20%] size-[80%] rounded-full border-20 border-white"></div>
+            <div className="absolute top-[-10%] right-[-10%] size-[60%] rounded-full border-40 border-sahara-on-primary"></div>
+            <div className="absolute bottom-[10%] left-[-20%] size-[80%] rounded-full border-20 border-sahara-on-primary"></div>
           </div>
 
           <div>
@@ -80,7 +80,7 @@ export function OnboardingPage() {
             <h2 className="font-serif text-2xl sm:text-3xl md:text-5xl leading-tight mb-3 md:mb-6">
               {currentStep.title}
             </h2>
-            <p className="text-white/80 text-sm md:text-lg font-medium leading-relaxed">
+            <p className="text-sahara-on-primary/80 text-sm md:text-lg font-medium leading-relaxed">
               {currentStep.subtitle}
             </p>
           </div>
