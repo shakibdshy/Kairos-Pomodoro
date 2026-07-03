@@ -27,14 +27,14 @@ export function SettingsSidebar({
           className={cn(
             "flex items-center gap-2.5 px-3 py-2 rounded-xl text-left transition-all duration-150",
             activeTab === tab.id
-              ? "bg-sahara-primary text-white shadow-sm shadow-sahara-primary/20"
+              ? "bg-sahara-primary text-sahara-on-primary shadow-sm shadow-sahara-primary/20"
               : "text-sahara-text-muted hover:bg-sahara-card hover:text-sahara-text-secondary",
           )}
         >
           <tab.icon
             className={cn(
               "size-4.5 shrink-0",
-              activeTab === tab.id ? "text-white" : "",
+              activeTab === tab.id ? "text-sahara-on-primary" : "",
             )}
           />
           <span className="text-[10px] tracking-widest font-bold uppercase leading-none">
