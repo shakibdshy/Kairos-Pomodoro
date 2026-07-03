@@ -24,13 +24,13 @@
 <h1 align="center">Download</h1>
 
 <p align="center">
-  <a href="https://github.com/shakibdshy/Kairos-Pomodoro/releases/download/v1.2.0/Kairos-Pomodoro_1.2.0_aarch64.dmg">
+  <a href="https://github.com/shakibdshy/Kairos-Pomodoro/releases/download/v1.3.0/Kairos-Pomodoro_1.3.0_aarch64.dmg">
     <img alt="Download for macOS" src="https://img.shields.io/badge/macOS-Apple%20Silicon-000?style=for-the-badge&logo=apple&logoColor=white">
   </a>
-  <a href="https://github.com/shakibdshy/Kairos-Pomodoro/releases/download/v1.2.0/Kairos-Pomodoro_1.2.0_x64-setup.exe">
+  <a href="https://github.com/shakibdshy/Kairos-Pomodoro/releases/download/v1.3.0/Kairos-Pomodoro_1.3.0_x64-setup.exe">
     <img alt="Download for Windows" src="https://img.shields.io/badge/Windows-x64%20Setup-0078D6?style=for-the-badge&logo=windows&logoColor=white">
   </a>
-  <a href="https://github.com/shakibdshy/Kairos-Pomodoro/releases/download/v1.2.0/Kairos-Pomodoro_1.2.0_amd64.AppImage">
+  <a href="https://github.com/shakibdshy/Kairos-Pomodoro/releases/download/v1.3.0/Kairos-Pomodoro_1.3.0_amd64.AppImage">
     <img alt="Download for Linux" src="https://img.shields.io/badge/Linux-AppImage-FCC624?style=for-the-badge&logo=linux&logoColor=black">
   </a>
 </p>
@@ -42,8 +42,19 @@
 </p>
 
 <p align="center">
-  <sup><strong>v1.1.0</strong> &nbsp;·&nbsp; MIT Licensed &nbsp;·&nbsp; <a href="#getting-started">Build from source →</a></sup>
+  <sup><strong>v1.3.0</strong> &nbsp;·&nbsp; MIT Licensed &nbsp;·&nbsp; <a href="#getting-started">Build from source →</a></sup>
 </p>
+
+## 🆕 What's New in v1.3 — Engagement + Lightweight Insights
+
+- **Custom color themes** — pick from Sahara, Forest, Ocean, or Mono palettes alongside light/dark/system mode
+- **Productivity score & streaks** — a daily 0–100 score plus current/best streaks surfaced on the Timer and Analytics pages
+- **Real achievement badges** — Early Bird, Marathon Runner, and Consistency King now evaluate from your actual session history
+- **Time-blocking on the calendar** — plan focus blocks (click any time slot or "Add Time"), link them to a task/category, and start a focus session straight from a block
+- **Journal page** — write free-form daily reflections, with your completed session notes pulled in alongside
+- **Free-text session intentions** — name what you're focusing on for each session, beyond just a category
+- **Local backup & restore** — export all your data to a JSON file and restore it later (Settings → Backup & Restore)
+- **All-time stats** — total focus, sessions, longest session, and total breaks on the Analytics page
 
 ## 🍎 macOS Installation Guide
 
@@ -123,9 +134,14 @@ Core features currently present in the codebase:
 - Adjustable durations for each timer phase
 - Overtime flow after a session completes
 - Task management with Pomodoro estimates and progress tracking
-- Categories and intentions linked to sessions
-- Daily and weekly analytics
+- Categories and intentions linked to sessions (including free-text intentions)
+- Daily and weekly analytics, plus all-time stats
+- Productivity score, streaks, and achievement badges
 - Weekly calendar timeline of completed sessions
+- Time-blocking: plan focus blocks on the calendar and start sessions from them
+- Journal for free-form daily reflections
+- Custom color theme presets (Sahara, Forest, Ocean, Mono) with light/dark/system mode
+- Local backup & restore (JSON export/import)
 - Desktop notifications and sound alerts
 - Global shortcut support
 - Tray/menubar integration
@@ -275,6 +291,9 @@ Main persisted data:
 - sessions
 - settings
 - categories
+- presets
+- time_blocks (planned calendar focus blocks)
+- journal_entries (free-form daily reflections)
 - simple schema version metadata
 
 No external backend or cloud service is configured in this codebase.
@@ -306,9 +325,10 @@ Defined in the router:
 
 - `/` - timer dashboard
 - `/tasks` - task management
-- `/calendar` - weekly session timeline
-- `/analytics` - focus analytics
-- `/settings` - app settings
+- `/calendar` - weekly session timeline + time-blocking
+- `/analytics` - focus analytics, streaks, score, badges
+- `/journal` - daily reflections and session notes
+- `/settings` - app settings (including theme, backup & restore)
 - `/onboarding` - onboarding flow
 
 ## Key Files
@@ -318,7 +338,7 @@ Useful files to read first:
 - `package.json` - scripts and JavaScript dependencies
 - `vite.config.ts` - Vite config and dev server port
 - `src/app/providers.tsx` - app initialization flow
-- `src/lib/db.ts` - SQLite schema, queries, and migrations
+- `src/lib/db/` - SQLite schema, queries, and migrations (one file per aggregate)
 - `src/features/timer/use-timer-store.ts` - timer logic
 - `src/features/tasks/use-task-store.ts` - task state management
 - `src/features/settings/use-settings-store.ts` - persisted settings
@@ -365,7 +385,7 @@ These are useful to know before extending the project:
 
 - the README reflects the current implementation, not a planned roadmap
 - some analytics/export actions are visible in the UI but not active
-- the onboarding route exists, but the app does not currently force a first-run onboarding flow
+- macOS builds are ad-hoc signed (no Apple Developer certificate), so users see a Gatekeeper warning on first launch — see the installation guide above
 
 ## Verified Commands
 
