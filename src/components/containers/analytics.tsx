@@ -54,13 +54,17 @@ export function AnalyticsDashboard({ period: externalPeriod, onPeriodChange }: A
 
     Promise.all([
       getWeeklyData(range.startDate, range.endDate).catch(() => []),
-      getDailyScore().catch(() => 0),
-      getEarnedBadges().catch(() => [] as BadgeAward[]),
       Promise.all([getCurrentStreak(), getBestStreak()])
         .then(([current, best]) => ({ current, best }))
         .catch(() => ({ current: 0, best: 0 })),
       getAllTimeStats().catch(() => allTime),
-    ]).then(([wd, sc, bd, st, at]) => {
+    ]).then(async ([wd, st, at]) => {
+      const [sc, bd] = await Promise.all([
+        getDailyScore(undefined, st.current).catch(() => 0),
+        getEarnedBadges({ currentStreak: st.current, bestStreak: st.best }).catch(
+          () => [] as BadgeAward[],
+        ),
+      ]);
       if (!cancelled) {
         setWeekData(wd);
         setScore(sc);

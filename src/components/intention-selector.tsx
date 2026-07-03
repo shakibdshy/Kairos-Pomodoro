@@ -37,12 +37,13 @@ export function IntentionSelector({
 
   const handleSelect = (category: Category | null) => {
     onSelect(category);
+    onCustomIntentionChange?.(null);
     setIsOpen(false);
     setSearchQuery("");
   };
 
-  // The label shown on the trigger button: free-text wins, else category, else prompt.
-  const displayLabel = customIntention || selectedCategory?.name;
+  // The label shown on the trigger button: category wins, else free-text, else prompt.
+  const displayLabel = selectedCategory?.name || customIntention;
 
   return (
     <>

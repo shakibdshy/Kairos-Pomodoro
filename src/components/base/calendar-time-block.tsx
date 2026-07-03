@@ -36,6 +36,7 @@ export function CalendarTimeBlock({
     <div
       className="absolute left-1 right-1 z-20 group"
       style={{ top: topPx, height: Math.max(heightPx, 36) }}
+      onClick={(e) => e.stopPropagation()}
     >
       <div
         className="h-full w-full rounded-lg border-2 border-dashed px-2 py-1.5 flex flex-col justify-start overflow-hidden bg-sahara-bg/60 backdrop-blur-sm transition-all hover:shadow-md"

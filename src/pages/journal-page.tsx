@@ -55,12 +55,22 @@ export function JournalPage() {
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editDraft, setEditDraft] = useState("");
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const refresh = useCallback(async () => {
     setLoading(true);
+    setError(null);
     const [journal, sessionNotes] = await Promise.all([
-      getJournalEntries().catch(() => [] as JournalEntry[]),
-      getSessionNotes().catch(() => [] as SessionNoteEntry[]),
+      getJournalEntries().catch((e) => {
+        console.error("[journal] Failed to load entries:", e);
+        setError("Could not load journal entries.");
+        return [] as JournalEntry[];
+      }),
+      getSessionNotes().catch((e) => {
+        console.error("[journal] Failed to load session notes:", e);
+        setError("Could not load session notes.");
+        return [] as SessionNoteEntry[];
+      }),
     ]);
 
     // Merge journal entries + session notes by day.
@@ -95,11 +105,15 @@ export function JournalPage() {
     const trimmed = draft.trim();
     if (!trimmed) return;
     setSaving(true);
+    setError(null);
     try {
       await addJournalEntry(trimmed);
       setDraft("");
       setComposing(false);
       await refresh();
+    } catch (e) {
+      console.error("[journal] Failed to save entry:", e);
+      setError("Could not save journal entry.");
     } finally {
       setSaving(false);
     }
@@ -109,19 +123,35 @@ export function JournalPage() {
     const trimmed = editDraft.trim();
     if (!trimmed) return;
     setSaving(true);
+    setError(null);
     try {
       await updateJournalEntry(id, trimmed);
       setEditingId(null);
       setEditDraft("");
       await refresh();
+    } catch (e) {
+      console.error("[journal] Failed to update entry:", e);
+      setError("Could not update journal entry.");
     } finally {
       setSaving(false);
     }
   };
 
   const handleDelete = async (id: number) => {
-    await deleteJournalEntry(id);
-    await refresh();
+    if (!window.confirm("Delete this journal entry? This cannot be undone.")) {
+      return;
+    }
+    setSaving(true);
+    setError(null);
+    try {
+      await deleteJournalEntry(id);
+      await refresh();
+    } catch (e) {
+      console.error("[journal] Failed to delete entry:", e);
+      setError("Could not delete journal entry.");
+    } finally {
+      setSaving(false);
+    }
   };
 
   const startEdit = (entry: JournalEntry) => {
@@ -160,6 +190,18 @@ export function JournalPage() {
             New Entry
           </Button>
         </header>
+
+        {error && (
+          <div className="mb-6 bg-red-500/10 border border-red-500/30 rounded-xl p-3 flex items-start gap-2">
+            <span className="text-xs text-red-600 flex-1">{error}</span>
+            <button
+              onClick={() => setError(null)}
+              className="text-xs text-red-600 hover:text-red-700 font-medium"
+            >
+              Dismiss
+            </button>
+          </div>
+        )}
 
         {/* Composer */}
         {composing && (

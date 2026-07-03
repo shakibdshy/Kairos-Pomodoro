@@ -39,6 +39,15 @@ function toDateString(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
+function resolveHourFromY(y: number, layout: DayLayout, hours: number[]): number {
+  for (let i = 0; i < hours.length; i++) {
+    if (y >= layout.hourTopPx[i] && y < layout.hourTopPx[i + 1]) {
+      return hours[i];
+    }
+  }
+  return hours[hours.length - 1] ?? 0;
+}
+
 function buildSessionsByDay(
   sessions: WeekSession[],
 ): Map<string, WeekSession[]> {
@@ -256,7 +265,7 @@ function CalendarMobileView({
               if (!onCreateBlock) return;
               const target = e.currentTarget.getBoundingClientRect();
               const y = e.clientY - target.top;
-              const hour = Math.floor(y / BASE_HOUR_HEIGHT) + (hours[0] ?? 6);
+              const hour = resolveHourFromY(y, layout, hours);
               onCreateBlock(dayDate, hour);
             }}
           >
@@ -371,7 +380,7 @@ function CalendarDesktopView({
                   if (!onCreateBlock) return;
                   const target = e.currentTarget.getBoundingClientRect();
                   const y = e.clientY - target.top;
-                  const hour = Math.floor(y / BASE_HOUR_HEIGHT) + (hours[0] ?? 6);
+                  const hour = resolveHourFromY(y, layout, hours);
                   onCreateBlock(day, hour);
                 }}
               >

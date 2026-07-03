@@ -30,12 +30,14 @@ export function TodayFocus() {
   const activeTask = tasks.find((t) => t.id === activeTaskId) ?? null;
 
   const refreshData = useCallback(async () => {
-    const [todaySessions, categoryData, currentStreak, dailyScore] = await Promise.all([
+    const [todaySessions, categoryData, currentStreak] = await Promise.all([
       getTodaySessions().catch(() => []),
       getCategoryBreakdown().catch(() => []),
       getCurrentStreak().catch(() => 0),
-      getDailyScore().catch(() => 0),
     ]);
+    const dailyScore = await getDailyScore(undefined, currentStreak).catch(
+      () => 0,
+    );
     setSessions(todaySessions);
     setBreakdowns(categoryData);
     setStreak(currentStreak);
