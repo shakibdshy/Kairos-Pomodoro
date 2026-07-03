@@ -31,6 +31,7 @@ export function TimerControls() {
     overtimeSeconds,
     durations,
     selectedCategory,
+    customIntention,
     isFocusComplete,
     isWorkPhase,
     durationMinutes,
@@ -48,6 +49,7 @@ export function TimerControls() {
   const abandonSession = useTimerStore((s) => s.abandonSession);
   const confirmStartNextPhase = useTimerStore((s) => s.confirmStartNextPhase);
   const setSelectedCategory = useTimerStore((s) => s.setSelectedCategory);
+  const setCustomIntention = useTimerStore((s) => s.setCustomIntention);
   const setDurationForCurrentPhase = useTimerStore(
     (s) => s.setDurationForCurrentPhase,
   );
@@ -123,6 +125,8 @@ export function TimerControls() {
               <IntentionSelector
                 selectedCategory={selectedCategory}
                 onSelect={setSelectedCategory}
+                customIntention={customIntention}
+                onCustomIntentionChange={setCustomIntention}
                 disabled={status !== "idle"}
               />
             </div>

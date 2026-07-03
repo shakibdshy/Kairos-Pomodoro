@@ -10,12 +10,18 @@ import { ModalOverlay } from "@/components/ui/modal-overlay";
 interface IntentionSelectorProps {
   selectedCategory: Category | null;
   onSelect: (category: Category | null) => void;
+  /** Current free-text intention (controlled). */
+  customIntention?: string | null;
+  /** Called when the user edits the free-text intention. */
+  onCustomIntentionChange?: (intention: string | null) => void;
   disabled?: boolean;
 }
 
 export function IntentionSelector({
   selectedCategory,
   onSelect,
+  customIntention,
+  onCustomIntentionChange,
   disabled = false,
 }: IntentionSelectorProps) {
   const [isOpen, setIsOpen] = useState(false);
@@ -35,6 +41,9 @@ export function IntentionSelector({
     setSearchQuery("");
   };
 
+  // The label shown on the trigger button: free-text wins, else category, else prompt.
+  const displayLabel = customIntention || selectedCategory?.name;
+
   return (
     <>
       <Button
@@ -51,14 +60,16 @@ export function IntentionSelector({
           selectedCategory && "hover:shadow-md",
         )}
       >
-        {selectedCategory ? (
+        {displayLabel ? (
           <>
-            <div
-              className="size-2.5 rounded-full shrink-0"
-              style={{ backgroundColor: selectedCategory.color }}
-            />
-            <span className="text-xs font-bold text-sahara-text tracking-wide">
-              {selectedCategory.name}
+            {selectedCategory && (
+              <div
+                className="size-2.5 rounded-full shrink-0"
+                style={{ backgroundColor: selectedCategory.color }}
+              />
+            )}
+            <span className="text-xs font-bold text-sahara-text tracking-wide truncate max-w-[160px]">
+              {displayLabel}
             </span>
             <ChevronDown className="size-3 text-sahara-text-muted" />
           </>
@@ -77,7 +88,26 @@ export function IntentionSelector({
           <h2 className="font-serif text-xl text-sahara-text">
             Set Intention
           </h2>
+          <p className="text-xs text-sahara-text-muted mt-1">
+            Name what you want to focus on this session.
+          </p>
         </div>
+
+        {/* Free-text intention prompt */}
+        {onCustomIntentionChange && (
+          <div className="px-6 pt-5">
+            <label className="text-[10px] font-bold text-sahara-text-muted uppercase tracking-widest">
+              What's your focus?
+            </label>
+            <input
+              type="text"
+              placeholder="e.g. Draft the intro without editing"
+              value={customIntention ?? ""}
+              onChange={(e) => onCustomIntentionChange(e.target.value || null)}
+              className="w-full mt-2 px-4 py-3 rounded-xl border border-sahara-border/30 bg-sahara-bg/50 text-sm font-medium placeholder:text-sahara-text-muted focus:outline-none focus:border-sahara-primary/50 focus:ring-2 focus:ring-sahara-primary/10 transition-all"
+            />
+          </div>
+        )}
 
         <div className="px-6 pt-5 pb-3">
           <div className="relative">

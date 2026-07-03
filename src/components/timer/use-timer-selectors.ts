@@ -16,6 +16,7 @@ export function useTimerSelectors() {
   const durations = useTimerStore((s) => s.durations);
   const completedPomos = useTimerStore((s) => s.completedPomos);
   const selectedCategory = useTimerStore((s) => s.selectedCategory);
+  const customIntention = useTimerStore((s) => s.customIntention);
   const isFullscreenFocus = useUIStore((s) => s.isFullscreenFocus);
 
   const isFocus = phase === "work";
@@ -47,6 +48,7 @@ export function useTimerSelectors() {
     durations,
     completedPomos,
     selectedCategory,
+    customIntention,
     isFullscreenFocus,
     isFocus,
     isBreak,
