@@ -32,7 +32,9 @@
     "updater:allow-check",
     "updater:allow-download-and-install",
     "dialog:allow-save",
+    "dialog:allow-open",
     "fs:allow-write-file",
+    "fs:allow-read-text-file",
     "fs:allow-mkdir",
     {
       "identifier": "fs:scope",
