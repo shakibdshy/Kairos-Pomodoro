@@ -49,17 +49,18 @@
 
 /* --- Sahara — dark --- */
 .dark {
+  --c-primary: #d97a3a;
   --c-bg: #1a1714;
-  --c-primary-light: rgba(194, 101, 42, 0.15);
+  --c-primary-light: rgba(217, 122, 58, 0.18);
   --c-text: #e8e0d8;
   --c-text-secondary: #b0a8a0;
-  --c-text-muted: #7a726a;
+  --c-text-muted: #8a8078;
   --c-border: #3a3530;
   --c-card: #242019;
   --c-surface: #201c17;
   --c-ring-track: #2e2820;
   --c-ring-track-active: #1a1714;
-  --c-ring-complete: #c17767;
+  --c-ring-complete: #d97a3a;
 }
 
 /* --- Forest — light --- */
@@ -80,11 +81,12 @@
 
 /* --- Forest — dark --- */
 .dark[data-theme="forest"] {
+  --c-primary: #4a9c75;
   --c-bg: #151b18;
-  --c-primary-light: rgba(47, 125, 91, 0.18);
+  --c-primary-light: rgba(74, 156, 117, 0.2);
   --c-text: #dde6e0;
   --c-text-secondary: #a7b3ac;
-  --c-text-muted: #6f7b74;
+  --c-text-muted: #8a958e;
   --c-border: #2c3832;
   --c-card: #1d2521;
   --c-surface: #1a211d;
@@ -111,11 +113,12 @@
 
 /* --- Ocean — dark --- */
 .dark[data-theme="ocean"] {
+  --c-primary: #4787c9;
   --c-bg: #131a22;
-  --c-primary-light: rgba(37, 102, 168, 0.2);
+  --c-primary-light: rgba(71, 135, 201, 0.2);
   --c-text: #d8e0e8;
   --c-text-secondary: #a3afba;
-  --c-text-muted: #6c7884;
+  --c-text-muted: #8a98a6;
   --c-border: #29343f;
   --c-card: #1c2530;
   --c-surface: #19222c;
@@ -142,17 +145,18 @@
 
 /* --- Mono — dark --- */
 .dark[data-theme="mono"] {
+  --c-primary: #e8e8e8;
   --c-bg: #161616;
-  --c-primary-light: rgba(255, 255, 255, 0.1);
+  --c-primary-light: rgba(255, 255, 255, 0.12);
   --c-text: #e8e8e8;
-  --c-text-secondary: #b0b0b0;
-  --c-text-muted: #767676;
-  --c-border: #333333;
+  --c-text-secondary: #b8b8b8;
+  --c-text-muted: #909090;
+  --c-border: #3a3a3a;
   --c-card: #202020;
   --c-surface: #1c1c1c;
-  --c-ring-track: #2a2a2a;
+  --c-ring-track: #2e2e2e;
   --c-ring-track-active: #161616;
-  --c-ring-complete: #b0b0b0;
+  --c-ring-complete: #c8c8c8;
 }
 
 @custom-variant dark (&:where(.dark, .dark *));
