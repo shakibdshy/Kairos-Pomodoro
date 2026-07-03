@@ -14,7 +14,7 @@ export function BadgeCard({ title, description, earned }: BadgeCardProps) {
         "flex items-center gap-3 md:gap-4 p-3.5 md:p-5 rounded-xl border transition-all",
         earned
           ? "bg-sahara-primary-light/20 border-sahara-primary/30"
-          : "bg-sahara-surface border-sahara-border/15 opacity-60",
+          : "bg-sahara-card/50 border-sahara-border/20 opacity-60",
       )}
     >
       <div

@@ -107,31 +107,45 @@ export function AnalyticsDashboard({ period: externalPeriod, onPeriodChange }: A
           Today
         </h2>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 lg:gap-4">
-          <div className="bg-sahara-surface border border-sahara-border/20 rounded-xl md:rounded-2xl p-5 md:p-6 flex flex-col items-center justify-center">
+          <div className="bg-sahara-card/50 border border-sahara-border/20 rounded-xl p-5 md:p-6 flex flex-col items-center justify-center">
             <ScoreRing score={score} />
             <p className="text-xs text-sahara-text-muted mt-3 text-center">
               Productivity score
             </p>
           </div>
-          <div className="bg-sahara-surface border border-sahara-border/20 rounded-xl md:rounded-2xl p-5 md:p-6 flex flex-col justify-center">
-            <p className="text-[10px] font-bold text-sahara-text-muted uppercase tracking-widest mb-2">
-              Current Streak
-            </p>
-            <p className="font-serif text-4xl md:text-5xl font-bold text-sahara-text tabular-nums leading-none">
-              {streaks.current}
-            </p>
-            <p className="text-xs text-sahara-text-muted mt-1">
-              day{streaks.current === 1 ? "" : "s"} in a row
+          <div className="bg-sahara-card/50 border border-sahara-border/20 rounded-xl p-5 md:p-6 flex flex-col items-center justify-center">
+            <div className="relative flex items-center justify-center" style={{ width: 96, height: 96 }}>
+              <div className="flex flex-col items-center justify-center">
+                <p className="text-[10px] font-bold text-sahara-text-muted uppercase tracking-widest mb-1">
+                  Current
+                </p>
+                <p className="font-serif text-4xl md:text-5xl font-bold text-sahara-text tabular-nums leading-none">
+                  {streaks.current}
+                </p>
+                <p className="text-[8px] md:text-[9px] font-bold text-sahara-text-muted uppercase tracking-widest mt-0.5">
+                  Day{streaks.current === 1 ? "" : "s"}
+                </p>
+              </div>
+            </div>
+            <p className="text-xs text-sahara-text-muted mt-3 text-center">
+              days in a row
             </p>
           </div>
-          <div className="bg-sahara-surface border border-sahara-border/20 rounded-xl md:rounded-2xl p-5 md:p-6 flex flex-col justify-center">
-            <p className="text-[10px] font-bold text-sahara-text-muted uppercase tracking-widest mb-2">
-              Best Streak
-            </p>
-            <p className="font-serif text-4xl md:text-5xl font-bold text-sahara-text tabular-nums leading-none">
-              {streaks.best}
-            </p>
-            <p className="text-xs text-sahara-text-muted mt-1">
+          <div className="bg-sahara-card/50 border border-sahara-border/20 rounded-xl p-5 md:p-6 flex flex-col items-center justify-center">
+            <div className="relative flex items-center justify-center" style={{ width: 96, height: 96 }}>
+              <div className="flex flex-col items-center justify-center">
+                <p className="text-[10px] font-bold text-sahara-text-muted uppercase tracking-widest mb-1">
+                  Best
+                </p>
+                <p className="font-serif text-4xl md:text-5xl font-bold text-sahara-text tabular-nums leading-none">
+                  {streaks.best}
+                </p>
+                <p className="text-[8px] md:text-[9px] font-bold text-sahara-text-muted uppercase tracking-widest mt-0.5">
+                  Day{streaks.best === 1 ? "" : "s"}
+                </p>
+              </div>
+            </div>
+            <p className="text-xs text-sahara-text-muted mt-3 text-center">
               all-time longest run
             </p>
           </div>
@@ -208,7 +222,7 @@ export function AnalyticsDashboard({ period: externalPeriod, onPeriodChange }: A
         <h2 className="font-serif text-lg font-semibold tracking-wide md:text-2xl text-sahara-text mb-4 md:mb-6">
           {range.label}
         </h2>
-        <div className="bg-sahara-surface border border-sahara-border/20 rounded-xl md:rounded-2xl p-3.5 md:p-5">
+        <div className="bg-sahara-card/50 border border-sahara-border/20 rounded-xl p-3.5 md:p-5">
           <WeeklyChart
             data={weekData}
             startDate={range.startDate}
