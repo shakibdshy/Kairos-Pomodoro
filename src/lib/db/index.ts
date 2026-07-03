@@ -1,6 +1,6 @@
 export { initDb } from "./schema";
 export { getDb } from "./schema";
-export type { Session, Category, CategoryBreakdown, DayData, WeekSession, WeekSummary, MoodStat, SessionNoteEntry, CompletedTaskEntry } from "./types";
+export type { Session, Category, CategoryBreakdown, DayData, WeekSession, WeekSummary, MoodStat, SessionNoteEntry, CompletedTaskEntry, TimeBlock, TimeBlockWithMeta, JournalEntry } from "./types";
 export {
   getTasks,
   addTask,
