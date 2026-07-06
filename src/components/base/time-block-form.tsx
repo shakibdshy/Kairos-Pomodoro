@@ -18,15 +18,25 @@ interface TimeBlockFormProps {
   onSubmit: (input: TimeBlockInput) => Promise<void>;
 }
 
-function toLocalInput(d: Date): string {
-  // yyyy-MM-ddTHH:mm — what <input type="datetime-local"> expects.
-  const pad = (n: number) => String(n).padStart(2, "0");
+const pad = (n: number) => String(n).padStart(2, "0");
+
+/** Date → `yyyy-MM-ddTHH:mm`, the format `<input type="datetime-local">` uses. */
+export function toLocalInput(d: Date): string {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
-function fromLocalInput(s: string): string {
-  // Convert datetime-local value to a full ISO datetime the DB stores.
-  return new Date(s).toISOString();
+/**
+ * Convert a datetime-local value to the **local-naive** `yyyy-MM-dd HH:mm:ss`
+ * string the DB stores. This matches how the `sessions` table records time
+ * (via `datetime('now','localtime')`): no UTC conversion, no trailing `Z`.
+ *
+ * Storing local-naive keeps time blocks consistent with every other date in
+ * the app (day grouping, the "now" line, SQL `date()` filters). Storing UTC
+ * ISO here previously shifted blocks onto the wrong timeline row.
+ */
+export function fromLocalInput(s: string): string {
+  const d = new Date(s);
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:00`;
 }
 
 export function TimeBlockForm({

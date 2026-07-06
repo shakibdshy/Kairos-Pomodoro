@@ -132,9 +132,21 @@ export async function initDb(): Promise<void> {
       )`,
       `CREATE INDEX IF NOT EXISTS idx_journal_entries_date ON journal_entries(date)`,
     ],
+    4: [
+      // Link each time block to the focus session it logs, so logged time
+      // counts toward stats (Total Focus, sessions, streaks) just like a
+      // completed countdown-timer session.
+      "ALTER TABLE time_blocks ADD COLUMN session_id INTEGER REFERENCES sessions(id)",
+      // Time blocks were previously stored as UTC ISO (`...Z`) via toISOString(),
+      // while every other date in the app is local-naive (`yyyy-MM-dd HH:mm:ss`).
+      // Convert existing rows to local-naive. The `LIKE '%Z'` guard makes this
+      // idempotent: naive rows have no trailing Z and are left untouched, so
+      // re-running the migration or restoring a converted backup is safe.
+      "UPDATE time_blocks SET start_time = datetime(start_time, 'localtime'), end_time = datetime(end_time, 'localtime') WHERE start_time LIKE '%Z'",
+    ],
   };
 
-  const targetVersion = 3;
+  const targetVersion = 4;
 
   for (let v = currentVersion + 1; v <= targetVersion; v++) {
     const statements = migrations[v];
