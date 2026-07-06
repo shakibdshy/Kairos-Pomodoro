@@ -47,6 +47,50 @@ export async function addLoggedSession(input: {
   return result.lastInsertId as number;
 }
 
+/**
+ * Update a logged session in place — used when the user edits the focus time
+ * block that produced it, so the recorded session (and thus stats) reflect the
+ * new times. Mirrors addLoggedSession()'s explicit-timestamp contract.
+ */
+export async function updateLoggedSession(
+  sessionId: number,
+  input: {
+    taskId: number | null;
+    startedAt: string;
+    endedAt: string;
+    durationSec: number;
+    categoryId?: number | null;
+    intention?: string | null;
+  },
+): Promise<void> {
+  const database = await getDb();
+  await database.execute(
+    `UPDATE sessions
+     SET task_id = $1,
+         started_at = $2,
+         ended_at = $3,
+         duration_sec = MAX(0, $4),
+         category_id = $5,
+         intention = $6
+     WHERE id = $7`,
+    [
+      input.taskId,
+      input.startedAt,
+      input.endedAt,
+      input.durationSec,
+      input.categoryId ?? null,
+      input.intention ?? null,
+      sessionId,
+    ],
+  );
+}
+
+/** Delete a session by id — used when its source time block is removed. */
+export async function deleteSession(sessionId: number): Promise<void> {
+  const database = await getDb();
+  await database.execute("DELETE FROM sessions WHERE id = $1", [sessionId]);
+}
+
 export async function startSession(
   taskId: number | null,
   phase: string,

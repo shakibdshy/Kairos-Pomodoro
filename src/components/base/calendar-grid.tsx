@@ -11,7 +11,6 @@ interface CalendarGridProps {
   weekDays: Date[];
   startHour: number;
   endHour: number;
-  hourHeight: number;
   /** Called when the user clicks an empty slot to create a block. */
   onCreateBlock?: (date: Date, hour: number) => void;
   /** Called when the user clicks edit on a block. */
@@ -50,9 +49,13 @@ function resolveHourFromY(y: number, layout: DayLayout, hours: number[]): number
 
 function buildSessionsByDay(
   sessions: WeekSession[],
+  /** Session ids that are already shown as logged time blocks — skip them so
+   * the same focus time isn't rendered twice on the calendar. */
+  hiddenSessionIds: Set<number>,
 ): Map<string, WeekSession[]> {
   const map = new Map<string, WeekSession[]>();
   for (const s of sessions) {
+    if (hiddenSessionIds.has(s.id)) continue;
     const key = toDateString(new Date(s.started_at));
     if (!map.has(key)) map.set(key, []);
     map.get(key)!.push(s);
@@ -91,7 +94,7 @@ interface DayLayout {
   totalHeight: number;
 }
 
-function computeDayLayout(
+export function computeDayLayout(
   daySessions: WeekSession[],
   dayBlocks: TimeBlockWithMeta[],
   startHour: number,
@@ -102,98 +105,61 @@ function computeDayLayout(
       new Date(a.started_at).getTime() - new Date(b.started_at).getTime(),
   );
 
-  const positioned: PositionedSession[] = [];
-
-  for (const session of sorted) {
+  // Every card sits on a single uniform `BASE_HOUR_HEIGHT` scale shared with
+  // the time axis, gridlines, and "now" line. Cards are positioned purely from
+  // their start time — never shifted to dodge overlaps and never allowed to
+  // inflate their hour row — so a card's pixel position always matches the
+  // time its label shows. (Previously sessions expanded their hour row and
+  // overlapping cards were nudged down, which detached position from time.)
+  const positioned: PositionedSession[] = sorted.map((session) => {
     const startTime = new Date(session.started_at);
     const durationMin = Math.ceil(session.duration_sec / 60);
     const startMin =
       (startTime.getHours() - startHour) * 60 + startTime.getMinutes();
-
-    let topPx = Math.max((startMin / 60) * BASE_HOUR_HEIGHT, 0);
-
-    for (const existing of positioned) {
-      const existingEnd = existing.topPx + existing.heightPx;
-      if (topPx < existingEnd) {
-        topPx = existingEnd + 4;
-      }
-    }
-
-    const heightPx = Math.max((durationMin / 60) * BASE_HOUR_HEIGHT, 100);
-
-    positioned.push({ session, topPx, heightPx });
-  }
-
-  // Position planned blocks independently — they sit alongside sessions.
-  const positionedBlocks: PositionedBlock[] = [];
-  const sortedBlocks = dayBlocks.toSorted(
-    (a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime(),
-  );
-  for (const block of sortedBlocks) {
-    const startTime = new Date(block.start_time);
-    const endTime = new Date(block.end_time);
-    const durationMin = Math.max(
-      1,
-      Math.round((endTime.getTime() - startTime.getTime()) / 60000),
-    );
-    const startMin =
-      (startTime.getHours() - startHour) * 60 + startTime.getMinutes();
-
-    let topPx = Math.max((startMin / 60) * BASE_HOUR_HEIGHT, 0);
-
-    for (const existing of positionedBlocks) {
-      const existingEnd = existing.topPx + existing.heightPx;
-      if (topPx < existingEnd) {
-        topPx = existingEnd + 4;
-      }
-    }
-
+    const topPx = Math.max((startMin / 60) * BASE_HOUR_HEIGHT, 0);
     const heightPx = Math.max((durationMin / 60) * BASE_HOUR_HEIGHT, 36);
+    return { session, topPx, heightPx };
+  });
 
-    positionedBlocks.push({ block, topPx, heightPx });
-  }
+  // Planned blocks use the same scale and are never overlap-shifted either.
+  const positionedBlocks: PositionedBlock[] = dayBlocks
+    .toSorted(
+      (a, b) =>
+        new Date(a.start_time).getTime() - new Date(b.start_time).getTime(),
+    )
+    .map((block) => {
+      const startTime = new Date(block.start_time);
+      const endTime = new Date(block.end_time);
+      const durationMin = Math.max(
+        1,
+        Math.round((endTime.getTime() - startTime.getTime()) / 60000),
+      );
+      const startMin =
+        (startTime.getHours() - startHour) * 60 + startTime.getMinutes();
+      const topPx = Math.max((startMin / 60) * BASE_HOUR_HEIGHT, 0);
+      const heightPx = Math.max((durationMin / 60) * BASE_HOUR_HEIGHT, 36);
+      return { block, topPx, heightPx };
+    });
 
+  // Uniform hour rows: hour h starts at h * BASE_HOUR_HEIGHT, never expanded
+  // by content. This is what keeps the shared time axis honest across columns.
   const hourCount = endHour - startHour + 1;
-  const hourTopPx: number[] = [0];
+  const hourTopPx = Array.from(
+    { length: hourCount + 1 },
+    (_, h) => h * BASE_HOUR_HEIGHT,
+  );
 
-  for (let h = 0; h < hourCount; h++) {
-    const hourStartMin = h * 60;
-    const hourEndMin = (h + 1) * 60;
-
-    const lastInHour = positioned
-      .filter((p) => {
-        const s = p.session;
-        const sStart = new Date(s.started_at);
-        const sStartMin =
-          (sStart.getHours() - startHour) * 60 + sStart.getMinutes();
-        return sStartMin >= hourStartMin && sStartMin < hourEndMin;
-      })
-      .pop();
-
-    const expandedHeight = lastInHour
-      ? Math.max(
-          lastInHour.topPx + lastInHour.heightPx - hourTopPx[h],
-          BASE_HOUR_HEIGHT,
-        )
-      : BASE_HOUR_HEIGHT;
-
-    hourTopPx.push(hourTopPx[hourTopPx.length - 1] + expandedHeight);
-  }
-
-  const totalContentBottom =
-    positioned.length > 0
-      ? Math.max(...positioned.map((p) => p.topPx + p.heightPx))
-      : 0;
+  const totalContentBottom = Math.max(
+    0,
+    ...positioned.map((p) => p.topPx + p.heightPx),
+    ...positionedBlocks.map((p) => p.topPx + p.heightPx),
+  );
 
   return {
     positioned,
     positionedBlocks,
     hourTopPx,
-    totalHeight: Math.max(
-      totalContentBottom,
-      ...positionedBlocks.map((p) => p.topPx + p.heightPx),
-      hourTopPx[hourCount],
-    ),
+    totalHeight: Math.max(totalContentBottom, hourTopPx[hourCount]),
   };
 }
 
@@ -240,15 +206,12 @@ function CalendarMobileView({
         <div className="flex" style={{ minHeight: layout.totalHeight }}>
           <div className="w-12 shrink-0 border-r border-sahara-border/15 bg-sahara-bg/20 relative">
             {hours.map((hour, hIdx) => {
-              const maxH = Math.max(
-                layout.hourTopPx[hIdx + 1] - layout.hourTopPx[hIdx],
-                BASE_HOUR_HEIGHT,
-              );
+              const rowH = layout.hourTopPx[hIdx + 1] - layout.hourTopPx[hIdx];
               return (
                 <div
                   key={hour}
                   className="pr-2 text-right border-b border-sahara-border/10"
-                  style={{ height: maxH }}
+                  style={{ height: rowH }}
                 >
                   <span className="text-[10px] font-medium text-sahara-text-muted tabular-nums leading-none inline-block mt-2">
                     {formatHour(hour)}
@@ -356,9 +319,11 @@ function CalendarDesktopView({
         <div className="grid" style={{ gridTemplateColumns: `64px repeat(${weekDays.length}, 1fr)`, minHeight: desktopGridTotalHeight }}>
           <div className="border-r border-sahara-border/20 bg-sahara-bg/30 relative shrink-0 w-16">
             {hours.map((hour, hIdx) => {
-              const maxH = Math.max(...allDayLayouts.map((l) => l.hourTopPx[hIdx + 1] - l.hourTopPx[hIdx]), BASE_HOUR_HEIGHT);
+              // Rows are uniform across all columns (see computeDayLayout), so
+              // the shared axis reads one column's height — no per-column max.
+              const rowH = allDayLayouts[0].hourTopPx[hIdx + 1] - allDayLayouts[0].hourTopPx[hIdx];
               return (
-                <div key={hour} className="pr-3 text-right border-b border-sahara-border/15" style={{ height: maxH }}>
+                <div key={hour} className="pr-3 text-right border-b border-sahara-border/15" style={{ height: rowH }}>
                   <span className="text-[11px] font-medium text-sahara-text-muted tabular-nums leading-none inline-block mt-2">{formatHour(hour)}</span>
                 </div>
               );
@@ -455,7 +420,22 @@ export function CalendarGrid({
     return () => clearInterval(id);
   }, []);
 
-  const sessionsByDay = useMemo(() => buildSessionsByDay(sessions), [sessions]);
+  // Session ids logged from a time block — those rows are rendered (and
+  // counted in stats) via the time block card, so skip them as plain sessions.
+  const loggedSessionIds = useMemo(
+    () =>
+      new Set(
+        timeBlocks
+          .map((b) => b.session_id)
+          .filter((id): id is number => id != null),
+      ),
+    [timeBlocks],
+  );
+
+  const sessionsByDay = useMemo(
+    () => buildSessionsByDay(sessions, loggedSessionIds),
+    [sessions, loggedSessionIds],
+  );
   const blocksByDay = useMemo(() => buildBlocksByDay(timeBlocks), [timeBlocks]);
 
   const todayIdx = weekDays.findIndex(isToday);

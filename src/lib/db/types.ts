@@ -103,6 +103,8 @@ export interface TimeBlock {
   color: string | null;
   completed: number;
   created_at: string;
+  /** The focus session logged from this block, so it counts toward stats. */
+  session_id: number | null;
 }
 
 /** A TimeBlock joined with its optional task/category for display. */

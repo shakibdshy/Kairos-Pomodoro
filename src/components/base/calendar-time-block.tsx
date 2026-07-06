@@ -1,6 +1,7 @@
 import { Pencil, Trash2, Play } from "lucide-react";
 import type { TimeBlockWithMeta } from "@/lib/db";
 import { DEFAULT_CATEGORY_COLOR } from "@/lib/constants";
+import { cn } from "@/lib/cn";
 
 interface CalendarTimeBlockProps {
   block: TimeBlockWithMeta;
@@ -31,6 +32,10 @@ export function CalendarTimeBlock({
   const color = block.color || block.category_color || DEFAULT_CATEGORY_COLOR;
   const label = block.title || block.task_name || block.category_name || "Focus block";
   const isShort = heightPx < 56;
+  // A block linked to a session has already been logged as focus time, so it
+  // counts toward stats — render it solid (like a completed session) instead
+  // of dashed, and drop the "start focus" action.
+  const isLogged = block.session_id != null;
 
   return (
     <div
@@ -39,7 +44,12 @@ export function CalendarTimeBlock({
       onClick={(e) => e.stopPropagation()}
     >
       <div
-        className="h-full w-full rounded-lg border-2 border-dashed px-2 py-1.5 flex flex-col justify-start overflow-hidden bg-sahara-bg/60 backdrop-blur-sm transition-all hover:shadow-md"
+        className={cn(
+          "h-full w-full rounded-lg border-2 px-2 py-1.5 flex flex-col justify-start overflow-hidden transition-all hover:shadow-md",
+          isLogged
+            ? "bg-sahara-bg/80 backdrop-blur-sm"
+            : "border-dashed bg-sahara-bg/60 backdrop-blur-sm",
+        )}
         style={{ borderColor: color }}
       >
         <div className="flex items-start gap-1.5">
@@ -61,7 +71,7 @@ export function CalendarTimeBlock({
 
         {/* Hover actions */}
         <div className="absolute top-1 right-1 flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-          {onStartFocus && (
+          {onStartFocus && !isLogged && (
             <button
               onClick={(e) => {
                 e.stopPropagation();

@@ -13,6 +13,8 @@ export {
 export {
   addSession,
   addLoggedSession,
+  updateLoggedSession,
+  deleteSession,
   startSession,
   finishSession,
   abandonSession,

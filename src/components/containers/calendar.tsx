@@ -7,6 +7,9 @@ import {
   deleteTimeBlock,
   addTimeBlock,
   updateTimeBlock,
+  addLoggedSession,
+  updateLoggedSession,
+  deleteSession,
   type WeekSession,
   type WeekSummary,
   type TimeBlockWithMeta,
@@ -22,7 +25,6 @@ import { useNavigate } from "react-router-dom";
 
 const START_HOUR = 6;
 const END_HOUR = 22;
-const HOUR_HEIGHT = 72;
 
 const EMPTY_SUMMARY: WeekSummary = {
   total_seconds: 0,
@@ -179,6 +181,11 @@ export function CalendarDashboard() {
   const handleDelete = useCallback(
     async (block: TimeBlockWithMeta) => {
       await deleteTimeBlock(block.id);
+      // Drop the linked session so stats (Total Focus, sessions, streaks)
+      // stay consistent with the calendar.
+      if (block.session_id) {
+        await deleteSession(block.session_id);
+      }
       reload();
     },
     [reload],
@@ -186,10 +193,36 @@ export function CalendarDashboard() {
 
   const handleSubmit = useCallback(
     async (input: TimeBlockInput) => {
+      // A logged focus time IS a counted session: it contributes to Total
+      // Focus, New Session, streaks — just like a completed countdown timer.
+      const startDate = new Date(input.start_time);
+      const endDate = new Date(input.end_time);
+      const durationSec = Math.max(
+        0,
+        Math.round((endDate.getTime() - startDate.getTime()) / 1000),
+      );
+      const sessionPayload = {
+        taskId: input.task_id ?? null,
+        phase: "work",
+        startedAt: input.start_time,
+        endedAt: input.end_time,
+        durationSec,
+        categoryId: input.category_id ?? null,
+        intention: input.title,
+      };
+
       if (editingBlock) {
         await updateTimeBlock(editingBlock.id, input);
+        if (editingBlock.session_id) {
+          await updateLoggedSession(editingBlock.session_id, sessionPayload);
+        } else {
+          // Block predates the session link — create one now and attach it.
+          const sid = await addLoggedSession(sessionPayload);
+          await updateTimeBlock(editingBlock.id, { session_id: sid });
+        }
       } else {
-        await addTimeBlock(input);
+        const sessionId = await addLoggedSession(sessionPayload);
+        await addTimeBlock({ ...input, session_id: sessionId });
       }
       reload();
     },
@@ -274,7 +307,6 @@ export function CalendarDashboard() {
           weekDays={weekDays}
           startHour={START_HOUR}
           endHour={END_HOUR}
-          hourHeight={HOUR_HEIGHT}
           onCreateBlock={openCreate}
           onEditBlock={openEdit}
           onDeleteBlock={handleDelete}

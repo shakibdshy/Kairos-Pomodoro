@@ -3,13 +3,15 @@ import type { TimeBlock, TimeBlockWithMeta } from "./types";
 
 export interface TimeBlockInput {
   title: string | null;
-  /** ISO datetime string. */
+  /** Local-naive `yyyy-MM-dd HH:mm:ss` datetime string (matches sessions). */
   start_time: string;
-  /** ISO datetime string. */
+  /** Local-naive `yyyy-MM-dd HH:mm:ss` datetime string (matches sessions). */
   end_time: string;
   task_id?: number | null;
   category_id?: number | null;
   color?: string | null;
+  /** Focus session created from this block, so it counts toward stats. */
+  session_id?: number | null;
 }
 
 function validateRange(start: string, end: string): void {
@@ -22,8 +24,8 @@ export async function addTimeBlock(input: TimeBlockInput): Promise<number> {
   validateRange(input.start_time, input.end_time);
   const database = await getDb();
   const result = await database.execute(
-    `INSERT INTO time_blocks (title, start_time, end_time, task_id, category_id, color)
-     VALUES ($1, $2, $3, $4, $5, $6)`,
+    `INSERT INTO time_blocks (title, start_time, end_time, task_id, category_id, color, session_id)
+     VALUES ($1, $2, $3, $4, $5, $6, $7)`,
     [
       input.title,
       input.start_time,
@@ -31,6 +33,7 @@ export async function addTimeBlock(input: TimeBlockInput): Promise<number> {
       input.task_id ?? null,
       input.category_id ?? null,
       input.color ?? null,
+      input.session_id ?? null,
     ],
   );
   return result.lastInsertId as number;
@@ -71,6 +74,10 @@ export async function updateTimeBlock(
   if (input.color !== undefined) {
     fields.push(`color = $${paramIndex++}`);
     values.push(input.color);
+  }
+  if (input.session_id !== undefined) {
+    fields.push(`session_id = $${paramIndex++}`);
+    values.push(input.session_id);
   }
 
   if (fields.length === 0) return;

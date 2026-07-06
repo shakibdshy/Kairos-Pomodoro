@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import {
   BACKUP_APP_ID,
   BACKUP_FORMAT_VERSION,
+  BACKUP_SCHEMA_VERSION,
   exportBackup,
   importBackup,
   resolveValue,
@@ -21,6 +22,11 @@ describe("backup constants", () => {
   it("exposes a numeric format version", () => {
     expect(typeof BACKUP_FORMAT_VERSION).toBe("number");
     expect(BACKUP_FORMAT_VERSION).toBeGreaterThan(0);
+  });
+
+  it("exposes the current schema version", () => {
+    // Must stay in sync with the targetVersion in schema.ts.
+    expect(BACKUP_SCHEMA_VERSION).toBe(4);
   });
 });
 
@@ -44,7 +50,7 @@ describe("BackupFile shape contract", () => {
       app: BACKUP_APP_ID,
       formatVersion: BACKUP_FORMAT_VERSION,
       exportedAt: new Date().toISOString(),
-      schemaVersion: 3,
+      schemaVersion: BACKUP_SCHEMA_VERSION,
       data: {
         categories: [{ id: 1, name: "Deep Work", color: "#c2652a", created_at: "2024-01-01" }],
         tasks: [],
