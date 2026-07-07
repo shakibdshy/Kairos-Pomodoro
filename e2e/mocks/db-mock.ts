@@ -54,8 +54,12 @@ function applyWhereFilters(rows: Row[], sql: string, up: string, params: unknown
   if (up.includes("DATE(STARTED_AT)")) {
     const rowDate = (r: Row) => String(r.started_at ?? "").slice(0, 10);
     if (up.includes("DATE('NOW'")) {
-      // today: date(started_at) = date('now', ...)
-      result = result.filter((r) => rowDate(r) === new Date().toISOString().slice(0, 10));
+      // today: date(started_at) = date('now', 'localtime'). Production uses the
+      // 'localtime' modifier, so compute "today" from local (not UTC) components —
+      // toISOString() would shift the day bucket near midnight UTC and mismatch.
+      const now = new Date();
+      const localToday = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+      result = result.filter((r) => rowDate(r) === localToday);
     } else {
       // range: date(started_at) >= $1 AND date(started_at) <= $2
       const dates = params.map(String);
