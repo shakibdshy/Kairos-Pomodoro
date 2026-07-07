@@ -91,6 +91,26 @@ describe("resolveValue (restore NULL handling)", () => {
     expect(resolveValue("categories", "color", undefined)).toBe("#c2652a");
   });
 
+  it("has no configured NOT NULL defaults for time_blocks", () => {
+    // time_blocks is not in COLUMN_DEFAULTS, so every NULL/undefined cell
+    // resolves to null. The table has no NOT NULL columns with app-supplied
+    // defaults in the backup path; assert that contract so a future schema
+    // change adding one is caught here.
+    expect(resolveValue("time_blocks", "title", null)).toBeNull();
+    expect(resolveValue("time_blocks", "task_id", undefined)).toBeNull();
+    expect(resolveValue("time_blocks", "completed", null)).toBeNull();
+    expect(resolveValue("time_blocks", "session_id", undefined)).toBeNull();
+    // Present values pass through unchanged.
+    expect(resolveValue("time_blocks", "completed", 1)).toBe(1);
+  });
+
+  it("has no configured NOT NULL defaults for journal_entries", () => {
+    expect(resolveValue("journal_entries", "date", null)).toBeNull();
+    expect(resolveValue("journal_entries", "content", undefined)).toBeNull();
+    expect(resolveValue("journal_entries", "updated_at", null)).toBeNull();
+    expect(resolveValue("journal_entries", "content", "dear diary")).toBe("dear diary");
+  });
+
   it("falls back to null for columns with no configured default", () => {
     expect(resolveValue("tasks", "project", null)).toBeNull();
     expect(resolveValue("tasks", "priority", undefined)).toBeNull();

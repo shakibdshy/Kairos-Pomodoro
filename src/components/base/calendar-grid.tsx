@@ -298,6 +298,11 @@ function CalendarDesktopView({
   currentTimePos, todayIdx, desktopGridTotalHeight, sessions,
   onCreateBlock, onEditBlock, onDeleteBlock, onStartFocusFromBlock,
 }: CalendarDesktopViewProps) {
+  // Week has planned blocks if any day's layout positioned any. Kept in sync
+  // with the `positionedBlocks` rendering below so the empty-state only shows
+  // when both sessions and blocks are absent.
+  const hasBlocks = allDayLayouts.some((l) => l.positionedBlocks.length > 0);
+
   return (
     <div className="hidden md:flex flex-col flex-1 min-h-0">
       <div className="grid border-b border-sahara-border/30" style={{ gridTemplateColumns: `64px repeat(${weekDays.length}, 1fr)` }}>
@@ -377,7 +382,7 @@ function CalendarDesktopView({
           })}
         </div>
 
-        {sessions.length === 0 && (
+        {sessions.length === 0 && !hasBlocks && (
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
             <div className="text-center opacity-30">
               <p className="text-xs font-semibold text-sahara-text-muted uppercase tracking-wider">No sessions this week</p>

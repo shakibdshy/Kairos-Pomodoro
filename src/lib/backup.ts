@@ -261,8 +261,12 @@ export async function importBackup(): Promise<BackupResult> {
     // write lock immediately, so no lock is held across the multi-second
     // import. That also REDUCES contention with polling vs. a long-held
     // transaction. Per-statement retry handles momentary SQLITE_BUSY.
+    //
+    // We deliberately do NOT toggle PRAGMA foreign_keys here. The restore wipes
+    // in reverse dependency order and inserts in forward order, so FK refs are
+    // always satisfied. Toggling the pragma would change global connection
+    // state for unrelated concurrent operations on this shared connection.
     await db.execute("PRAGMA busy_timeout = 15000").catch(() => {});
-    await db.execute("PRAGMA foreign_keys = OFF").catch(() => {});
 
     const isBusyError = (e: unknown) =>
       /database is locked|SQLITE_BUSY|code: 5/i.test(String((e as Error)?.message ?? e));
@@ -280,83 +284,87 @@ export async function importBackup(): Promise<BackupResult> {
       }
     };
 
-    try {
-      // Wipe (reverse dependency order so FK refs clear cleanly).
-      for (const table of [...TABLES].reverse()) {
+    // Wipe (reverse dependency order so FK refs clear cleanly).
+    for (const table of [...TABLES].reverse()) {
+      try {
+        await execWithRetry(`DELETE FROM ${table}`);
+      } catch (e) {
+        const msg = (e as Error)?.message ?? "";
+        if (!msg.toLowerCase().includes("no such table")) throw e;
+        // table may not exist pre-migration; ignore
+      }
+    }
+
+    // Re-insert (forward dependency order).
+    for (const table of TABLES) {
+      const rows = payload.data[table] ?? [];
+      counts[table] = 0;
+      if (rows.length === 0) continue;
+
+      const allowedCols = TABLE_COLUMNS[table] ?? [];
+      const validRows = rows.filter((row) => {
+        const cols = Object.keys(row).filter((c) => allowedCols.includes(c));
+        return cols.length > 0;
+      });
+      if (validRows.length === 0) continue;
+
+      // Union of allowed columns across ALL valid rows. Deriving from the first
+      // row only would drop a column whenever a later row has it but the first
+      // doesn't (sparse backups), silently losing data and/or causing per-row
+      // inserts to omit required columns.
+      const colsSet = new Set<string>();
+      for (const row of validRows) {
+        for (const c of Object.keys(row)) {
+          if (allowedCols.includes(c)) colsSet.add(c);
+        }
+      }
+      const cols = Array.from(colsSet);
+
+      const BATCH_SIZE = 500;
+      for (let i = 0; i < validRows.length; i += BATCH_SIZE) {
+        const batch = validRows.slice(i, i + BATCH_SIZE);
+        const allValues: unknown[] = [];
+        const rowPlaceholders: string[] = [];
+        let paramIndex = 1;
+
+        for (const row of batch) {
+          const placeholders = cols.map(() => `$${paramIndex++}`);
+          rowPlaceholders.push(`(${placeholders.join(", ")})`);
+          for (const col of cols) {
+            allValues.push(resolveValue(table, col, (row as Record<string, unknown>)[col]));
+          }
+        }
+
         try {
-          await execWithRetry(`DELETE FROM ${table}`);
+          await execWithRetry(
+            `INSERT INTO ${table} (${cols.join(", ")}) VALUES ${rowPlaceholders.join(", ")}`,
+            allValues,
+          );
+          counts[table] += batch.length;
         } catch (e) {
-          const msg = (e as Error)?.message ?? "";
-          if (!msg.toLowerCase().includes("no such table")) throw e;
-          // table may not exist pre-migration; ignore
-        }
-      }
-
-      // Re-insert (forward dependency order).
-      for (const table of TABLES) {
-        const rows = payload.data[table] ?? [];
-        counts[table] = 0;
-        if (rows.length === 0) continue;
-
-        const allowedCols = TABLE_COLUMNS[table] ?? [];
-        const validRows = rows.filter((row) => {
-          const cols = Object.keys(row).filter((c) => allowedCols.includes(c));
-          return cols.length > 0;
-        });
-        if (validRows.length === 0) continue;
-
-        // Common columns from the first valid row.
-        const cols = Object.keys(validRows[0]).filter((c) => allowedCols.includes(c));
-
-        const BATCH_SIZE = 500;
-        for (let i = 0; i < validRows.length; i += BATCH_SIZE) {
-          const batch = validRows.slice(i, i + BATCH_SIZE);
-          const allValues: unknown[] = [];
-          const rowPlaceholders: string[] = [];
-          let paramIndex = 1;
-
+          // Batch failed — fall back to one-by-one so a single bad row
+          // doesn't abort the whole table.
+          console.warn(
+            `[backup] Batch insert for ${table} failed, trying one-by-one`,
+            (e as Error)?.message,
+          );
           for (const row of batch) {
-            const placeholders = cols.map(() => `$${paramIndex++}`);
-            rowPlaceholders.push(`(${placeholders.join(", ")})`);
-            for (const col of cols) {
-              allValues.push(resolveValue(table, col, (row as Record<string, unknown>)[col]));
-            }
-          }
-
-          try {
-            await execWithRetry(
-              `INSERT INTO ${table} (${cols.join(", ")}) VALUES ${rowPlaceholders.join(", ")}`,
-              allValues,
-            );
-            counts[table] += batch.length;
-          } catch (e) {
-            // Batch failed — fall back to one-by-one so a single bad row
-            // doesn't abort the whole table.
-            console.warn(
-              `[backup] Batch insert for ${table} failed, trying one-by-one`,
-              (e as Error)?.message,
-            );
-            for (const row of batch) {
-              try {
-                const singlePlaceholders = cols.map((_, idx) => `$${idx + 1}`);
-                const singleValues = cols.map((col) =>
-                  resolveValue(table, col, (row as Record<string, unknown>)[col]),
-                );
-                await execWithRetry(
-                  `INSERT INTO ${table} (${cols.join(", ")}) VALUES (${singlePlaceholders.join(", ")})`,
-                  singleValues,
-                );
-                counts[table]++;
-              } catch (singleErr) {
-                console.warn(`[backup] Skipped ${table} row:`, (singleErr as Error)?.message);
-              }
+            try {
+              const singlePlaceholders = cols.map((_, idx) => `$${idx + 1}`);
+              const singleValues = cols.map((col) =>
+                resolveValue(table, col, (row as Record<string, unknown>)[col]),
+              );
+              await execWithRetry(
+                `INSERT INTO ${table} (${cols.join(", ")}) VALUES (${singlePlaceholders.join(", ")})`,
+                singleValues,
+              );
+              counts[table]++;
+            } catch (singleErr) {
+              console.warn(`[backup] Skipped ${table} row:`, (singleErr as Error)?.message);
             }
           }
         }
       }
-    } finally {
-      // Restore FK enforcement regardless of outcome.
-      await db.execute("PRAGMA foreign_keys = ON").catch(() => {});
     }
 
     return { ok: true, path: filePath, counts };
