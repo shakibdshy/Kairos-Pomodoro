@@ -257,7 +257,7 @@ function UpdatesSectionInner({
 }: {
   update: NonNullable<ReturnType<typeof useUpdate>>;
 }) {
-  const { status, currentVersion, installError, checkForUpdate } = update;
+  const { status, currentVersion, installError, installedPendingRestart, checkForUpdate } = update;
   const checking = status.kind === "checking";
 
   const statusText =
@@ -341,6 +341,15 @@ function UpdatesSectionInner({
             title={installError}
           >
             Last install failed: {installError}
+          </p>
+        </div>
+      )}
+
+      {installedPendingRestart && (
+        <div className="mt-3 flex items-start gap-2 p-2.5 bg-emerald-500/10 border border-emerald-500/20 rounded-xl">
+          <CheckCircle2 className="size-3.5 text-emerald-400 shrink-0 mt-0.5" />
+          <p className="text-[11px] text-emerald-400 leading-relaxed">
+            Update installed successfully. Quit and reopen the app to finish.
           </p>
         </div>
       )}
