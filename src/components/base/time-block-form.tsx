@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { ModalOverlay } from "@/components/ui/modal-overlay";
 import { Button } from "@/components/ui/button";
 import { useCategoriesStore } from "@/features/categories/use-categories-store";
@@ -83,6 +83,16 @@ export function TimeBlockForm({
       setCategoryId("");
     }
   }, [open, block, defaultDate, defaultHour, loadCategories]);
+
+  // Active tasks only, but keep the currently-selected task in the list even if
+  // it is now completed (so editing an old block doesn't drop its linked task).
+  const selectableTasks = useMemo(
+    () =>
+      tasks.filter(
+        (t) => t.completed_pomos < t.estimated_pomos || t.id === Number(taskId),
+      ),
+    [tasks, taskId],
+  );
 
   const handleSubmit = async () => {
     if (!start || !end) return;
@@ -175,7 +185,7 @@ export function TimeBlockForm({
         </div>
 
         {/* Task link */}
-        {tasks.length > 0 && (
+        {selectableTasks.length > 0 && (
           <div>
             <label className="text-[10px] font-bold text-sahara-text-muted uppercase tracking-widest">
               Task (optional)
@@ -186,7 +196,7 @@ export function TimeBlockForm({
               className="w-full mt-2 px-4 py-3 bg-sahara-bg/40 border border-sahara-border/20 rounded-xl text-sm text-sahara-text focus:outline-none focus:border-sahara-primary/50 focus:ring-2 focus:ring-sahara-primary/10 transition-all appearance-none cursor-pointer"
             >
               <option value="">None</option>
-              {tasks.map((t) => (
+              {selectableTasks.map((t) => (
                 <option key={t.id} value={t.id}>
                   {t.name}
                 </option>
