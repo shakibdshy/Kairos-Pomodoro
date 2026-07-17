@@ -257,7 +257,7 @@ function UpdatesSectionInner({
 }: {
   update: NonNullable<ReturnType<typeof useUpdate>>;
 }) {
-  const { status, checkForUpdate } = update;
+  const { status, currentVersion, installError, checkForUpdate } = update;
   const checking = status.kind === "checking";
 
   const statusText =
@@ -268,7 +268,7 @@ function UpdatesSectionInner({
         : status.kind === "available"
           ? `v${status.update.version} is available.`
           : status.kind === "error"
-            ? "Check failed — see console for details."
+            ? status.message || "Check failed."
             : "";
 
   const StatusIcon =
@@ -297,12 +297,25 @@ function UpdatesSectionInner({
       <p className="text-xs text-sahara-text-muted mb-4">
         Kairos checks for updates automatically on launch and every 24 hours. You can also check manually.
       </p>
+
+      {currentVersion && (
+        <div className="flex items-center gap-2 mb-3 text-[11px] text-sahara-text-muted">
+          <span className="uppercase tracking-wider">Current version:</span>
+          <span className="font-bold text-sahara-text-secondary tabular-nums">
+            v{currentVersion}
+          </span>
+        </div>
+      )}
+
       <div className="flex items-center justify-between gap-3 py-2">
         <div className="flex items-center gap-2.5 flex-1 min-w-0">
           <StatusIcon
             className={cn("size-4 shrink-0", statusTone, checking && "animate-spin")}
           />
-          <span className="text-xs text-sahara-text-secondary truncate">
+          <span
+            className="text-xs text-sahara-text-secondary truncate"
+            title={statusText}
+          >
             {statusText}
           </span>
         </div>
@@ -319,6 +332,18 @@ function UpdatesSectionInner({
           {checking ? "Checking…" : "Check for Updates"}
         </Button>
       </div>
+
+      {installError && (
+        <div className="mt-3 flex items-start gap-2 p-2.5 bg-red-500/10 border border-red-500/20 rounded-xl">
+          <AlertCircle className="size-3.5 text-red-400 shrink-0 mt-0.5" />
+          <p
+            className="text-[11px] text-red-400 leading-relaxed break-words"
+            title={installError}
+          >
+            Last install failed: {installError}
+          </p>
+        </div>
+      )}
     </div>
   );
 }

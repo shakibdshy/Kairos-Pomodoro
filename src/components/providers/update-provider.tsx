@@ -30,6 +30,10 @@ export type UpdateCheckStatus =
 interface UpdateContextValue {
   /** Current status of the update check (idle / checking / up-to-date / available / error). */
   status: UpdateCheckStatus;
+  /** The running app's version (from package.json via Tauri). Null outside Tauri. */
+  currentVersion: string | null;
+  /** Error from the last install attempt, if any. Cleared on a new install attempt. */
+  installError: string | null;
   /** Manually trigger an update check. Returns true if an update is available. */
   checkForUpdate: () => Promise<boolean>;
   /** Install the pending update, if any. */
@@ -49,10 +53,22 @@ export function useUpdate(): UpdateContextValue | null {
 export function UpdateProvider({ children }: UpdateProviderProps) {
   const [pendingUpdate, setPendingUpdate] = useState<Update | null>(null);
   const [status, setStatus] = useState<UpdateCheckStatus>({ kind: "idle" });
+  const [currentVersion, setCurrentVersion] = useState<string | null>(null);
   const [downloading, setDownloading] = useState(false);
   const [installError, setInstallError] = useState<string | null>(null);
   const dismissedRef = useRef(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // Read the running app's version (sourced from package.json via Tauri at
+  // build time). Used to show "Current version: vX.Y.Z" in Settings so users
+  // can see what they're running — essential for making sense of update state.
+  useEffect(() => {
+    if (!isTauri()) return;
+    import("@tauri-apps/api/app")
+      .then(({ getVersion }) => getVersion())
+      .then(setCurrentVersion)
+      .catch((err) => console.error("[UpdateProvider] getVersion failed:", err));
+  }, []);
 
   const checkForUpdate = useCallback(async (): Promise<boolean> => {
     setStatus({ kind: "checking" });
@@ -136,6 +152,8 @@ export function UpdateProvider({ children }: UpdateProviderProps) {
 
   const value: UpdateContextValue = {
     status,
+    currentVersion,
+    installError,
     checkForUpdate,
     installUpdate,
   };
