@@ -2,8 +2,9 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/cn";
-import { Moon, Sun, Monitor, Circle, Activity } from "lucide-react";
+import { Moon, Sun, Monitor, Circle, Activity, RefreshCw, CheckCircle2, AlertCircle, Download } from "lucide-react";
 import type { ThemeMode, ThemePreset } from "@/features/settings/settings-types";
+import { useUpdate } from "@/components/providers/update-provider";
 
 const THEME_OPTIONS: { id: ThemeMode; label: string; icon: typeof Sun }[] = [
   { id: "light", label: "Light", icon: Sun },
@@ -238,6 +239,86 @@ export function SettingsGeneralSection({
           </div>
         ))}
       </div>
+
+      <UpdatesSection />
     </section>
+  );
+}
+
+/** Manual update-check trigger + status. No-op outside the UpdateProvider (tests/dev). */
+function UpdatesSection() {
+  const update = useUpdate();
+  if (!update) return null;
+  return <UpdatesSectionInner update={update} />;
+}
+
+function UpdatesSectionInner({
+  update,
+}: {
+  update: NonNullable<ReturnType<typeof useUpdate>>;
+}) {
+  const { status, checkForUpdate } = update;
+  const checking = status.kind === "checking";
+
+  const statusText =
+    status.kind === "checking"
+      ? "Checking…"
+      : status.kind === "up-to-date"
+        ? "You're on the latest version."
+        : status.kind === "available"
+          ? `v${status.update.version} is available.`
+          : status.kind === "error"
+            ? "Check failed — see console for details."
+            : "";
+
+  const StatusIcon =
+    status.kind === "up-to-date"
+      ? CheckCircle2
+      : status.kind === "available"
+        ? Download
+        : status.kind === "error"
+          ? AlertCircle
+          : RefreshCw;
+
+  const statusTone =
+    status.kind === "up-to-date"
+      ? "text-emerald-400"
+      : status.kind === "available"
+        ? "text-sahara-primary"
+        : status.kind === "error"
+          ? "text-red-400"
+          : "text-sahara-text-muted";
+
+  return (
+    <div className="mt-12">
+      <h3 className="font-serif text-xl md:text-2xl text-sahara-text mb-2 md:mb-3">
+        Updates
+      </h3>
+      <p className="text-xs text-sahara-text-muted mb-4">
+        Kairos checks for updates automatically on launch and every 24 hours. You can also check manually.
+      </p>
+      <div className="flex items-center justify-between gap-3 py-2">
+        <div className="flex items-center gap-2.5 flex-1 min-w-0">
+          <StatusIcon
+            className={cn("size-4 shrink-0", statusTone, checking && "animate-spin")}
+          />
+          <span className="text-xs text-sahara-text-secondary truncate">
+            {statusText}
+          </span>
+        </div>
+        <Button
+          variant="outline"
+          intent="default"
+          size="sm"
+          shape="rounded-xl"
+          onClick={() => void checkForUpdate()}
+          disabled={checking}
+          className="text-[10px] gap-1.5 shrink-0"
+        >
+          <RefreshCw className={cn("size-3", checking && "animate-spin")} />
+          {checking ? "Checking…" : "Check for Updates"}
+        </Button>
+      </div>
+    </div>
   );
 }
