@@ -91,6 +91,8 @@ export function AddTaskModal({
   // The lazy initializer above runs only on first mount, but this component is
   // mounted once by the parent and toggled via `open`, so we must re-seed here
   // whenever we transition into an open state — otherwise editing shows blanks.
+  // Key on `editTask?.id`, not the object: a new reference for the *same* task
+  // (e.g. a background store refetch) must not blow away in-progress edits.
   useEffect(() => {
     if (!open) return;
     if (editTask) {
@@ -107,7 +109,7 @@ export function AddTaskModal({
     } else {
       dispatch({ type: "RESET" });
     }
-  }, [open, editTask]);
+  }, [open, editTask?.id]);
 
   const handleOverlayKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
