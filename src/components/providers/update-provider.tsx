@@ -10,7 +10,7 @@ import {
 import type { Update } from "@tauri-apps/plugin-updater";
 import { relaunch } from "@tauri-apps/plugin-process";
 import { isTauri } from "@/lib/tauri";
-import { X, Download, AlertCircle } from "lucide-react";
+import { X, Download, AlertCircle, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const RECHECK_INTERVAL_MS = 24 * 60 * 60 * 1000;
@@ -34,6 +34,8 @@ interface UpdateContextValue {
   currentVersion: string | null;
   /** Error from the last install attempt, if any. Cleared on a new install attempt. */
   installError: string | null;
+  /** True when the new version was installed successfully but the app still needs a restart. */
+  installedPendingRestart: boolean;
   /** Manually trigger an update check. Returns true if an update is available. */
   checkForUpdate: () => Promise<boolean>;
   /** Install the pending update, if any. */
@@ -56,6 +58,7 @@ export function UpdateProvider({ children }: UpdateProviderProps) {
   const [currentVersion, setCurrentVersion] = useState<string | null>(null);
   const [downloading, setDownloading] = useState(false);
   const [installError, setInstallError] = useState<string | null>(null);
+  const [installedPendingRestart, setInstalledPendingRestart] = useState(false);
   const dismissedRef = useRef(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -101,6 +104,10 @@ export function UpdateProvider({ children }: UpdateProviderProps) {
     if (!pendingUpdate) return;
     setDownloading(true);
     setInstallError(null);
+    setInstalledPendingRestart(false);
+
+    // Step 1: download + install. If this fails, it's a genuine failure and
+    // the user should retry / download manually.
     try {
       await pendingUpdate.downloadAndInstall((event) => {
         switch (event.event) {
@@ -114,11 +121,25 @@ export function UpdateProvider({ children }: UpdateProviderProps) {
             break;
         }
       });
-
-      await relaunch();
     } catch (err) {
       console.error("[UpdateProvider] Install failed:", err);
       setInstallError(String(err));
+      setDownloading(false);
+      return;
+    }
+
+    // Step 2: relaunch. By this point the new version is already on disk —
+    // if relaunch throws (common on macOS after the binary was swapped), the
+    // update still succeeded; we just need the user to restart manually.
+    // Previously this shared the same try/catch as the install, so a relaunch
+    // failure surfaced as "Update failed" even though the update had worked.
+    try {
+      await relaunch();
+    } catch (err) {
+      console.error("[UpdateProvider] Relaunch failed (update already installed):", err);
+      setInstalledPendingRestart(true);
+      setPendingUpdate(null);
+      setStatus({ kind: "idle" });
       setDownloading(false);
     }
   }, [pendingUpdate]);
@@ -154,6 +175,7 @@ export function UpdateProvider({ children }: UpdateProviderProps) {
     status,
     currentVersion,
     installError,
+    installedPendingRestart,
     checkForUpdate,
     installUpdate,
   };
@@ -233,6 +255,38 @@ export function UpdateProvider({ children }: UpdateProviderProps) {
             <p className="text-[9px] text-sahara-text-muted text-center">
               App will restart after installation
             </p>
+          </div>
+        </div>
+      )}
+
+      {/* Update installed successfully but the app couldn't auto-restart (common
+          on macOS after the binary was swapped). Tell the user to restart
+          manually — NOT an error, the update worked. */}
+      {installedPendingRestart && !showBanner && (
+        <div className="fixed bottom-4 right-4 z-200 max-w-sm animate-in slide-in-from-right-4 fade-in duration-300">
+          <div className="bg-sahara-surface border border-emerald-500/30 rounded-2xl shadow-xl p-5 space-y-3">
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex items-center gap-2.5">
+                <div className="size-8 rounded-full bg-emerald-500/15 flex items-center justify-center">
+                  <CheckCircle2 className="size-4 text-emerald-400" />
+                </div>
+                <div>
+                  <p className="text-sm font-bold text-sahara-text">
+                    Update Installed
+                  </p>
+                  <p className="text-[11px] text-sahara-text-muted">
+                    Please restart the app to finish.
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setInstalledPendingRestart(false)}
+                aria-label="Dismiss"
+                className="p-1 rounded-lg text-sahara-text-muted hover:text-sahara-text hover:bg-sahara-card transition-colors cursor-pointer"
+              >
+                <X className="size-4" />
+              </button>
+            </div>
           </div>
         </div>
       )}
