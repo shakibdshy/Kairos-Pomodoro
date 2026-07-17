@@ -37,7 +37,7 @@ export function SettingsSidebar({
               activeTab === tab.id ? "text-sahara-on-primary" : "",
             )}
           />
-          <span className="text-[10px] tracking-widest font-bold uppercase leading-none">
+          <span className="text-[10px] tracking-widest font-bold uppercase leading-none whitespace-nowrap">
             {tab.label}
           </span>
         </button>
