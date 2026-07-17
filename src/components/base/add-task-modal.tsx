@@ -87,6 +87,28 @@ export function AddTaskModal({
     return () => window.removeEventListener("app:escape", onCloseEvent);
   }, [open]);
 
+  // Seed form state whenever the modal opens (or editTask changes while open).
+  // The lazy initializer above runs only on first mount, but this component is
+  // mounted once by the parent and toggled via `open`, so we must re-seed here
+  // whenever we transition into an open state — otherwise editing shows blanks.
+  useEffect(() => {
+    if (!open) return;
+    if (editTask) {
+      dispatch({
+        type: "SET_ALL",
+        payload: {
+          name: editTask.name,
+          estimatedPomos: editTask.estimated_pomos,
+          project: editTask.project || "",
+          priority: editTask.priority || "",
+          categoryId: editTask.category_id ?? null,
+        },
+      });
+    } else {
+      dispatch({ type: "RESET" });
+    }
+  }, [open, editTask]);
+
   const handleOverlayKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
       if (e.key === "Enter" || e.key === " ") {
