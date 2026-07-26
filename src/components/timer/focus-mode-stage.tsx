@@ -28,6 +28,9 @@ const STAGE_TRANSITION = {
   mass: 0.85,
 };
 
+const FULLSCREEN_VERTICAL_LIFT_RATIO = 0.05;
+const FULLSCREEN_VERTICAL_LIFT_MAX = 64;
+
 export function FocusModeStage({
   boundaryRef,
   isFullscreenFocus,
@@ -47,9 +50,14 @@ export function FocusModeStage({
 
     const boundaryRect = boundary.getBoundingClientRect();
     const stageRect = stage.getBoundingClientRect();
+    const fullscreenVerticalLift = Math.min(
+      FULLSCREEN_VERTICAL_LIFT_MAX,
+      boundaryRect.height * FULLSCREEN_VERTICAL_LIFT_RATIO,
+    );
     const targetY = isFullscreenFocus
       ? boundaryRect.top + boundaryRect.height / 2 -
-        (stageRect.top + stageRect.height / 2)
+        (stageRect.top + stageRect.height / 2) -
+        fullscreenVerticalLift
       : 0;
 
     animationRef.current?.stop();
