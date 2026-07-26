@@ -1,5 +1,12 @@
 import { getDb } from "./schema";
-import type { CategoryBreakdown, DayData, MoodStat, SessionNoteEntry, CompletedTaskEntry } from "./types";
+import type {
+  CategoryAnalytics,
+  CategoryBreakdown,
+  DayData,
+  MoodStat,
+  SessionNoteEntry,
+  CompletedTaskEntry,
+} from "./types";
 import { computeDailyScore } from "@/lib/productivity-score";
 
 export async function getCategoryBreakdown(
@@ -11,15 +18,16 @@ export async function getCategoryBreakdown(
     return database.select<CategoryBreakdown[]>(
       `SELECT
         s.category_id,
-        s.intention,
+        NULL AS intention,
         c.name AS category_name,
         c.color AS category_color,
         COALESCE(SUM(s.duration_sec), 0) AS total_seconds,
         COUNT(*) AS session_count
       FROM sessions s
       LEFT JOIN categories c ON s.category_id = c.id
-      WHERE date(s.started_at) >= $1 AND date(s.started_at) <= $2 AND s.completed = 1
-      GROUP BY s.category_id, s.intention, c.name, c.color
+      WHERE date(s.started_at) >= $1 AND date(s.started_at) <= $2
+        AND s.completed = 1 AND s.phase = 'work'
+      GROUP BY s.category_id, c.name, c.color
       ORDER BY total_seconds DESC`,
       [startDate, endDate],
     );
@@ -27,15 +35,16 @@ export async function getCategoryBreakdown(
   return database.select<CategoryBreakdown[]>(`
     SELECT
       s.category_id,
-      s.intention,
+      NULL AS intention,
       c.name AS category_name,
       c.color AS category_color,
       COALESCE(SUM(s.duration_sec), 0) AS total_seconds,
       COUNT(*) AS session_count
     FROM sessions s
     LEFT JOIN categories c ON s.category_id = c.id
-    WHERE date(s.started_at) = date('now', 'localtime') AND s.completed = 1
-    GROUP BY s.category_id, s.intention, c.name, c.color
+    WHERE date(s.started_at) = date('now', 'localtime')
+      AND s.completed = 1 AND s.phase = 'work'
+    GROUP BY s.category_id, c.name, c.color
     ORDER BY total_seconds DESC
   `);
 }
@@ -45,15 +54,15 @@ export async function getAllCategoryBreakdown(): Promise<CategoryBreakdown[]> {
   return database.select<CategoryBreakdown[]>(`
     SELECT
       s.category_id,
-      s.intention,
+      NULL AS intention,
       c.name AS category_name,
       c.color AS category_color,
       COALESCE(SUM(s.duration_sec), 0) AS total_seconds,
       COUNT(*) AS session_count
     FROM sessions s
     LEFT JOIN categories c ON s.category_id = c.id
-    WHERE s.completed = 1
-    GROUP BY s.category_id, s.intention, c.name, c.color
+    WHERE s.completed = 1 AND s.phase = 'work'
+    GROUP BY s.category_id, c.name, c.color
     ORDER BY total_seconds DESC
   `);
 }
@@ -74,7 +83,8 @@ export async function getWeeklyData(
       COALESCE(SUM(duration_sec), 0) AS total_seconds,
       COUNT(*) AS session_count
     FROM sessions
-    WHERE date(started_at) >= $1 AND date(started_at) <= $2 AND completed = 1
+    WHERE date(started_at) >= $1 AND date(started_at) <= $2
+      AND completed = 1 AND phase = 'work'
     GROUP BY date(started_at)
     ORDER BY date(started_at) ASC`;
   return database.select<DayData[]>(query, [startDate ?? "", endDate ?? ""]);
@@ -100,8 +110,8 @@ export async function getAllTimeStats(): Promise<{
     }[]
   >(`
     SELECT
-      COALESCE(SUM(CASE WHEN phase = 'work' THEN duration_sec ELSE 0 END), 0) AS total_focus_seconds,
-      COALESCE(SUM(CASE WHEN completed = 1 THEN 1 ELSE 0 END), 0) AS total_sessions,
+      COALESCE(SUM(CASE WHEN phase = 'work' AND completed = 1 THEN duration_sec ELSE 0 END), 0) AS total_focus_seconds,
+      COALESCE(SUM(CASE WHEN phase = 'work' AND completed = 1 THEN 1 ELSE 0 END), 0) AS total_sessions,
       COALESCE(AVG(CASE WHEN phase = 'work' AND completed = 1 THEN duration_sec END), 0) AS avg_session_seconds,
       COALESCE(MAX(CASE WHEN phase = 'work' AND completed = 1 THEN duration_sec END), 0) AS longest_session_seconds,
       COALESCE(SUM(CASE WHEN phase != 'work' AND completed = 1 THEN duration_sec ELSE 0 END), 0) AS total_break_seconds,
@@ -123,10 +133,10 @@ export async function getAllTimeStats(): Promise<{
 export async function getCurrentStreak(): Promise<number> {
   const database = await getDb();
   const rows = await database.select<{ days: string }[]>(
-    "SELECT DISTINCT date(started_at) as days FROM sessions WHERE completed = 1 ORDER BY days DESC",
+    "SELECT DISTINCT date(started_at) as days FROM sessions WHERE completed = 1 AND phase = 'work' ORDER BY days DESC",
   );
   if (rows.length === 0) return 0;
-  const today = new Date().toISOString().split("T")[0];
+  const today = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, "0")}-${String(new Date().getDate()).padStart(2, "0")}`;
   let streak = 0;
   for (const row of rows) {
     const [ay, am, ad] = today.split("-").map(Number);
@@ -148,7 +158,7 @@ export async function getCurrentStreak(): Promise<number> {
 export async function getBestStreak(): Promise<number> {
   const database = await getDb();
   const rows = await database.select<{ days: string }[]>(
-    "SELECT DISTINCT date(started_at) as days FROM sessions WHERE completed = 1 ORDER BY days ASC",
+    "SELECT DISTINCT date(started_at) as days FROM sessions WHERE completed = 1 AND phase = 'work' ORDER BY days ASC",
   );
   if (rows.length === 0) return 0;
   let bestStreak = 1;
@@ -169,6 +179,116 @@ export async function getBestStreak(): Promise<number> {
     }
   }
   return bestStreak;
+}
+
+export interface AchievementProgress {
+  currentStreak: number;
+  bestStreak: number;
+  earlyBird: boolean;
+  marathon: boolean;
+  qualifyingMonths: number;
+}
+
+export async function getAchievementProgress(): Promise<AchievementProgress> {
+  const database = await getDb();
+  const [currentStreak, bestStreak, earlyBirdRows, marathonRows, monthRows] =
+    await Promise.all([
+      getCurrentStreak(),
+      getBestStreak(),
+      database.select<{ count: number }[]>(
+        `SELECT COUNT(*) AS count FROM sessions
+         WHERE completed = 1 AND phase = 'work'
+           AND CAST(strftime('%H', started_at) AS INTEGER) < 7`,
+      ),
+      database.select<{ count: number }[]>(
+        `SELECT COUNT(*) AS count FROM (
+           SELECT date(started_at) AS day, COUNT(*) AS sessions
+           FROM sessions
+           WHERE completed = 1 AND phase = 'work'
+           GROUP BY date(started_at)
+           HAVING sessions >= 4
+         )`,
+      ),
+      database.select<{ month: string }[]>(
+        `SELECT strftime('%Y-%m', started_at) AS month
+         FROM sessions
+         WHERE completed = 1 AND phase = 'work'
+         GROUP BY strftime('%Y-%m', started_at)
+         HAVING COUNT(*) >= 10`,
+      ),
+    ]);
+
+  return {
+    currentStreak,
+    bestStreak,
+    earlyBird: (earlyBirdRows[0]?.count ?? 0) > 0,
+    marathon: (marathonRows[0]?.count ?? 0) > 0,
+    qualifyingMonths: monthRows.length,
+  };
+}
+
+export async function getCategoryAnalytics(
+  startDate?: string,
+  endDate?: string,
+): Promise<CategoryAnalytics[]> {
+  const database = await getDb();
+  const hasRange = Boolean(startDate && endDate);
+  const rangeClause = hasRange
+    ? "AND date(s.started_at) >= $1 AND date(s.started_at) <= $2"
+    : "";
+  const params = hasRange ? [startDate!, endDate!] : [];
+  const rows = await database.select<
+    {
+      category_id: number | null;
+      category_name: string | null;
+      category_color: string | null;
+      total_focus_seconds: number;
+      session_count: number;
+      avg_session_seconds: number;
+      active_days: number;
+    }[]
+  >(
+    `SELECT
+       s.category_id,
+       COALESCE(c.name, 'Uncategorized') AS category_name,
+       COALESCE(c.color, '#94a3b8') AS category_color,
+       COALESCE(SUM(s.duration_sec), 0) AS total_focus_seconds,
+       COUNT(*) AS session_count,
+       COALESCE(AVG(s.duration_sec), 0) AS avg_session_seconds,
+       COUNT(DISTINCT date(s.started_at)) AS active_days
+     FROM sessions s
+     LEFT JOIN categories c ON s.category_id = c.id
+     WHERE s.completed = 1 AND s.phase = 'work' ${rangeClause}
+     GROUP BY s.category_id, c.name, c.color
+     ORDER BY total_focus_seconds DESC`,
+    params,
+  );
+
+  const totalFocus = rows.reduce((sum, row) => sum + row.total_focus_seconds, 0);
+  const dayCount = hasRange
+    ? Math.max(
+        1,
+        Math.round(
+          (new Date(`${endDate}T00:00:00`).getTime() -
+            new Date(`${startDate}T00:00:00`).getTime()) /
+            86400000,
+        ) + 1,
+      )
+    : undefined;
+
+  return rows.map((row) => ({
+    ...row,
+    category_name: row.category_name ?? "Uncategorized",
+    category_color: row.category_color ?? "#94a3b8",
+    daily_avg_seconds:
+      dayCount !== undefined
+        ? Math.round(row.total_focus_seconds / dayCount)
+        : row.active_days > 0
+          ? Math.round(row.total_focus_seconds / row.active_days)
+          : 0,
+    percentage_of_focus:
+      totalFocus > 0 ? Math.round((row.total_focus_seconds / totalFocus) * 100) : 0,
+  }));
 }
 
 export async function getMoodDistribution(
@@ -311,14 +431,14 @@ export async function getDailyScore(
     }[]
   >(
     `SELECT
-      COALESCE(SUM(CASE WHEN phase = 'work' THEN duration_sec ELSE 0 END), 0) AS focus_seconds,
+      COALESCE(SUM(duration_sec), 0) AS focus_seconds,
       COUNT(*) AS started,
       COALESCE(SUM(CASE WHEN completed = 1 THEN 1 ELSE 0 END), 0) AS completed,
       COALESCE(SUM(CASE WHEN mood = 'focused' THEN 1 ELSE 0 END), 0) AS focused,
       COALESCE(SUM(CASE WHEN mood = 'neutral' THEN 1 ELSE 0 END), 0) AS neutral,
       COALESCE(SUM(CASE WHEN mood = 'distracted' THEN 1 ELSE 0 END), 0) AS distracted
     FROM sessions
-    WHERE ${dayClause}`,
+    WHERE phase = 'work' AND ${dayClause}`,
     day ? [day] : [],
   );
 
@@ -359,27 +479,15 @@ export async function getEarnedBadges(streaks?: {
   currentStreak?: number;
   bestStreak?: number;
 }): Promise<BadgeAward[]> {
-  const database = await getDb();
-
-  const earlyBirdRow = await database.select<{ n: number }[]>(
-    `SELECT COUNT(*) AS n FROM sessions
-     WHERE completed = 1 AND phase = 'work'
-       AND CAST(strftime('%H', started_at) AS INTEGER) < 7`,
-  );
-  const earlyBird = (earlyBirdRow[0]?.n ?? 0) > 0;
-
-  const marathonRow = await database.select<{ n: number }[]>(
-    `SELECT MAX(c) AS n FROM (
-       SELECT date(started_at) AS d, COUNT(*) AS c FROM sessions
-       WHERE completed = 1 AND phase = 'work'
-       GROUP BY date(started_at)
-     )`,
-  );
-  const marathon = (marathonRow[0]?.n ?? 0) >= 4;
-
-  const bestStreak = streaks?.bestStreak ?? await getBestStreak().catch(() => 0);
-  const currentStreak =
-    streaks?.currentStreak ?? await getCurrentStreak().catch(() => 0);
+  const progress = await getAchievementProgress().catch(() => ({
+    currentStreak: 0,
+    bestStreak: 0,
+    earlyBird: false,
+    marathon: false,
+    qualifyingMonths: 0,
+  }));
+  const bestStreak = streaks?.bestStreak ?? progress.bestStreak;
+  const currentStreak = streaks?.currentStreak ?? progress.currentStreak;
   const consistency = Math.max(bestStreak, currentStreak) >= 7;
 
   return [
@@ -387,13 +495,13 @@ export async function getEarnedBadges(streaks?: {
       id: "early_bird",
       title: "Early Bird",
       description: "Complete a focus session before 7 AM",
-      earned: earlyBird,
+      earned: progress.earlyBird,
     },
     {
       id: "marathon",
       title: "Marathon Runner",
       description: "Complete 4+ focus sessions in one day",
-      earned: marathon,
+      earned: progress.marathon,
     },
     {
       id: "consistency",
