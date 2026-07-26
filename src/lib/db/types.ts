@@ -31,6 +31,18 @@ export interface CategoryBreakdown {
   session_count: number;
 }
 
+export interface CategoryAnalytics {
+  category_id: number | null;
+  category_name: string;
+  category_color: string;
+  total_focus_seconds: number;
+  session_count: number;
+  avg_session_seconds: number;
+  active_days: number;
+  daily_avg_seconds: number;
+  percentage_of_focus: number;
+}
+
 export interface DayData {
   date: string;
   day_name: string;

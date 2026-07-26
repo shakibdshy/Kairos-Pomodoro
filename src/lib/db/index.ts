@@ -1,6 +1,6 @@
 export { initDb } from "./schema";
 export { getDb } from "./schema";
-export type { Session, Category, CategoryBreakdown, DayData, WeekSession, WeekSummary, MoodStat, SessionNoteEntry, CompletedTaskEntry, TimeBlock, TimeBlockWithMeta, JournalEntry } from "./types";
+export type { Session, Category, CategoryBreakdown, CategoryAnalytics, DayData, WeekSession, WeekSummary, MoodStat, SessionNoteEntry, CompletedTaskEntry, TimeBlock, TimeBlockWithMeta, JournalEntry } from "./types";
 export {
   getTasks,
   addTask,
@@ -34,10 +34,12 @@ export {
 export {
   getCategoryBreakdown,
   getAllCategoryBreakdown,
+  getCategoryAnalytics,
   getWeeklyData,
   getAllTimeStats,
   getCurrentStreak,
   getBestStreak,
+  getAchievementProgress,
   getMoodDistribution,
   getSessionNotes,
   getCompletedTasksForPeriod,
@@ -45,6 +47,13 @@ export {
   getEarnedBadges,
 } from "./analytics";
 export type { BadgeAward } from "./analytics";
+export {
+  getBadgeAwards,
+  getUnannouncedBadgeAwards,
+  recordBadgeAward,
+  markBadgeAnnounced,
+} from "./achievements";
+export type { BadgeAwardRow } from "./achievements";
 export { getPresets, addPreset, updatePreset, deletePreset } from "./presets";
 export type { TimerPreset } from "./presets";
 export {
