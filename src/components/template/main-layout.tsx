@@ -17,14 +17,11 @@ export function MainLayout({ children }: MainLayoutProps) {
 
   return (
     <div className="flex h-screen bg-sahara-bg text-sahara-text font-sans overflow-hidden">
-      <AnimatePresence initial={false} mode="sync">
-        {!isFullscreenFocus && (
-          <Sidebar
-            isCollapsed={isCollapsed}
-            onToggleCollapse={() => setIsCollapsed(!isCollapsed)}
-          />
-        )}
-      </AnimatePresence>
+      <Sidebar
+        isCollapsed={isCollapsed}
+        isFullscreenFocus={isFullscreenFocus}
+        onToggleCollapse={() => setIsCollapsed(!isCollapsed)}
+      />
 
       <m.div
         className="flex-1 flex flex-col relative overflow-hidden min-w-0"
