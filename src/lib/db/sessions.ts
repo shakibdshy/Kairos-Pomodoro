@@ -1,3 +1,4 @@
+import Database from "@tauri-apps/plugin-sql";
 import { getDb } from "./schema";
 import type { Session, WeekSession, WeekSummary } from "./types";
 
@@ -28,9 +29,9 @@ export async function addLoggedSession(input: {
   durationSec: number;
   categoryId?: number | null;
   intention?: string | null;
-}): Promise<number> {
-  const database = await getDb();
-  const result = await database.execute(
+}, database?: Database): Promise<number> {
+  const connection = database ?? (await getDb());
+  const result = await connection.execute(
     `INSERT INTO sessions
        (task_id, phase, started_at, ended_at, duration_sec, completed, category_id, intention)
      VALUES ($1, $2, $3, $4, MAX(0, $5), 1, $6, $7)`,
@@ -62,9 +63,10 @@ export async function updateLoggedSession(
     categoryId?: number | null;
     intention?: string | null;
   },
+  database?: Database,
 ): Promise<void> {
-  const database = await getDb();
-  await database.execute(
+  const connection = database ?? (await getDb());
+  await connection.execute(
     `UPDATE sessions
      SET task_id = $1,
          started_at = $2,

@@ -1,3 +1,4 @@
+import Database from "@tauri-apps/plugin-sql";
 import { getDb } from "./schema";
 import type { TimeBlock, TimeBlockWithMeta } from "./types";
 
@@ -20,10 +21,13 @@ function validateRange(start: string, end: string): void {
   }
 }
 
-export async function addTimeBlock(input: TimeBlockInput): Promise<number> {
+export async function addTimeBlock(
+  input: TimeBlockInput,
+  database?: Database,
+): Promise<number> {
   validateRange(input.start_time, input.end_time);
-  const database = await getDb();
-  const result = await database.execute(
+  const connection = database ?? (await getDb());
+  const result = await connection.execute(
     `INSERT INTO time_blocks (title, start_time, end_time, task_id, category_id, color, session_id)
      VALUES ($1, $2, $3, $4, $5, $6, $7)`,
     [
@@ -42,11 +46,12 @@ export async function addTimeBlock(input: TimeBlockInput): Promise<number> {
 export async function updateTimeBlock(
   id: number,
   input: Partial<TimeBlockInput>,
+  database?: Database,
 ): Promise<void> {
   if (input.start_time !== undefined && input.end_time !== undefined) {
     validateRange(input.start_time, input.end_time);
   }
-  const database = await getDb();
+  const connection = database ?? (await getDb());
   const fields: string[] = [];
   const values: (string | number | null)[] = [];
   let paramIndex = 1;
@@ -82,7 +87,7 @@ export async function updateTimeBlock(
 
   if (fields.length === 0) return;
   values.push(id);
-  await database.execute(
+  await connection.execute(
     `UPDATE time_blocks SET ${fields.join(", ")} WHERE id = $${paramIndex}`,
     values,
   );
