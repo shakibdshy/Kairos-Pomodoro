@@ -44,6 +44,7 @@ export function Sidebar({
   return (
     <m.aside
       initial={false}
+      inert={isFullscreenFocus}
       animate={{
         x: isFullscreenFocus ? -16 : 0,
         opacity: isFullscreenFocus ? 0 : 1,
