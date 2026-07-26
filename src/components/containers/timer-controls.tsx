@@ -77,28 +77,23 @@ export function TimerControls() {
     >
       {/* Task & Category label in fullscreen */}
       <AnimatePresence initial={false} mode="wait">
-        {isFullscreenFocus && (
+        {isFullscreenFocus ? (
           <m.div
             key="fullscreen-task-label"
-            initial={{ opacity: 0, y: -12, scale: 0.96 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -12, scale: 0.96 }}
-            transition={{ type: "spring", damping: 24, stiffness: 240 }}
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.2, ease: "easeOut" }}
           >
             <FullscreenTaskLabel />
           </m.div>
-        )}
-      </AnimatePresence>
-
-      {/* Top Controls Group */}
-      <AnimatePresence initial={false} mode="sync">
-        {!isFullscreenFocus && (
+        ) : (
           <m.div
-            initial={{ opacity: 0, height: 0, y: -20 }}
-            animate={{ opacity: 1, height: "auto", y: 0 }}
-            exit={{ opacity: 0, height: 0, y: -20 }}
-            layout="position"
-            transition={{ type: "spring", damping: 26, stiffness: 220 }}
+            key="top-controls"
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.2, ease: "easeOut" }}
             className="flex flex-col items-center gap-4 md:gap-5 w-full overflow-hidden"
           >
             {/* Top Controls */}
@@ -149,7 +144,7 @@ export function TimerControls() {
       </AnimatePresence>
 
       {/* Timer Display */}
-      <m.div layout="position">
+      <div>
         <TimerDisplay
           secondsRemaining={secondsRemaining}
           totalSeconds={totalSeconds}
@@ -159,13 +154,10 @@ export function TimerControls() {
           onDurationChange={setDurationForCurrentPhase}
           style={timerStyle}
         />
-      </m.div>
+      </div>
 
       {/* Duration Adjuster with Time Range */}
-      <m.div
-        layout="position"
-        className="flex items-center gap-2 md:gap-3"
-      >
+      <div className="flex items-center gap-2 md:gap-3">
         <Button
           variant="outline"
           size="icon"
@@ -197,13 +189,10 @@ export function TimerControls() {
         >
           <Plus className="size-3 md:w-3.5 md:h-3.5" />
         </Button>
-      </m.div>
+      </div>
 
       {/* Action Buttons */}
-      <m.div
-        layout="position"
-        className="flex items-center gap-2 md:gap-4 flex-wrap justify-center max-w-lg md:max-w-none"
-      >
+      <div className="flex items-center gap-2 md:gap-4 flex-wrap justify-center max-w-lg md:max-w-none">
         {isFocusComplete ? (
           <FocusCompleteActions
             isWorkPhase={isWorkPhase}
@@ -232,7 +221,7 @@ export function TimerControls() {
             onAbandon={() => abandonSession()}
           />
         )}
-      </m.div>
+      </div>
 
       <FinishSessionModal
         open={showFinishModal}

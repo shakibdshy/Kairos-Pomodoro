@@ -27,8 +27,6 @@ export function MainLayout({ children }: MainLayoutProps) {
       </AnimatePresence>
 
       <m.div
-        layout
-        transition={{ type: "spring", damping: 30, stiffness: 190, mass: 0.8 }}
         className="flex-1 flex flex-col relative overflow-hidden min-w-0"
       >
         <div
