@@ -10,6 +10,7 @@ import { SettingsPage } from "@/pages/settings-page";
 import { OnboardingPage } from "@/pages/onboarding-page";
 import { useOnboardingStore } from "@/features/onboarding/use-onboarding-store";
 import { TimerMiniPlayer } from "@/components/layout/timer-mini-player";
+import { AchievementAnnouncementHost } from "@/components/achievements/achievement-announcement-host";
 
 function OnboardingGuard() {
   const loaded = useOnboardingStore((s) => s.loaded);
@@ -33,6 +34,7 @@ function OnboardingGuard() {
     <>
       <Outlet />
       <TimerMiniPlayer />
+      <AchievementAnnouncementHost />
     </>
   );
 }

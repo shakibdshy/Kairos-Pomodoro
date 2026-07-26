@@ -3,18 +3,19 @@ import { Loader2, Flame, Trophy } from "lucide-react";
 import {
   getWeeklyData,
   getDailyScore,
-  getEarnedBadges,
   getCurrentStreak,
   getBestStreak,
   getAllTimeStats,
   type DayData,
-  type BadgeAward,
 } from "@/lib/db";
+import { getAchievementSnapshot } from "@/features/achievements/achievement-service";
+import type { AchievementDisplay } from "@/features/achievements/achievement-catalog";
 import { StatCard } from "@/components/base/stat-card";
 import { WeeklyChart } from "@/components/base/weekly-chart";
-import { BadgeCard } from "@/components/base/badge-card";
+import { AchievementSection } from "@/components/base/achievement-section";
 import { ScoreRing } from "@/components/base/score-ring";
 import { AnalyticsCategoryBreakdown } from "@/components/base/analytics-category-breakdown";
+import { CategoryInsights } from "@/components/base/category-insights";
 import { DateRangePicker } from "@/components/base/date-range-picker";
 import { MoodDistribution } from "@/components/base/mood-distribution";
 import { SessionNotes } from "@/components/base/session-notes";
@@ -30,7 +31,7 @@ interface AnalyticsDashboardProps {
 export function AnalyticsDashboard({ period: externalPeriod, onPeriodChange }: AnalyticsDashboardProps) {
   const [weekData, setWeekData] = useState<DayData[]>([]);
   const [score, setScore] = useState(0);
-  const [badges, setBadges] = useState<BadgeAward[]>([]);
+  const [badges, setBadges] = useState<AchievementDisplay[]>([]);
   const [streaks, setStreaks] = useState({ current: 0, best: 0 });
   const [allTime, setAllTime] = useState({
     total_focus_seconds: 0,
@@ -61,9 +62,7 @@ export function AnalyticsDashboard({ period: externalPeriod, onPeriodChange }: A
     ]).then(async ([wd, st, at]) => {
       const [sc, bd] = await Promise.all([
         getDailyScore(undefined, st.current).catch(() => 0),
-        getEarnedBadges({ currentStreak: st.current, bestStreak: st.best }).catch(
-          () => [] as BadgeAward[],
-        ),
+        getAchievementSnapshot().catch(() => [] as AchievementDisplay[]),
       ]);
       if (!cancelled) {
         setWeekData(wd);
@@ -84,8 +83,16 @@ export function AnalyticsDashboard({ period: externalPeriod, onPeriodChange }: A
   const totalSessions = weekData.reduce((s, d) => s + d.session_count, 0);
   const avgSessionSec =
     totalSessions > 0 ? Math.round(totalFocusSec / totalSessions) : 0;
-  const avgDailySec = weekData.length > 0
-    ? Math.round(totalFocusSec / weekData.length)
+  const periodDayCount = Math.max(
+    1,
+    Math.round(
+      (new Date(`${range.endDate}T00:00:00`).getTime() -
+        new Date(`${range.startDate}T00:00:00`).getTime()) /
+        86400000,
+    ) + 1,
+  );
+  const avgDailySec = totalFocusSec > 0
+    ? Math.round(totalFocusSec / periodDayCount)
     : 0;
 
   if (loadingRef.current && weekData.length === 0) {
@@ -223,30 +230,27 @@ export function AnalyticsDashboard({ period: externalPeriod, onPeriodChange }: A
         </div>
       </section>
 
-      {/* Badges */}
-      <section>
-        <h2 className="font-serif text-lg font-semibold tracking-wide md:text-2xl text-sahara-text mb-4 md:mb-6">
-          Achievements
-        </h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
-          {badges.length > 0 ? (
-            badges.map((b) => (
-              <BadgeCard
-                key={b.id}
-                title={b.title}
-                description={b.description}
-                earned={b.earned}
-              />
-            ))
-          ) : (
-            <>
-              <BadgeCard title="Early Bird" description="Complete a focus session before 7 AM" earned={false} />
-              <BadgeCard title="Marathon Runner" description="Complete 4+ focus sessions in one day" earned={false} />
-              <BadgeCard title="Consistency King" description="Maintain a 7-day streak" earned={false} />
-            </>
-          )}
-        </div>
-      </section>
+      {/* Achievement groups */}
+      <div className="space-y-8 md:space-y-12">
+        <AchievementSection
+          title="Achievements"
+          description="Milestones earned from the way you focus."
+          badges={badges.filter((badge) => badge.category === "legacy")}
+          accent="primary"
+        />
+        <AchievementSection
+          title="Streak Badges"
+          description="Build your rhythm, one focused day at a time."
+          badges={badges.filter((badge) => badge.category === "streak")}
+          accent="flame"
+        />
+        <AchievementSection
+          title="Monthly Badges"
+          description="Keep your momentum moving across the calendar."
+          badges={badges.filter((badge) => badge.category === "monthly")}
+          accent="calendar"
+        />
+      </div>
 
       {/* Category Breakdown & Tasks */}
       <section>
@@ -255,7 +259,9 @@ export function AnalyticsDashboard({ period: externalPeriod, onPeriodChange }: A
             <h2 className="font-serif text-lg font-semibold tracking-wide md:text-2xl text-sahara-text mb-4 md:mb-6">
               Category Breakdown
             </h2>
-            <AnalyticsCategoryBreakdown startDate={range.startDate} endDate={range.endDate} />
+            <div className="bg-sahara-surface border border-sahara-border/20 rounded-xl md:rounded-2xl p-3.5 md:p-5">
+              <AnalyticsCategoryBreakdown startDate={range.startDate} endDate={range.endDate} />
+            </div>
           </div>
           <div>
             <h2 className="font-serif text-lg font-semibold tracking-wide md:text-2xl text-sahara-text mb-4 md:mb-6">
@@ -264,6 +270,14 @@ export function AnalyticsDashboard({ period: externalPeriod, onPeriodChange }: A
             <CompletedTasks startDate={range.startDate} endDate={range.endDate} />
           </div>
         </div>
+      </section>
+
+      {/* Category metrics */}
+      <section>
+        <h2 className="font-serif text-lg font-semibold tracking-wide md:text-2xl text-sahara-text mb-4 md:mb-6">
+          Category Insights
+        </h2>
+        <CategoryInsights startDate={range.startDate} endDate={range.endDate} />
       </section>
 
       {/* Mood Distribution */}
@@ -284,4 +298,3 @@ export function AnalyticsDashboard({ period: externalPeriod, onPeriodChange }: A
     </div>
   );
 }
-
