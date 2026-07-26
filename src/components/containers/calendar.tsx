@@ -7,7 +7,6 @@ import {
   deleteTimeBlock,
   addTimeBlock,
   updateTimeBlock,
-  addLoggedSession,
   updateLoggedSession,
   deleteSession,
   type WeekSession,
@@ -22,6 +21,7 @@ import { TimeBlockForm } from "@/components/base/time-block-form";
 import { Button } from "@/components/ui/button";
 import { useTimerStore } from "@/features/timer/use-timer-store";
 import { useNavigate } from "react-router-dom";
+import { SessionService } from "@/features/timer/session-service";
 
 const START_HOUR = 6;
 const END_HOUR = 22;
@@ -217,11 +217,11 @@ export function CalendarDashboard() {
           await updateLoggedSession(editingBlock.session_id, sessionPayload);
         } else {
           // Block predates the session link — create one now and attach it.
-          const sid = await addLoggedSession(sessionPayload);
+          const sid = await SessionService.recordLoggedSession(sessionPayload);
           await updateTimeBlock(editingBlock.id, { session_id: sid });
         }
       } else {
-        const sessionId = await addLoggedSession(sessionPayload);
+        const sessionId = await SessionService.recordLoggedSession(sessionPayload);
         await addTimeBlock({ ...input, session_id: sessionId });
       }
       reload();
