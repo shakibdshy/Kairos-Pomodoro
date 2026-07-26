@@ -26,10 +26,15 @@ const NAV_ITEMS = [
 
 interface SidebarProps {
   isCollapsed: boolean;
+  isFullscreenFocus: boolean;
   onToggleCollapse: () => void;
 }
 
-export function Sidebar({ isCollapsed, onToggleCollapse }: SidebarProps) {
+export function Sidebar({
+  isCollapsed,
+  isFullscreenFocus,
+  onToggleCollapse,
+}: SidebarProps) {
   const location = useLocation();
   const navigate = useNavigate();
   const status = useTimerStore((s) => s.status);
@@ -38,13 +43,19 @@ export function Sidebar({ isCollapsed, onToggleCollapse }: SidebarProps) {
 
   return (
     <m.aside
-      initial={{ x: -300, opacity: 0 }}
-      animate={{ x: 0, opacity: 1 }}
-      exit={{ x: -300, opacity: 0 }}
-      transition={{ type: "spring", damping: 30, stiffness: 200 }}
+      initial={false}
+      animate={{
+        x: isFullscreenFocus ? -16 : 0,
+        opacity: isFullscreenFocus ? 0 : 1,
+        width: isFullscreenFocus ? 0 : isCollapsed ? 80 : 256,
+      }}
+      transition={{
+        x: { duration: 0.32, ease: "easeOut" },
+        opacity: { duration: 0.2, ease: "easeOut" },
+        width: { duration: 0.42, ease: [0.22, 1, 0.36, 1] },
+      }}
       className={cn(
-        "hidden md:flex border-r border-sahara-border/30 flex-col py-8 bg-sahara-bg/50 backdrop-blur-sm relative z-10",
-        isCollapsed ? "w-20" : "w-64",
+        "hidden md:flex shrink-0 overflow-hidden border-r border-sahara-border/30 flex-col py-8 bg-sahara-bg/50 backdrop-blur-sm relative z-10",
       )}
     >
       <Button

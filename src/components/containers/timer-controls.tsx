@@ -73,7 +73,7 @@ export function TimerControls() {
     <m.div
       layout="position"
       transition={{ type: "spring", damping: 30, stiffness: 200 }}
-      className="flex flex-col items-center gap-5 md:gap-8 w-full"
+      className="flex w-fit max-w-full flex-col items-center gap-5 md:gap-8"
     >
       {/* Task & Category label in fullscreen */}
       <AnimatePresence initial={false} mode="wait">
