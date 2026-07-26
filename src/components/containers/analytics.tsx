@@ -259,9 +259,7 @@ export function AnalyticsDashboard({ period: externalPeriod, onPeriodChange }: A
             <h2 className="font-serif text-lg font-semibold tracking-wide md:text-2xl text-sahara-text mb-4 md:mb-6">
               Category Breakdown
             </h2>
-            <div className="bg-sahara-surface border border-sahara-border/20 rounded-xl md:rounded-2xl p-3.5 md:p-5">
-              <AnalyticsCategoryBreakdown startDate={range.startDate} endDate={range.endDate} />
-            </div>
+            <AnalyticsCategoryBreakdown startDate={range.startDate} endDate={range.endDate} />
           </div>
           <div>
             <h2 className="font-serif text-lg font-semibold tracking-wide md:text-2xl text-sahara-text mb-4 md:mb-6">

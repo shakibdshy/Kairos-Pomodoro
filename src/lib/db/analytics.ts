@@ -8,6 +8,7 @@ import type {
   CompletedTaskEntry,
 } from "./types";
 import { computeDailyScore } from "@/lib/productivity-score";
+import { CONSISTENCY_STREAK_THRESHOLD } from "@/lib/constants";
 
 export async function getCategoryBreakdown(
   startDate?: string,
@@ -488,7 +489,7 @@ export async function getEarnedBadges(streaks?: {
   }));
   const bestStreak = streaks?.bestStreak ?? progress.bestStreak;
   const currentStreak = streaks?.currentStreak ?? progress.currentStreak;
-  const consistency = Math.max(bestStreak, currentStreak) >= 7;
+  const consistency = Math.max(bestStreak, currentStreak) >= CONSISTENCY_STREAK_THRESHOLD;
 
   return [
     {
