@@ -1,24 +1,34 @@
 import { MainLayout } from "@/components/template/main-layout";
 import { TimerControls } from "@/components/containers/timer-controls";
+import { FocusModeStage } from "@/components/timer/focus-mode-stage";
 import { TodayFocus } from "@/components/containers/today-focus";
 import { TodaySessions } from "@/components/containers/today-sessions";
 import { Text } from "@/components/ui/text";
 import { useUIStore } from "@/features/ui/use-ui-store";
 import { m, AnimatePresence } from "framer-motion";
+import { useRef } from "react";
 import { cn } from "@/lib/cn";
 
 export function TimerPage() {
   const isFullscreenFocus = useUIStore((s) => s.isFullscreenFocus);
+  const pageRef = useRef<HTMLDivElement>(null);
 
   return (
     <MainLayout>
       <div
+        ref={pageRef}
+        data-focus-mode-boundary
         className={cn(
           "flex flex-col items-center gap-6 md:gap-8 px-4 sm:px-6 md:px-12 py-4 md:py-6 max-w-4xl mx-auto min-h-full w-full transition-[padding,gap] duration-500 ease-out",
-          isFullscreenFocus ? "justify-center h-full overflow-hidden" : "justify-start",
+          isFullscreenFocus && "h-full overflow-hidden",
         )}
       >
-        <TimerControls />
+        <FocusModeStage
+          boundaryRef={pageRef}
+          isFullscreenFocus={isFullscreenFocus}
+        >
+          <TimerControls />
+        </FocusModeStage>
 
         <AnimatePresence initial={false} mode="sync">
           {!isFullscreenFocus && (

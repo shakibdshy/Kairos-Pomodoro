@@ -184,7 +184,10 @@ export function TimerDisplay({
   };
 
   return (
-    <div className="relative inline-flex items-center justify-center">
+    <div
+      data-timer-display
+      className="relative inline-flex items-center justify-center"
+    >
       {/* Desktop SVG */}
       <svg
         width={SIZE_DESKTOP}

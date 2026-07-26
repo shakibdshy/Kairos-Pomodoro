@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { m, AnimatePresence } from "framer-motion";
+import { m } from "framer-motion";
 import { useTimerStore } from "@/features/timer/use-timer-store";
 import { TimerDisplay } from "@/components/base/timer-display";
 import { IntentionSelector } from "@/components/intention-selector";
@@ -71,78 +71,84 @@ export function TimerControls() {
 
   return (
     <m.div
-      layout="position"
-      layoutDependency={isFullscreenFocus}
-      transition={{ type: "spring", damping: 30, stiffness: 200 }}
       className="flex w-fit max-w-full flex-col items-center gap-5 md:gap-8"
     >
-      {/* Task & Category label in fullscreen */}
-      <AnimatePresence initial={false} mode="wait">
-        {isFullscreenFocus ? (
-          <m.div
-            key="fullscreen-task-label"
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={{ duration: 0.2, ease: "easeOut" }}
-          >
-            <FullscreenTaskLabel />
-          </m.div>
-        ) : (
-          <m.div
-            key="top-controls"
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={{ duration: 0.2, ease: "easeOut" }}
-            className="flex flex-col items-center gap-4 md:gap-5 w-full overflow-hidden"
-          >
-            {/* Top Controls */}
-            <div className="flex items-center gap-3">
-              <div className="flex bg-sahara-card p-1 rounded-full border border-sahara-border/20">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  intent="default"
-                  shape="rounded-full"
-                  active={isFocus}
-                  onClick={() => setPhase("work")}
-                  disabled={status !== "idle"}
-                  className="px-3 sm:px-4 md:px-6 py-2 text-[10px] sm:text-xs font-bold tracking-wider"
-                >
-                  Focus
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  intent="default"
-                  shape="rounded-full"
-                  active={isBreak}
-                  onClick={() => setPhase(detectedBreakPhase)}
-                  disabled={status !== "idle"}
-                  className="px-3 sm:px-4 md:px-6 py-2 text-[10px] sm:text-xs font-bold tracking-wider"
-                >
-                  Break
-                </Button>
-              </div>
-              <div className="w-px h-6 bg-sahara-border/20" />
-              <PresetSelector />
-            </div>
+      {/* Stable chrome slot: keep the timer's natural position fixed while the mode changes. */}
+      <div className="grid w-full items-center">
+        <m.div
+          initial={false}
+          animate={
+            isFullscreenFocus
+              ? { opacity: 1, y: 0 }
+              : { opacity: 0, y: -10 }
+          }
+          transition={{ duration: 0.2, ease: "easeOut" }}
+          aria-hidden={!isFullscreenFocus}
+          className={`[grid-area:1/1] justify-self-center ${
+            !isFullscreenFocus ? "pointer-events-none" : ""
+          }`}
+        >
+          <FullscreenTaskLabel />
+        </m.div>
 
-            {/* Task & Intention Selectors */}
-            <div className="flex flex-wrap items-center justify-center gap-3">
-              <TaskSelector disabled={status !== "idle"} />
-              <IntentionSelector
-                selectedCategory={selectedCategory}
-                onSelect={setSelectedCategory}
-                customIntention={customIntention}
-                onCustomIntentionChange={setCustomIntention}
+        <m.div
+          initial={false}
+          animate={
+            isFullscreenFocus
+              ? { opacity: 0, y: -10 }
+              : { opacity: 1, y: 0 }
+          }
+          transition={{ duration: 0.2, ease: "easeOut" }}
+          aria-hidden={isFullscreenFocus}
+          className={`[grid-area:1/1] flex w-full flex-col items-center gap-4 md:gap-5 ${
+            isFullscreenFocus ? "pointer-events-none" : ""
+          }`}
+        >
+          {/* Top Controls */}
+          <div className="flex items-center gap-3">
+            <div className="flex bg-sahara-card p-1 rounded-full border border-sahara-border/20">
+              <Button
+                variant="ghost"
+                size="sm"
+                intent="default"
+                shape="rounded-full"
+                active={isFocus}
+                onClick={() => setPhase("work")}
                 disabled={status !== "idle"}
-              />
+                className="px-3 sm:px-4 md:px-6 py-2 text-[10px] sm:text-xs font-bold tracking-wider"
+              >
+                Focus
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                intent="default"
+                shape="rounded-full"
+                active={isBreak}
+                onClick={() => setPhase(detectedBreakPhase)}
+                disabled={status !== "idle"}
+                className="px-3 sm:px-4 md:px-6 py-2 text-[10px] sm:text-xs font-bold tracking-wider"
+              >
+                Break
+              </Button>
             </div>
-          </m.div>
-        )}
-      </AnimatePresence>
+            <div className="w-px h-6 bg-sahara-border/20" />
+            <PresetSelector />
+          </div>
+
+          {/* Task & Intention Selectors */}
+          <div className="flex flex-wrap items-center justify-center gap-3">
+            <TaskSelector disabled={status !== "idle"} />
+            <IntentionSelector
+              selectedCategory={selectedCategory}
+              onSelect={setSelectedCategory}
+              customIntention={customIntention}
+              onCustomIntentionChange={setCustomIntention}
+              disabled={status !== "idle"}
+            />
+          </div>
+        </m.div>
+      </div>
 
       {/* Timer Display */}
       <div>
