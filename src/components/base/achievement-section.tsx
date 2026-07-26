@@ -23,20 +23,22 @@ export function AchievementSection({
 }: AchievementSectionProps) {
   if (badges.length === 0) return null;
 
+  const headingId = `${title.toLowerCase().replaceAll(" ", "-")}-heading`;
+
   return (
-    <section aria-labelledby={`${title.toLowerCase().replaceAll(" ", "-")}-heading`}>
+    <section aria-labelledby={headingId}>
       <div className="mb-4 flex items-end justify-between gap-4 md:mb-6">
         <div>
           <div className="flex items-center gap-2.5">
             <span className={cn("size-2 rounded-full shadow-[0_0_12px_currentColor]", ACCENT_STYLES[accent])} />
             <h2
-              id={`${title.toLowerCase().replaceAll(" ", "-")}-heading`}
+              id={headingId}
               className="font-serif text-lg font-semibold tracking-wide text-sahara-text md:text-2xl"
             >
               {title}
             </h2>
           </div>
-          <p className="mt-1 text-xs text-sahara-text-muted md:ml-[18px]">{description}</p>
+          <p className="mt-1 text-xs text-sahara-text-muted md:ml-4.5">{description}</p>
         </div>
         <span className="hidden shrink-0 text-[10px] font-black uppercase tracking-[0.18em] text-sahara-text-muted sm:block">
           {badges.filter((badge) => badge.earned).length}/{badges.length} unlocked

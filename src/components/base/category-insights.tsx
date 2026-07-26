@@ -12,17 +12,12 @@ interface CategoryInsightsProps {
 
 type Scope = "period" | "allTime";
 
-const METRICS = [
-  { label: "Focus", icon: Clock3 },
-  { label: "Sessions", icon: Target },
-  { label: "Avg Session", icon: TrendingUp },
-  { label: "Daily Avg", icon: BarChart3 },
-] as const;
-
 export function CategoryInsights({ startDate, endDate }: CategoryInsightsProps) {
   const [scope, setScope] = useState<Scope>("period");
   const [categories, setCategories] = useState<CategoryAnalytics[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const requestScope = scope === "allTime" ? "allTime" : `${startDate}:${endDate}`;
 
   useEffect(() => {
     let cancelled = false;
@@ -45,7 +40,7 @@ export function CategoryInsights({ startDate, endDate }: CategoryInsightsProps) 
     return () => {
       cancelled = true;
     };
-  }, [startDate, endDate, scope]);
+  }, [requestScope, scope]);
 
   return (
     <div className="space-y-4">
@@ -96,10 +91,26 @@ export function CategoryInsights({ startDate, endDate }: CategoryInsightsProps) 
 
 function CategoryMetricCard({ category }: { category: CategoryAnalytics }) {
   const metrics = [
-    formatTotalTime(category.total_focus_seconds),
-    String(category.session_count),
-    category.avg_session_seconds > 0 ? formatDuration(category.avg_session_seconds) : "0m",
-    category.daily_avg_seconds > 0 ? formatTotalTime(category.daily_avg_seconds) : "0m",
+    {
+      label: "Focus",
+      icon: Clock3,
+      value: formatTotalTime(category.total_focus_seconds),
+    },
+    {
+      label: "Sessions",
+      icon: Target,
+      value: String(category.session_count),
+    },
+    {
+      label: "Avg Session",
+      icon: TrendingUp,
+      value: category.avg_session_seconds > 0 ? formatDuration(category.avg_session_seconds) : "0m",
+    },
+    {
+      label: "Daily Avg",
+      icon: BarChart3,
+      value: category.daily_avg_seconds > 0 ? formatTotalTime(category.daily_avg_seconds) : "0m",
+    },
   ];
 
   return (
@@ -118,7 +129,7 @@ function CategoryMetricCard({ category }: { category: CategoryAnalytics }) {
       </div>
 
       <div className="mt-4 grid grid-cols-2 gap-3">
-        {METRICS.map((metric, index) => {
+        {metrics.map((metric) => {
           const Icon = metric.icon;
           return (
             <div key={metric.label} className="rounded-xl bg-sahara-bg/45 px-3 py-2.5">
@@ -126,7 +137,7 @@ function CategoryMetricCard({ category }: { category: CategoryAnalytics }) {
                 <Icon className="size-3" />
                 <span className="text-[9px] font-bold uppercase tracking-wider">{metric.label}</span>
               </div>
-              <p className="mt-1 text-sm font-black tabular-nums text-sahara-text">{metrics[index]}</p>
+              <p className="mt-1 text-sm font-black tabular-nums text-sahara-text">{metric.value}</p>
             </div>
           );
         })}

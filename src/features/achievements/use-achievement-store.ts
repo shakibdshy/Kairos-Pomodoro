@@ -24,7 +24,11 @@ export const useAchievementStore = create<AchievementStore>((set, get) => ({
       // a surprise burst of historical popups after an app update.
       await reconcileAchievements(null, false);
       const pending = await getPendingAchievementAnnouncements();
-      set({ queue: pending, loaded: true });
+      set((state) => {
+        const queuedIds = new Set(state.queue.map((achievement) => achievement.id));
+        const additions = pending.filter((achievement) => !queuedIds.has(achievement.id));
+        return { queue: [...state.queue, ...additions], loaded: true };
+      });
     } catch (error) {
       console.error("[Achievements] Failed to load pending announcements:", error);
       set({ loaded: true });
@@ -43,7 +47,14 @@ export const useAchievementStore = create<AchievementStore>((set, get) => ({
   dismissCurrent: async () => {
     const current = get().queue[0];
     if (!current) return;
-    await markBadgeAnnounced(current.id).catch(() => {});
-    set((state) => ({ queue: state.queue.slice(1) }));
+    try {
+      await markBadgeAnnounced(current.id);
+    } catch (error) {
+      console.error(`[Achievements] Failed to mark ${current.id} announced:`, error);
+      return;
+    }
+    set((state) => ({
+      queue: state.queue.filter((achievement) => achievement.id !== current.id),
+    }));
   },
 }));

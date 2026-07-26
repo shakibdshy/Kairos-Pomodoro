@@ -5,6 +5,7 @@ import {
   getWeekSummary,
   getWeekTimeBlocks,
   deleteTimeBlock,
+  addLoggedSession,
   addTimeBlock,
   updateTimeBlock,
   updateLoggedSession,
@@ -21,7 +22,8 @@ import { TimeBlockForm } from "@/components/base/time-block-form";
 import { Button } from "@/components/ui/button";
 import { useTimerStore } from "@/features/timer/use-timer-store";
 import { useNavigate } from "react-router-dom";
-import { SessionService } from "@/features/timer/session-service";
+import { reconcileAchievements } from "@/features/achievements/achievement-service";
+import { useAchievementStore } from "@/features/achievements/use-achievement-store";
 
 const START_HOUR = 6;
 const END_HOUR = 22;
@@ -211,19 +213,65 @@ export function CalendarDashboard() {
         intention: input.title,
       };
 
+      let committedSessionId: number | null = editingBlock?.session_id ?? null;
+
+      const restoreBlock = async () => {
+        if (!editingBlock) return;
+        await updateTimeBlock(editingBlock.id, {
+          title: editingBlock.title,
+          start_time: editingBlock.start_time,
+          end_time: editingBlock.end_time,
+          task_id: editingBlock.task_id,
+          category_id: editingBlock.category_id,
+          color: editingBlock.color,
+          session_id: editingBlock.session_id,
+        });
+      };
+
       if (editingBlock) {
-        await updateTimeBlock(editingBlock.id, input);
         if (editingBlock.session_id) {
-          await updateLoggedSession(editingBlock.session_id, sessionPayload);
+          await updateTimeBlock(editingBlock.id, input);
+          try {
+            await updateLoggedSession(editingBlock.session_id, sessionPayload);
+          } catch (error) {
+            try {
+              await restoreBlock();
+            } catch (restoreError) {
+              console.error("[Calendar] Failed to restore time block after session update failure:", restoreError);
+            }
+            throw error;
+          }
         } else {
           // Block predates the session link — create one now and attach it.
-          const sid = await SessionService.recordLoggedSession(sessionPayload);
-          await updateTimeBlock(editingBlock.id, { session_id: sid });
+          const sid = await addLoggedSession(sessionPayload);
+          try {
+            await updateTimeBlock(editingBlock.id, { ...input, session_id: sid });
+          } catch (error) {
+            await deleteSession(sid).catch((cleanupError) => {
+              console.error("[Calendar] Failed to remove orphaned logged session:", cleanupError);
+            });
+            throw error;
+          }
+          committedSessionId = sid;
         }
       } else {
-        const sessionId = await SessionService.recordLoggedSession(sessionPayload);
-        await addTimeBlock({ ...input, session_id: sessionId });
+        const sessionId = await addLoggedSession(sessionPayload);
+        try {
+          await addTimeBlock({ ...input, session_id: sessionId });
+        } catch (error) {
+          await deleteSession(sessionId).catch((cleanupError) => {
+            console.error("[Calendar] Failed to remove orphaned logged session:", cleanupError);
+          });
+          throw error;
+        }
+        committedSessionId = sessionId;
       }
+
+      const unlocked = await reconcileAchievements(committedSessionId, true).catch((error) => {
+        console.error("[Calendar] Failed to reconcile achievements after save:", error);
+        return [];
+      });
+      useAchievementStore.getState().enqueue(unlocked);
       reload();
     },
     [editingBlock, reload],

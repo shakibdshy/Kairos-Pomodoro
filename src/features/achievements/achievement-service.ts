@@ -10,6 +10,7 @@ import {
   getAchievementDefinitions,
   type AchievementDisplay,
 } from "./achievement-catalog";
+import { CONSISTENCY_STREAK_THRESHOLD } from "@/lib/constants";
 
 function buildDisplay(
   definitions: ReturnType<typeof getAchievementDefinitions>,
@@ -23,7 +24,7 @@ function buildDisplay(
       (definition.id === "early_bird" && progress.earlyBird) ||
       (definition.id === "marathon" && progress.marathon) ||
       (definition.id === "consistency" &&
-        Math.max(progress.currentStreak, progress.bestStreak) >= 7) ||
+        Math.max(progress.currentStreak, progress.bestStreak) >= CONSISTENCY_STREAK_THRESHOLD) ||
       (definition.category === "streak" &&
         (progress.currentStreak >= (definition.threshold ?? Infinity) ||
           progress.bestStreak >= (definition.threshold ?? Infinity))) ||
