@@ -1,13 +1,18 @@
-import { Award } from "lucide-react";
+import { Award, CalendarDays, Flame, Sun, Trophy } from "lucide-react";
 import { cn } from "@/lib/cn";
+import type { AchievementIcon } from "@/features/achievements/achievement-catalog";
 
 interface BadgeCardProps {
   title: string;
   description: string;
   earned: boolean;
+  icon?: AchievementIcon;
 }
 
-export function BadgeCard({ title, description, earned }: BadgeCardProps) {
+const ICONS = { award: Award, calendar: CalendarDays, flame: Flame, sun: Sun, trophy: Trophy } as const;
+
+export function BadgeCard({ title, description, earned, icon = "award" }: BadgeCardProps) {
+  const Icon = ICONS[icon];
   return (
     <div
       className={cn(
@@ -25,7 +30,7 @@ export function BadgeCard({ title, description, earned }: BadgeCardProps) {
             : "bg-sahara-card text-sahara-text-muted",
         )}
       >
-        <Award className="size-5 md:w-6 md:h-6" />
+        <Icon className="size-5 md:w-6 md:h-6" />
       </div>
       <div>
         <h4
