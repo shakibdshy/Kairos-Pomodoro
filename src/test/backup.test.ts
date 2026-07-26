@@ -26,7 +26,7 @@ describe("backup constants", () => {
 
   it("exposes the current schema version", () => {
     // Must stay in sync with the targetVersion in schema.ts.
-    expect(BACKUP_SCHEMA_VERSION).toBe(4);
+    expect(BACKUP_SCHEMA_VERSION).toBe(5);
   });
 });
 
@@ -59,11 +59,12 @@ describe("BackupFile shape contract", () => {
         settings: [],
         time_blocks: [],
         journal_entries: [],
+        badge_awards: [],
       },
     };
     expect(payload.app).toBe("kairos");
     expect(payload.formatVersion).toBe(BACKUP_FORMAT_VERSION);
-    expect(Object.keys(payload.data)).toHaveLength(7);
+    expect(Object.keys(payload.data)).toHaveLength(8);
     expect(payload.data.categories).toHaveLength(1);
   });
 });

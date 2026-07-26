@@ -144,9 +144,19 @@ export async function initDb(): Promise<void> {
       // re-running the migration or restoring a converted backup is safe.
       "UPDATE time_blocks SET start_time = datetime(start_time, 'localtime'), end_time = datetime(end_time, 'localtime') WHERE start_time LIKE '%Z'",
     ],
+    5: [
+      `CREATE TABLE IF NOT EXISTS badge_awards (
+        badge_id TEXT PRIMARY KEY,
+        earned_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        trigger_session_id INTEGER,
+        announced_at DATETIME,
+        FOREIGN KEY (trigger_session_id) REFERENCES sessions(id)
+      )`,
+      "CREATE INDEX IF NOT EXISTS idx_badge_awards_announced ON badge_awards(announced_at)",
+    ],
   };
 
-  const targetVersion = 4;
+  const targetVersion = 5;
 
   for (let v = currentVersion + 1; v <= targetVersion; v++) {
     const statements = migrations[v];
