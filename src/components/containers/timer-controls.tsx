@@ -76,15 +76,29 @@ export function TimerControls() {
       className="flex flex-col items-center gap-5 md:gap-8 w-full"
     >
       {/* Task & Category label in fullscreen */}
-      {isFullscreenFocus && <FullscreenTaskLabel />}
+      <AnimatePresence initial={false} mode="wait">
+        {isFullscreenFocus && (
+          <m.div
+            key="fullscreen-task-label"
+            initial={{ opacity: 0, y: -12, scale: 0.96 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -12, scale: 0.96 }}
+            transition={{ type: "spring", damping: 24, stiffness: 240 }}
+          >
+            <FullscreenTaskLabel />
+          </m.div>
+        )}
+      </AnimatePresence>
 
       {/* Top Controls Group */}
-      <AnimatePresence>
+      <AnimatePresence initial={false} mode="sync">
         {!isFullscreenFocus && (
           <m.div
             initial={{ opacity: 0, height: 0, y: -20 }}
             animate={{ opacity: 1, height: "auto", y: 0 }}
             exit={{ opacity: 0, height: 0, y: -20 }}
+            layout="position"
+            transition={{ type: "spring", damping: 26, stiffness: 220 }}
             className="flex flex-col items-center gap-4 md:gap-5 w-full overflow-hidden"
           >
             {/* Top Controls */}

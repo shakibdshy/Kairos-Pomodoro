@@ -17,7 +17,7 @@ export function MainLayout({ children }: MainLayoutProps) {
 
   return (
     <div className="flex h-screen bg-sahara-bg text-sahara-text font-sans overflow-hidden">
-      <AnimatePresence initial={false} mode="popLayout">
+      <AnimatePresence initial={false} mode="sync">
         {!isFullscreenFocus && (
           <Sidebar
             isCollapsed={isCollapsed}
@@ -28,7 +28,7 @@ export function MainLayout({ children }: MainLayoutProps) {
 
       <m.div
         layout
-        transition={{ type: "spring", damping: 30, stiffness: 200 }}
+        transition={{ type: "spring", damping: 30, stiffness: 190, mass: 0.8 }}
         className="flex-1 flex flex-col relative overflow-hidden min-w-0"
       >
         <div
@@ -66,7 +66,18 @@ export function MainLayout({ children }: MainLayoutProps) {
           )}
         </AnimatePresence>
 
-        {!isFullscreenFocus && <MobileNav />}
+        <AnimatePresence initial={false}>
+          {!isFullscreenFocus && (
+            <m.div
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 16 }}
+              transition={{ duration: 0.22, ease: "easeOut" }}
+            >
+              <MobileNav />
+            </m.div>
+          )}
+        </AnimatePresence>
       </m.div>
     </div>
   );
