@@ -6,7 +6,7 @@ import { useAchievementStore } from "@/features/achievements/use-achievement-sto
 import { ACHIEVEMENT_ICONS } from "@/features/achievements/achievement-icons";
 
 const FOCUSABLE_SELECTOR =
-  'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+  'button:not([disabled]):not([data-achievement-backdrop]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
 export function AchievementAnnouncementHost() {
   const current = useAchievementStore((state) => state.queue[0]);
@@ -100,6 +100,7 @@ export function AchievementAnnouncementHost() {
           transition={{ duration: reducedMotion ? 0 : 0.22 }}
         >
           <button
+            data-achievement-backdrop
             className="absolute inset-0 cursor-default bg-sahara-text/30 backdrop-blur-md"
             aria-label="Close achievement announcement"
             tabIndex={-1}
