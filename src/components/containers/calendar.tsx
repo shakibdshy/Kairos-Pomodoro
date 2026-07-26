@@ -10,6 +10,7 @@ import {
   updateTimeBlock,
   updateLoggedSession,
   deleteSession,
+  withTransaction,
   type WeekSession,
   type WeekSummary,
   type TimeBlockWithMeta,
@@ -215,56 +216,27 @@ export function CalendarDashboard() {
 
       let committedSessionId: number | null = editingBlock?.session_id ?? null;
 
-      const restoreBlock = async () => {
-        if (!editingBlock) return;
-        await updateTimeBlock(editingBlock.id, {
-          title: editingBlock.title,
-          start_time: editingBlock.start_time,
-          end_time: editingBlock.end_time,
-          task_id: editingBlock.task_id,
-          category_id: editingBlock.category_id,
-          color: editingBlock.color,
-          session_id: editingBlock.session_id,
-        });
-      };
-
       if (editingBlock) {
         if (editingBlock.session_id) {
-          await updateTimeBlock(editingBlock.id, input);
-          try {
-            await updateLoggedSession(editingBlock.session_id, sessionPayload);
-          } catch (error) {
-            try {
-              await restoreBlock();
-            } catch (restoreError) {
-              console.error("[Calendar] Failed to restore time block after session update failure:", restoreError);
-            }
-            throw error;
-          }
+          const sessionId = editingBlock.session_id;
+          await withTransaction(async (database) => {
+            await updateTimeBlock(editingBlock.id, input, database);
+            await updateLoggedSession(sessionId, sessionPayload, database);
+          });
         } else {
           // Block predates the session link — create one now and attach it.
-          const sid = await addLoggedSession(sessionPayload);
-          try {
-            await updateTimeBlock(editingBlock.id, { ...input, session_id: sid });
-          } catch (error) {
-            await deleteSession(sid).catch((cleanupError) => {
-              console.error("[Calendar] Failed to remove orphaned logged session:", cleanupError);
-            });
-            throw error;
-          }
-          committedSessionId = sid;
+          await withTransaction(async (database) => {
+            const sid = await addLoggedSession(sessionPayload, database);
+            await updateTimeBlock(editingBlock.id, { ...input, session_id: sid }, database);
+            committedSessionId = sid;
+          });
         }
       } else {
-        const sessionId = await addLoggedSession(sessionPayload);
-        try {
-          await addTimeBlock({ ...input, session_id: sessionId });
-        } catch (error) {
-          await deleteSession(sessionId).catch((cleanupError) => {
-            console.error("[Calendar] Failed to remove orphaned logged session:", cleanupError);
-          });
-          throw error;
-        }
-        committedSessionId = sessionId;
+        await withTransaction(async (database) => {
+          const sessionId = await addLoggedSession(sessionPayload, database);
+          await addTimeBlock({ ...input, session_id: sessionId }, database);
+          committedSessionId = sessionId;
+        });
       }
 
       const unlocked = await reconcileAchievements(committedSessionId, true).catch((error) => {
