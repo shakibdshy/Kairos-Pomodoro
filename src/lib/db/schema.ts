@@ -6,24 +6,28 @@ const DB_NAME = import.meta.env.DEV
   : "sqlite:Kairos-Pomodoro.db";
 
 let db: Database | null = null;
+let dbPromise: Promise<Database> | null = null;
+let writeQueue: Promise<void> = Promise.resolve();
 
-export async function withTransaction<T>(
+/**
+ * Serialize multi-statement writes without explicit BEGIN/COMMIT commands.
+ * The Tauri SQL plugin autocommits statements on this shared connection, and
+ * explicit transaction control can leave COMMIT with no active transaction.
+ */
+export async function withSerializedWrite<T>(
   work: (database: Database) => Promise<T>,
 ): Promise<T> {
-  const database = await getDb();
-  await database.execute("BEGIN IMMEDIATE");
+  const previous = writeQueue;
+  let release!: () => void;
+  writeQueue = new Promise<void>((resolve) => {
+    release = resolve;
+  });
 
+  await previous;
   try {
-    const result = await work(database);
-    await database.execute("COMMIT");
-    return result;
-  } catch (error) {
-    try {
-      await database.execute("ROLLBACK");
-    } catch (rollbackError) {
-      console.error("[DB] Failed to roll back transaction:", rollbackError);
-    }
-    throw error;
+    return await work(await getDb());
+  } finally {
+    release();
   }
 }
 
@@ -32,12 +36,25 @@ export function getDbName(): string {
 }
 
 export async function getDb(): Promise<Database> {
-  if (!db) {
-    db = await Database.load(DB_NAME);
-    // Set busy timeout to 10 seconds to avoid SQLITE_BUSY errors
-    await db.execute("PRAGMA busy_timeout = 10000");
+  if (db) return db;
+
+  // Several pages load data with Promise.all during startup. Share the
+  // in-flight native connection load so those callers cannot open multiple
+  // SQLite connections to the same file and contend for the write lock.
+  if (!dbPromise) {
+    dbPromise = Database.load(DB_NAME)
+      .then(async (connection) => {
+        await connection.execute("PRAGMA busy_timeout = 10000");
+        db = connection;
+        return connection;
+      })
+      .catch((error) => {
+        dbPromise = null;
+        throw error;
+      });
   }
-  return db;
+
+  return dbPromise;
 }
 
 export async function initDb(): Promise<void> {

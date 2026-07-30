@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { ModalOverlay } from "@/components/ui/modal-overlay";
 import { Button } from "@/components/ui/button";
+import { Toast } from "@/components/ui/toast";
 import { useCategoriesStore } from "@/features/categories/use-categories-store";
 import { useTaskStore } from "@/features/tasks/use-task-store";
 import type { TimeBlockWithMeta, TimeBlockInput } from "@/lib/db";
@@ -19,10 +20,48 @@ interface TimeBlockFormProps {
 }
 
 const pad = (n: number) => String(n).padStart(2, "0");
+const DEFAULT_FOCUS_MINUTES = 25;
 
 /** Date → `yyyy-MM-ddTHH:mm`, the format `<input type="datetime-local">` uses. */
 export function toLocalInput(d: Date): string {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+function addLocalMinutes(value: string, minutes: number): string {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  date.setMinutes(date.getMinutes() + minutes);
+  return toLocalInput(date);
+}
+
+/** Default to a short focus block after a newly selected start time. */
+export function getEndAfterStart(start: string): string {
+  return addLocalMinutes(start, DEFAULT_FOCUS_MINUTES);
+}
+
+/** The native picker should never offer an end equal to the start. */
+export function getMinimumEnd(start: string): string {
+  return addLocalMinutes(start, 1);
+}
+
+/** Validate a completed focus-time range against the current clock. */
+export function getTimeRangeError(
+  start: string,
+  end: string,
+  now = Date.now(),
+): string | null {
+  const startDate = new Date(start);
+  const endDate = new Date(end);
+  if (Number.isNaN(startDate.getTime()) || Number.isNaN(endDate.getTime())) {
+    return "Please enter valid start and end times.";
+  }
+  if (endDate.getTime() <= startDate.getTime()) {
+    return "End time must be after start time.";
+  }
+  if (endDate.getTime() > now) {
+    return "End time cannot be in the future.";
+  }
+  return null;
 }
 
 /**
@@ -98,14 +137,9 @@ export function TimeBlockForm({
     if (!start || !end) return;
     setError(null);
 
-    const startDate = new Date(start);
-    const endDate = new Date(end);
-    if (Number.isNaN(startDate.getTime()) || Number.isNaN(endDate.getTime())) {
-      setError("Please enter valid start and end times.");
-      return;
-    }
-    if (endDate.getTime() <= startDate.getTime()) {
-      setError("End time must be after start time.");
+    const timeRangeError = getTimeRangeError(start, end);
+    if (timeRangeError) {
+      setError(timeRangeError);
       return;
     }
 
@@ -123,8 +157,36 @@ export function TimeBlockForm({
       };
       await onSubmit(input);
       onClose();
+    } catch (submitError) {
+      const message = String(
+        (submitError as Error)?.message ?? submitError,
+      );
+      console.error("[TimeBlockForm] Failed to save focus time:", submitError);
+      setError(
+        /database is locked|SQLITE_BUSY|code:\s*5/i.test(message)
+          ? "The database is busy. Please try again in a moment."
+          : "Could not save focus time. Please try again.",
+      );
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleStartChange = (nextStart: string) => {
+    setStart(nextStart);
+    setError(null);
+
+    // If the user moves the start past the existing end, keep the form
+    // immediately usable by carrying the default focus duration forward.
+    if (!nextStart || !end) return;
+    const nextStartDate = new Date(nextStart);
+    const endDate = new Date(end);
+    if (
+      !Number.isNaN(nextStartDate.getTime()) &&
+      !Number.isNaN(endDate.getTime()) &&
+      endDate.getTime() <= nextStartDate.getTime()
+    ) {
+      setEnd(getEndAfterStart(nextStart));
     }
   };
 
@@ -167,7 +229,8 @@ export function TimeBlockForm({
             <input
               type="datetime-local"
               value={start}
-              onChange={(e) => setStart(e.target.value)}
+              max={toLocalInput(new Date())}
+              onChange={(e) => handleStartChange(e.target.value)}
               className="w-full mt-2 px-4 py-3 rounded-xl border border-sahara-border/30 bg-sahara-bg/40 text-sm font-medium text-sahara-text focus:outline-none focus:border-sahara-primary/50 focus:ring-2 focus:ring-sahara-primary/10 transition-all"
             />
           </div>
@@ -178,7 +241,12 @@ export function TimeBlockForm({
             <input
               type="datetime-local"
               value={end}
-              onChange={(e) => setEnd(e.target.value)}
+              min={start ? getMinimumEnd(start) : undefined}
+              max={toLocalInput(new Date())}
+              onChange={(e) => {
+                setEnd(e.target.value);
+                setError(null);
+              }}
               className="w-full mt-2 px-4 py-3 rounded-xl border border-sahara-border/30 bg-sahara-bg/40 text-sm font-medium text-sahara-text focus:outline-none focus:border-sahara-primary/50 focus:ring-2 focus:ring-sahara-primary/10 transition-all"
             />
           </div>
@@ -250,9 +318,11 @@ export function TimeBlockForm({
       </div>
 
       {error && (
-        <p className="px-6 text-xs text-red-600" role="alert">
-          {error}
-        </p>
+        <Toast
+          title="Unable to log focus time"
+          message={error}
+          onClose={() => setError(null)}
+        />
       )}
 
       <div className="px-6 py-4 border-t border-sahara-border/20 flex justify-end gap-2">

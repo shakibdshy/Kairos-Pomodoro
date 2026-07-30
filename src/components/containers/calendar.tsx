@@ -10,7 +10,7 @@ import {
   updateTimeBlock,
   updateLoggedSession,
   deleteSession,
-  withTransaction,
+  withSerializedWrite,
   type WeekSession,
   type WeekSummary,
   type TimeBlockWithMeta,
@@ -20,6 +20,7 @@ import { CalendarWeekNav } from "@/components/base/calendar-week-nav";
 import { CalendarGrid } from "@/components/base/calendar-grid";
 import { CalendarWeekStats } from "@/components/base/calendar-week-stats";
 import { TimeBlockForm } from "@/components/base/time-block-form";
+import { TimeBlockDetailsModal } from "@/components/base/time-block-details-modal";
 import { Button } from "@/components/ui/button";
 import { useTimerStore } from "@/features/timer/use-timer-store";
 import { useNavigate } from "react-router-dom";
@@ -158,6 +159,7 @@ export function CalendarDashboard() {
   const setCustomIntention = useTimerStore((s) => s.setCustomIntention);
 
   const [formOpen, setFormOpen] = useState(false);
+  const [viewingBlock, setViewingBlock] = useState<TimeBlockWithMeta | null>(null);
   const [editingBlock, setEditingBlock] = useState<TimeBlockWithMeta | null>(null);
   const [defaultDate, setDefaultDate] = useState<Date | null>(null);
   const [defaultHour, setDefaultHour] = useState<number | undefined>(undefined);
@@ -175,10 +177,15 @@ export function CalendarDashboard() {
   }, []);
 
   const openEdit = useCallback((block: TimeBlockWithMeta) => {
+    setViewingBlock(null);
     setEditingBlock(block);
     setDefaultDate(null);
     setDefaultHour(undefined);
     setFormOpen(true);
+  }, []);
+
+  const openView = useCallback((block: TimeBlockWithMeta) => {
+    setViewingBlock(block);
   }, []);
 
   const handleDelete = useCallback(
@@ -192,6 +199,14 @@ export function CalendarDashboard() {
       reload();
     },
     [reload],
+  );
+
+  const handleDeleteFromDetails = useCallback(
+    async (block: TimeBlockWithMeta) => {
+      setViewingBlock(null);
+      await handleDelete(block);
+    },
+    [handleDelete],
   );
 
   const handleSubmit = useCallback(
@@ -219,23 +234,62 @@ export function CalendarDashboard() {
       if (editingBlock) {
         if (editingBlock.session_id) {
           const sessionId = editingBlock.session_id;
-          await withTransaction(async (database) => {
-            await updateTimeBlock(editingBlock.id, input, database);
-            await updateLoggedSession(sessionId, sessionPayload, database);
+          await withSerializedWrite(async () => {
+            await updateTimeBlock(editingBlock.id, input);
+            try {
+              await updateLoggedSession(sessionId, sessionPayload);
+            } catch (error) {
+              // Restore the block if its linked session could not be updated.
+              await updateTimeBlock(editingBlock.id, {
+                title: editingBlock.title,
+                start_time: editingBlock.start_time,
+                end_time: editingBlock.end_time,
+                task_id: editingBlock.task_id,
+                category_id: editingBlock.category_id,
+                color: editingBlock.color,
+                session_id: editingBlock.session_id,
+              }).catch((restoreError) => {
+                console.error(
+                  "[Calendar] Failed to restore time block after session update failure:",
+                  restoreError,
+                );
+              });
+              throw error;
+            }
           });
         } else {
           // Block predates the session link — create one now and attach it.
-          await withTransaction(async (database) => {
-            const sid = await addLoggedSession(sessionPayload, database);
-            await updateTimeBlock(editingBlock.id, { ...input, session_id: sid }, database);
-            committedSessionId = sid;
+          await withSerializedWrite(async () => {
+            const sid = await addLoggedSession(sessionPayload);
+            try {
+              await updateTimeBlock(editingBlock.id, { ...input, session_id: sid });
+              committedSessionId = sid;
+            } catch (error) {
+              await deleteSession(sid).catch((cleanupError) => {
+                console.error(
+                  "[Calendar] Failed to remove orphaned logged session:",
+                  cleanupError,
+                );
+              });
+              throw error;
+            }
           });
         }
       } else {
-        await withTransaction(async (database) => {
-          const sessionId = await addLoggedSession(sessionPayload, database);
-          await addTimeBlock({ ...input, session_id: sessionId }, database);
-          committedSessionId = sessionId;
+        await withSerializedWrite(async () => {
+          const sessionId = await addLoggedSession(sessionPayload);
+          try {
+            await addTimeBlock({ ...input, session_id: sessionId });
+            committedSessionId = sessionId;
+          } catch (error) {
+            await deleteSession(sessionId).catch((cleanupError) => {
+              console.error(
+                "[Calendar] Failed to remove orphaned logged session:",
+                cleanupError,
+              );
+            });
+            throw error;
+          }
         });
       }
 
@@ -328,6 +382,7 @@ export function CalendarDashboard() {
           startHour={START_HOUR}
           endHour={END_HOUR}
           onCreateBlock={openCreate}
+          onViewBlock={openView}
           onEditBlock={openEdit}
           onDeleteBlock={handleDelete}
           onStartFocusFromBlock={handleStartFocusFromBlock}
@@ -342,6 +397,14 @@ export function CalendarDashboard() {
         defaultDate={defaultDate}
         defaultHour={defaultHour}
         onSubmit={handleSubmit}
+      />
+
+      <TimeBlockDetailsModal
+        block={viewingBlock}
+        open={viewingBlock !== null}
+        onClose={() => setViewingBlock(null)}
+        onEdit={openEdit}
+        onDelete={handleDeleteFromDetails}
       />
     </div>
   );

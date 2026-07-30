@@ -255,3 +255,42 @@ input[type="range"]::-webkit-slider-thumb {
 @utility zoom-in-95 {
   --tw-enter-scale: 0.95;
 }
+
+/* Modal motion is deliberately explicit so it does not depend on Tailwind's
+   transition-duration utilities being applied to CSS animations. */
+@keyframes kairos-modal-backdrop-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes kairos-modal-panel-in {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 0.75rem, 0) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+.kairos-modal-backdrop-in {
+  animation: kairos-modal-backdrop-in 180ms ease-out both;
+  will-change: opacity;
+}
+
+.kairos-modal-panel-in {
+  animation: kairos-modal-panel-in 220ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  will-change: opacity, transform;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .kairos-modal-backdrop-in,
+  .kairos-modal-panel-in {
+    animation-duration: 1ms;
+  }
+}

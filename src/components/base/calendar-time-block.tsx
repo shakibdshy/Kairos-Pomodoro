@@ -3,10 +3,16 @@ import type { TimeBlockWithMeta } from "@/lib/db";
 import { DEFAULT_CATEGORY_COLOR } from "@/lib/constants";
 import { cn } from "@/lib/cn";
 
+const BLOCK_STACK_OFFSET = 6;
+
 interface CalendarTimeBlockProps {
   block: TimeBlockWithMeta;
   topPx: number;
   heightPx: number;
+  columnIndex?: number;
+  columnCount?: number;
+  stackIndex?: number;
+  onView?: (block: TimeBlockWithMeta) => void;
   onEdit?: (block: TimeBlockWithMeta) => void;
   onDelete?: (block: TimeBlockWithMeta) => void;
   onStartFocus?: (block: TimeBlockWithMeta) => void;
@@ -25,6 +31,10 @@ export function CalendarTimeBlock({
   block,
   topPx,
   heightPx,
+  columnIndex = 0,
+  columnCount = 1,
+  stackIndex = 0,
+  onView,
   onEdit,
   onDelete,
   onStartFocus,
@@ -39,9 +49,31 @@ export function CalendarTimeBlock({
 
   return (
     <div
-      className="absolute left-1 right-1 z-20 group"
-      style={{ top: topPx, height: Math.max(heightPx, 36) }}
-      onClick={(e) => e.stopPropagation()}
+      className="absolute left-0 z-20 group cursor-pointer"
+      style={{
+        // Keep the time-derived top intact; this is only a small visual nudge
+        // so overlapping logs remain readable without drifting into another
+        // hour row.
+        top: topPx + stackIndex * BLOCK_STACK_OFFSET,
+        height: Math.max(heightPx, 36),
+        left: `${(columnIndex / columnCount) * 100}%`,
+        width: `${100 / columnCount}%`,
+        paddingLeft: 4,
+        paddingRight: 4,
+      }}
+      onClick={(e) => {
+        e.stopPropagation();
+        onView?.(block);
+      }}
+      onKeyDown={(e) => {
+        if ((e.key === "Enter" || e.key === " ") && onView) {
+          e.preventDefault();
+          onView(block);
+        }
+      }}
+      role={onView ? "button" : undefined}
+      tabIndex={onView ? 0 : undefined}
+      aria-label={onView ? `View details for ${label}` : undefined}
     >
       <div
         className={cn(

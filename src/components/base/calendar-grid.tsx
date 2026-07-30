@@ -15,6 +15,8 @@ interface CalendarGridProps {
   onCreateBlock?: (date: Date, hour: number) => void;
   /** Called when the user clicks edit on a block. */
   onEditBlock?: (block: TimeBlockWithMeta) => void;
+  /** Called when the user clicks a block to view its details. */
+  onViewBlock?: (block: TimeBlockWithMeta) => void;
   /** Called when the user clicks delete on a block. */
   onDeleteBlock?: (block: TimeBlockWithMeta) => void;
   /** Called when the user clicks "start focus" on a block. */
@@ -24,6 +26,10 @@ interface CalendarGridProps {
 const DAY_LABELS_FULL = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"];
 
 const BASE_HOUR_HEIGHT = 64;
+const MIN_BLOCK_HEIGHT = 36;
+// Small visual nudge for overlapping cards; it must not move a card into a
+// different hour row like a full-card stack would.
+const BLOCK_STACK_OFFSET = 6;
 
 function isToday(date: Date): boolean {
   const today = new Date();
@@ -85,6 +91,9 @@ interface PositionedBlock {
   block: TimeBlockWithMeta;
   topPx: number;
   heightPx: number;
+  columnIndex: number;
+  columnCount: number;
+  stackIndex: number;
 }
 
 interface DayLayout {
@@ -92,6 +101,58 @@ interface DayLayout {
   positionedBlocks: PositionedBlock[];
   hourTopPx: number[];
   totalHeight: number;
+}
+
+interface BlockWithRange {
+  block: TimeBlockWithMeta;
+  index: number;
+  startMs: number;
+  endMs: number;
+}
+
+interface BlockColumn {
+  columnIndex: number;
+  columnCount: number;
+  stackIndex: number;
+}
+
+/** Assign each connected overlap group to one vertical calendar column. */
+function assignBlockColumns(blocks: BlockWithRange[]): Map<number, BlockColumn> {
+  const sorted = blocks.toSorted((a, b) => a.startMs - b.startMs);
+  const columns = new Map<number, BlockColumn>();
+  let group: BlockWithRange[] = [];
+  let active: { endMs: number }[] = [];
+
+  const finishGroup = () => {
+    group.forEach((item, stackIndex) => {
+      columns.set(item.index, {
+        columnIndex: 0,
+        columnCount: 1,
+        stackIndex,
+      });
+    });
+    group = [];
+    active = [];
+  };
+
+  for (const item of sorted) {
+    active = active.filter(({ endMs }) => endMs > item.startMs);
+    if (active.length === 0 && group.length > 0) finishGroup();
+
+    // Cards have a visual minimum height, so use that rendered extent for
+    // collision detection; otherwise adjacent 25-minute cards overlap by
+    // several pixels despite having touching time ranges.
+    const renderedEndMs = Math.max(
+      item.endMs,
+      item.startMs + (MIN_BLOCK_HEIGHT / BASE_HOUR_HEIGHT) * 60 * 60 * 1000,
+    );
+    active.push({ endMs: renderedEndMs });
+    group.push(item);
+    columns.set(item.index, { columnIndex: 0, columnCount: 1, stackIndex: 0 });
+  }
+  if (group.length > 0) finishGroup();
+
+  return columns;
 }
 
 export function computeDayLayout(
@@ -121,13 +182,18 @@ export function computeDayLayout(
     return { session, topPx, heightPx };
   });
 
-  // Planned blocks use the same scale and are never overlap-shifted either.
-  const positionedBlocks: PositionedBlock[] = dayBlocks
-    .toSorted(
-      (a, b) =>
-        new Date(a.start_time).getTime() - new Date(b.start_time).getTime(),
-    )
-    .map((block) => {
+  // Planned blocks use the same vertical scale, while overlapping blocks are
+  // assigned horizontal lanes so their cards remain independently readable.
+  const blocksWithRange: BlockWithRange[] = dayBlocks.map((block, index) => ({
+    block,
+    index,
+    startMs: new Date(block.start_time).getTime(),
+    endMs: new Date(block.end_time).getTime(),
+  }));
+  const blockColumns = assignBlockColumns(blocksWithRange);
+  const positionedBlocks: PositionedBlock[] = blocksWithRange
+    .toSorted((a, b) => a.startMs - b.startMs)
+    .map(({ block, index }) => {
       const startTime = new Date(block.start_time);
       const endTime = new Date(block.end_time);
       const durationMin = Math.max(
@@ -137,8 +203,9 @@ export function computeDayLayout(
       const startMin =
         (startTime.getHours() - startHour) * 60 + startTime.getMinutes();
       const topPx = Math.max((startMin / 60) * BASE_HOUR_HEIGHT, 0);
-      const heightPx = Math.max((durationMin / 60) * BASE_HOUR_HEIGHT, 36);
-      return { block, topPx, heightPx };
+      const heightPx = Math.max((durationMin / 60) * BASE_HOUR_HEIGHT, MIN_BLOCK_HEIGHT);
+      const { columnIndex, columnCount, stackIndex } = blockColumns.get(index)!;
+      return { block, topPx, heightPx, columnIndex, columnCount, stackIndex };
     });
 
   // Uniform hour rows: hour h starts at h * BASE_HOUR_HEIGHT, never expanded
@@ -152,7 +219,9 @@ export function computeDayLayout(
   const totalContentBottom = Math.max(
     0,
     ...positioned.map((p) => p.topPx + p.heightPx),
-    ...positionedBlocks.map((p) => p.topPx + p.heightPx),
+    ...positionedBlocks.map(
+      (p) => p.topPx + p.stackIndex * BLOCK_STACK_OFFSET + p.heightPx,
+    ),
   );
 
   return {
@@ -173,6 +242,7 @@ interface CalendarMobileViewProps {
   currentTimePos: number | null;
   sessions: WeekSession[];
   onCreateBlock?: (date: Date, hour: number) => void;
+  onViewBlock?: (block: TimeBlockWithMeta) => void;
   onEditBlock?: (block: TimeBlockWithMeta) => void;
   onDeleteBlock?: (block: TimeBlockWithMeta) => void;
   onStartFocusFromBlock?: (block: TimeBlockWithMeta) => void;
@@ -181,7 +251,7 @@ interface CalendarMobileViewProps {
 function CalendarMobileView({
   weekDays, allDayLayouts, selectedMobileDay, onSelectMobileDay,
   hours, formatHour, currentTimePos, sessions,
-  onCreateBlock, onEditBlock, onDeleteBlock, onStartFocusFromBlock,
+  onCreateBlock, onViewBlock, onEditBlock, onDeleteBlock, onStartFocusFromBlock,
 }: CalendarMobileViewProps) {
   const layout = allDayLayouts[selectedMobileDay];
   const dayDate = weekDays[selectedMobileDay];
@@ -244,12 +314,16 @@ function CalendarMobileView({
               <CalendarSessionBlock key={session.id} session={session} topPx={topPx} heightPx={heightPx} />
             ))}
 
-            {layout.positionedBlocks.map(({ block, topPx, heightPx }) => (
+            {layout.positionedBlocks.map(({ block, topPx, heightPx, columnIndex, columnCount, stackIndex }) => (
               <CalendarTimeBlock
                 key={`b-${block.id}`}
                 block={block}
                 topPx={topPx}
                 heightPx={heightPx}
+                columnIndex={columnIndex}
+                columnCount={columnCount}
+                stackIndex={stackIndex}
+                onView={onViewBlock}
                 onEdit={onEditBlock}
                 onDelete={onDeleteBlock}
                 onStartFocus={onStartFocusFromBlock}
@@ -288,6 +362,7 @@ interface CalendarDesktopViewProps {
   desktopGridTotalHeight: number;
   sessions: WeekSession[];
   onCreateBlock?: (date: Date, hour: number) => void;
+  onViewBlock?: (block: TimeBlockWithMeta) => void;
   onEditBlock?: (block: TimeBlockWithMeta) => void;
   onDeleteBlock?: (block: TimeBlockWithMeta) => void;
   onStartFocusFromBlock?: (block: TimeBlockWithMeta) => void;
@@ -296,7 +371,7 @@ interface CalendarDesktopViewProps {
 function CalendarDesktopView({
   weekDays, allDayLayouts, hours, formatHour,
   currentTimePos, todayIdx, desktopGridTotalHeight, sessions,
-  onCreateBlock, onEditBlock, onDeleteBlock, onStartFocusFromBlock,
+  onCreateBlock, onViewBlock, onEditBlock, onDeleteBlock, onStartFocusFromBlock,
 }: CalendarDesktopViewProps) {
   // Week has planned blocks if any day's layout positioned any. Kept in sync
   // with the `positionedBlocks` rendering below so the empty-state only shows
@@ -360,12 +435,16 @@ function CalendarDesktopView({
                 {layout.positioned.map(({ session, topPx, heightPx }) => (
                   <CalendarSessionBlock key={session.id} session={session} topPx={topPx} heightPx={heightPx} />
                 ))}
-                {layout.positionedBlocks.map(({ block, topPx, heightPx }) => (
+                {layout.positionedBlocks.map(({ block, topPx, heightPx, columnIndex, columnCount, stackIndex }) => (
                   <CalendarTimeBlock
                     key={`b-${block.id}`}
                     block={block}
                     topPx={topPx}
                     heightPx={heightPx}
+                    columnIndex={columnIndex}
+                    columnCount={columnCount}
+                    stackIndex={stackIndex}
+                    onView={onViewBlock}
                     onEdit={onEditBlock}
                     onDelete={onDeleteBlock}
                     onStartFocus={onStartFocusFromBlock}
@@ -402,6 +481,7 @@ export function CalendarGrid({
   startHour,
   endHour,
   onCreateBlock,
+  onViewBlock,
   onEditBlock,
   onDeleteBlock,
   onStartFocusFromBlock,
@@ -494,6 +574,7 @@ export function CalendarGrid({
         currentTimePos={currentTimePos}
         sessions={sessions}
         onCreateBlock={onCreateBlock}
+        onViewBlock={onViewBlock}
         onEditBlock={onEditBlock}
         onDeleteBlock={onDeleteBlock}
         onStartFocusFromBlock={onStartFocusFromBlock}
@@ -508,6 +589,7 @@ export function CalendarGrid({
         desktopGridTotalHeight={desktopGridTotalHeight}
         sessions={sessions}
         onCreateBlock={onCreateBlock}
+        onViewBlock={onViewBlock}
         onEditBlock={onEditBlock}
         onDeleteBlock={onDeleteBlock}
         onStartFocusFromBlock={onStartFocusFromBlock}

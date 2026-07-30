@@ -1,5 +1,11 @@
 import { describe, it, expect } from "vitest";
-import { fromLocalInput, toLocalInput } from "@/components/base/time-block-form";
+import {
+  fromLocalInput,
+  getEndAfterStart,
+  getMinimumEnd,
+  getTimeRangeError,
+  toLocalInput,
+} from "@/components/base/time-block-form";
 
 /**
  * These conversions use the JS Date local getters, so the exact stored string
@@ -34,5 +40,21 @@ describe("time-block-form datetime conversion", () => {
     const stored = fromLocalInput(picked);
     const back = toLocalInput(new Date(stored));
     expect(back).toBe(picked);
+  });
+
+  it("provides a valid end when the user moves the start past the current end", () => {
+    expect(getEndAfterStart("2026-07-30T14:30")).toBe("2026-07-30T14:55");
+    expect(getMinimumEnd("2026-07-30T14:30")).toBe("2026-07-30T14:31");
+  });
+
+  it("rejects focus time that ends in the future", () => {
+    const now = new Date("2026-07-30T16:18").getTime();
+
+    expect(
+      getTimeRangeError("2026-07-30T15:50", "2026-07-30T16:40", now),
+    ).toBe("End time cannot be in the future.");
+    expect(
+      getTimeRangeError("2026-07-30T15:50", "2026-07-30T16:10", now),
+    ).toBeNull();
   });
 });

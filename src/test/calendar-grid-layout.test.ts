@@ -116,4 +116,42 @@ describe("computeDayLayout — uniform hour grid", () => {
     const startMin = (d2.getHours() - START_HOUR) * 60 + d2.getMinutes();
     expect(layout.positioned[1].topPx).toBe((startMin / 60) * BASE_HOUR_HEIGHT);
   });
+
+  it("keeps overlapping time blocks in one vertical column", () => {
+    const layout = computeDayLayout([], [
+      makeBlock({ id: 1, start_time: "2026-07-05 16:00:00", end_time: "2026-07-05 16:25:00" }),
+      makeBlock({ id: 2, start_time: "2026-07-05 16:00:00", end_time: "2026-07-05 16:25:00" }),
+      makeBlock({ id: 3, start_time: "2026-07-05 17:00:00", end_time: "2026-07-05 17:25:00" }),
+    ], START_HOUR, END_HOUR);
+
+    const [first, second, backToBack] = layout.positionedBlocks;
+    expect(first.columnCount).toBe(1);
+    expect(second.columnCount).toBe(1);
+    expect(first.columnIndex).toBe(0);
+    expect(second.columnIndex).toBe(0);
+    expect(first.stackIndex).toBe(0);
+    expect(second.stackIndex).toBe(1);
+    expect(backToBack.columnCount).toBe(1);
+    expect(backToBack.columnIndex).toBe(0);
+  });
+
+  it("stacks dense overlap groups in one readable column", () => {
+    const layout = computeDayLayout([], [
+      makeBlock({ id: 1, start_time: "2026-07-05 16:00:00", end_time: "2026-07-05 16:25:00" }),
+      makeBlock({ id: 2, start_time: "2026-07-05 16:00:00", end_time: "2026-07-05 16:25:00" }),
+      makeBlock({ id: 3, start_time: "2026-07-05 16:00:00", end_time: "2026-07-05 16:25:00" }),
+      makeBlock({ id: 4, start_time: "2026-07-05 16:00:00", end_time: "2026-07-05 16:25:00" }),
+    ], START_HOUR, END_HOUR);
+
+    expect(layout.positionedBlocks.map((block) => [
+      block.columnIndex,
+      block.columnCount,
+      block.stackIndex,
+    ])).toEqual([
+      [0, 1, 0],
+      [0, 1, 1],
+      [0, 1, 2],
+      [0, 1, 3],
+    ]);
+  });
 });
