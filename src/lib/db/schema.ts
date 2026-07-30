@@ -31,6 +31,26 @@ export async function withSerializedWrite<T>(
   }
 }
 
+export async function withTransaction<T>(
+  work: (database: Database) => Promise<T>,
+): Promise<T> {
+  const database = await getDb();
+  await database.execute("BEGIN IMMEDIATE");
+
+  try {
+    const result = await work(database);
+    await database.execute("COMMIT");
+    return result;
+  } catch (error) {
+    try {
+      await database.execute("ROLLBACK");
+    } catch (rollbackError) {
+      console.error("[DB] Failed to roll back transaction:", rollbackError);
+    }
+    throw error;
+  }
+}
+
 export function getDbName(): string {
   return DB_NAME;
 }
