@@ -10,6 +10,7 @@ import {
   updateTimeBlock,
   updateLoggedSession,
   deleteSession,
+  validateRange,
   withSerializedWrite,
   type WeekSession,
   type WeekSummary,
@@ -219,6 +220,11 @@ export function CalendarDashboard() {
         0,
         Math.round((endDate.getTime() - startDate.getTime()) / 1000),
       );
+
+      // Validate up front so an invalid range never inserts an orphan session
+      // that the catch blocks would then have to clean up. addTimeBlock and
+      // updateTimeBlock also validate, but addLoggedSession does not.
+      validateRange(input.start_time, input.end_time);
       const sessionPayload = {
         taskId: input.task_id ?? null,
         phase: "work",

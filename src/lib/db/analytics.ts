@@ -8,7 +8,13 @@ import type {
   CompletedTaskEntry,
 } from "./types";
 import { computeDailyScore } from "@/lib/productivity-score";
-import { CONSISTENCY_STREAK_THRESHOLD } from "@/lib/constants";
+import {
+  CONSISTENCY_STREAK_THRESHOLD,
+  DEFAULT_CATEGORY_COLOR,
+  EARLY_BIRD_HOUR,
+  MARATHON_SESSIONS_PER_DAY,
+  MONTHLY_QUALIFYING_SESSIONS,
+} from "@/lib/constants";
 
 export async function getCategoryBreakdown(
   startDate?: string,
@@ -137,7 +143,9 @@ export async function getCurrentStreak(): Promise<number> {
     "SELECT DISTINCT date(started_at) as days FROM sessions WHERE completed = 1 AND phase = 'work' ORDER BY days DESC",
   );
   if (rows.length === 0) return 0;
-  const today = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, "0")}-${String(new Date().getDate()).padStart(2, "0")}`;
+  // Snapshot once so all local parts come from the same instant.
+  const now = new Date();
+  const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
   let streak = 0;
   for (const row of rows) {
     const [ay, am, ad] = today.split("-").map(Number);
@@ -199,15 +207,15 @@ export async function getAchievementProgress(): Promise<AchievementProgress> {
       database.select<{ count: number }[]>(
         `SELECT COUNT(*) AS count FROM sessions
          WHERE completed = 1 AND phase = 'work'
-           AND CAST(strftime('%H', started_at) AS INTEGER) < 7`,
+           AND CAST(strftime('%H', started_at) AS INTEGER) < ${EARLY_BIRD_HOUR}`,
       ),
       database.select<{ count: number }[]>(
         `SELECT COUNT(*) AS count FROM (
-           SELECT date(started_at) AS day, COUNT(*) AS sessions
+           SELECT date(started_at) AS day, COUNT(*) AS sessionCount
            FROM sessions
            WHERE completed = 1 AND phase = 'work'
            GROUP BY date(started_at)
-           HAVING sessions >= 4
+           HAVING sessionCount >= ${MARATHON_SESSIONS_PER_DAY}
          )`,
       ),
       database.select<{ month: string }[]>(
@@ -215,7 +223,7 @@ export async function getAchievementProgress(): Promise<AchievementProgress> {
          FROM sessions
          WHERE completed = 1 AND phase = 'work'
          GROUP BY strftime('%Y-%m', started_at)
-         HAVING COUNT(*) >= 10`,
+         HAVING COUNT(*) >= ${MONTHLY_QUALIFYING_SESSIONS}`,
       ),
     ]);
 
@@ -241,8 +249,9 @@ export async function getCategoryAnalytics(
   const rows = await database.select<
     {
       category_id: number | null;
-      category_name: string | null;
-      category_color: string | null;
+      // COALESCE in the query guarantees both are non-null.
+      category_name: string;
+      category_color: string;
       total_focus_seconds: number;
       session_count: number;
       avg_session_seconds: number;
@@ -252,7 +261,7 @@ export async function getCategoryAnalytics(
     `SELECT
        s.category_id,
        COALESCE(c.name, 'Uncategorized') AS category_name,
-       COALESCE(c.color, '#94a3b8') AS category_color,
+       COALESCE(c.color, '${DEFAULT_CATEGORY_COLOR}') AS category_color,
        COALESCE(SUM(s.duration_sec), 0) AS total_focus_seconds,
        COUNT(*) AS session_count,
        COALESCE(AVG(s.duration_sec), 0) AS avg_session_seconds,
@@ -279,8 +288,7 @@ export async function getCategoryAnalytics(
 
   return rows.map((row) => ({
     ...row,
-    category_name: row.category_name ?? "Uncategorized",
-    category_color: row.category_color ?? "#94a3b8",
+    // COALESCE above already guarantees non-null name/color.
     daily_avg_seconds:
       dayCount !== undefined
         ? Math.round(row.total_focus_seconds / dayCount)
@@ -432,7 +440,7 @@ export async function getDailyScore(
     }[]
   >(
     `SELECT
-      COALESCE(SUM(duration_sec), 0) AS focus_seconds,
+      COALESCE(SUM(CASE WHEN completed = 1 THEN duration_sec ELSE 0 END), 0) AS focus_seconds,
       COUNT(*) AS started,
       COALESCE(SUM(CASE WHEN completed = 1 THEN 1 ELSE 0 END), 0) AS completed,
       COALESCE(SUM(CASE WHEN mood = 'focused' THEN 1 ELSE 0 END), 0) AS focused,

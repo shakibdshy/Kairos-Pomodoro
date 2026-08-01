@@ -84,6 +84,7 @@ export function TimerControls() {
           }
           transition={{ duration: 0.2, ease: "easeOut" }}
           aria-hidden={!isFullscreenFocus}
+          inert={!isFullscreenFocus}
           className={`[grid-area:1/1] justify-self-center ${
             !isFullscreenFocus ? "pointer-events-none" : ""
           }`}
@@ -100,6 +101,7 @@ export function TimerControls() {
           }
           transition={{ duration: 0.2, ease: "easeOut" }}
           aria-hidden={isFullscreenFocus}
+          inert={isFullscreenFocus}
           className={`[grid-area:1/1] flex w-full flex-col items-center gap-4 md:gap-5 ${
             isFullscreenFocus ? "pointer-events-none" : ""
           }`}

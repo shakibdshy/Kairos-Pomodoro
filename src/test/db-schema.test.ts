@@ -33,9 +33,14 @@ describe("database transactions", () => {
       await db.execute("UPDATE time_blocks SET title = $1", ["Focus"]);
     });
 
-    expect(execute.mock.calls.map(([sql]) => sql)).toEqual([
-      "UPDATE time_blocks SET title = $1",
-    ]);
+    // Assert the UPDATE ran without BEGIN/COMMIT, independently of setup-call
+    // ordering: getDb emits a one-time PRAGMA busy_timeout on first load, so
+    // the executed-SQL array may or may not include it depending on whether
+    // the connection was previously cached by another test in the suite.
+    const executedSql = execute.mock.calls.map(([sql]) => sql);
+    expect(executedSql).toContain("UPDATE time_blocks SET title = $1");
+    expect(executedSql.some((sql) => /^\s*BEGIN\b/i.test(String(sql)))).toBe(false);
+    expect(executedSql.some((sql) => /^\s*COMMIT\b/i.test(String(sql)))).toBe(false);
   });
 
   it("serializes overlapping multi-statement writes", async () => {

@@ -26,10 +26,11 @@ interface CalendarGridProps {
 const DAY_LABELS_FULL = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"];
 
 const BASE_HOUR_HEIGHT = 64;
-const MIN_BLOCK_HEIGHT = 36;
+/** Minimum rendered card height shared with calendar-time-block. */
+export const MIN_BLOCK_HEIGHT = 36;
 // Small visual nudge for overlapping cards; it must not move a card into a
-// different hour row like a full-card stack would.
-const BLOCK_STACK_OFFSET = 6;
+// different hour row like a full-card stack would. Shared with the block card.
+export const BLOCK_STACK_OFFSET = 6;
 
 function isToday(date: Date): boolean {
   const today = new Date();
@@ -116,7 +117,12 @@ interface BlockColumn {
   stackIndex: number;
 }
 
-/** Assign each connected overlap group to one vertical calendar column. */
+/**
+ * Assign each block in a connected overlap group a stack index. Overlapping
+ * blocks stay in a single column (columnIndex 0 of 1) and are differentiated
+ * by stackIndex, which the card uses as a small vertical offset so all remain
+ * readable without spreading into separate horizontal lanes.
+ */
 function assignBlockColumns(blocks: BlockWithRange[]): Map<number, BlockColumn> {
   const sorted = blocks.toSorted((a, b) => a.startMs - b.startMs);
   const columns = new Map<number, BlockColumn>();
@@ -155,6 +161,54 @@ function assignBlockColumns(blocks: BlockWithRange[]): Map<number, BlockColumn> 
   return columns;
 }
 
+/**
+ * Compute the visible hour window for the shared time axis. The default range
+ * (6–22) expands — in whole-hour steps — to include any session or time block
+ * that falls outside it, so a 12:30 AM block no longer clamps to the 6 AM row
+ * (the reported bug) and an 11 PM session isn't cut off at the bottom.
+ *
+ * Expansion is based purely on start/end hours: the axis must cover every row a
+ * card touches. Returns the default window unchanged when all content fits.
+ */
+export function computeVisibleHourRange(
+  sessions: WeekSession[],
+  timeBlocks: TimeBlockWithMeta[],
+  defaultStartHour: number,
+  defaultEndHour: number,
+): { startHour: number; endHour: number } {
+  let startHour = defaultStartHour;
+  let endHour = defaultEndHour;
+
+  // The hour index a timestamp falls into: 00:30 → 0, 23:00 → 23. An end time
+  // exactly on the hour (e.g. 02:00) ends on that gridline, so its row is the
+  // previous hour (01:00) — hence the -1 guard for on-the-hour ends.
+  const hourOf = (d: Date, isEnd: boolean): number => {
+    let h = d.getHours();
+    if (isEnd && d.getMinutes() === 0 && d.getSeconds() === 0) h -= 1;
+    return h;
+  };
+
+  for (const s of sessions) {
+    startHour = Math.min(startHour, hourOf(new Date(s.started_at), false));
+  }
+  for (const b of timeBlocks) {
+    startHour = Math.min(startHour, hourOf(new Date(b.start_time), false));
+    endHour = Math.max(endHour, hourOf(new Date(b.end_time), true));
+  }
+  for (const s of sessions) {
+    // Sessions carry a duration rather than an explicit end; derive the end hour.
+    const end = new Date(s.started_at);
+    end.setSeconds(end.getSeconds() + s.duration_sec);
+    endHour = Math.max(endHour, hourOf(end, true));
+  }
+
+  // Clamp to a valid day range.
+  startHour = Math.max(0, Math.min(startHour, defaultStartHour));
+  endHour = Math.max(defaultEndHour, Math.min(endHour, 23));
+  if (endHour < startHour) endHour = startHour;
+  return { startHour, endHour };
+}
+
 export function computeDayLayout(
   daySessions: WeekSession[],
   dayBlocks: TimeBlockWithMeta[],
@@ -183,7 +237,7 @@ export function computeDayLayout(
   });
 
   // Planned blocks use the same vertical scale, while overlapping blocks are
-  // assigned horizontal lanes so their cards remain independently readable.
+  // stacked with a small vertical offset so their cards stay independently readable.
   const blocksWithRange: BlockWithRange[] = dayBlocks.map((block, index) => ({
     block,
     index,
@@ -486,9 +540,17 @@ export function CalendarGrid({
   onDeleteBlock,
   onStartFocusFromBlock,
 }: CalendarGridProps) {
+  // The time axis expands beyond the default 6–22 window when any session or
+  // block falls outside it, so early/late cards get a real row instead of
+  // clamping to the top/bottom of the grid.
+  const { startHour: visibleStartHour, endHour: visibleEndHour } = useMemo(
+    () => computeVisibleHourRange(sessions, timeBlocks, startHour, endHour),
+    [sessions, timeBlocks, startHour, endHour],
+  );
+
   const hours = Array.from(
-    { length: endHour - startHour + 1 },
-    (_, i) => startHour + i,
+    { length: visibleEndHour - visibleStartHour + 1 },
+    (_, i) => visibleStartHour + i,
   );
 
   function formatHour(h: number): string {
@@ -539,17 +601,17 @@ export function CalendarGrid({
         computeDayLayout(
           sessionsByDay.get(toDateString(day)) ?? [],
           blocksByDay.get(toDateString(day)) ?? [],
-          startHour,
-          endHour,
+          visibleStartHour,
+          visibleEndHour,
         ),
       ),
-    [sessionsByDay, blocksByDay, weekDays, startHour, endHour],
+    [sessionsByDay, blocksByDay, weekDays, visibleStartHour, visibleEndHour],
   );
 
   function getCurrentTimePosition(): number | null {
     const currentMinutes = nowRef.current.getHours() * 60 + nowRef.current.getMinutes();
-    const startMinutes = startHour * 60;
-    if (currentMinutes < startMinutes || currentMinutes > (endHour + 1) * 60)
+    const startMinutes = visibleStartHour * 60;
+    if (currentMinutes < startMinutes || currentMinutes > (visibleEndHour + 1) * 60)
       return null;
 
     const offsetMin = currentMinutes - startMinutes;

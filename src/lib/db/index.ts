@@ -69,5 +69,6 @@ export {
   getTimeBlock,
   getWeekTimeBlocks,
   markTimeBlockCompleted,
+  validateRange,
 } from "./time-blocks";
 export type { TimeBlockInput } from "./time-blocks";

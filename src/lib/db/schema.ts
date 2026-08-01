@@ -207,7 +207,7 @@ export async function initDb(): Promise<void> {
         earned_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
         trigger_session_id INTEGER,
         announced_at DATETIME,
-        FOREIGN KEY (trigger_session_id) REFERENCES sessions(id)
+        FOREIGN KEY (trigger_session_id) REFERENCES sessions(id) ON DELETE SET NULL
       )`,
       "CREATE INDEX IF NOT EXISTS idx_badge_awards_announced ON badge_awards(announced_at)",
     ],

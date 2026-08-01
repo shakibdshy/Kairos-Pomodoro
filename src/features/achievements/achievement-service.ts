@@ -51,13 +51,20 @@ export async function reconcileAchievements(
     (achievement) => achievement.earned,
   );
 
+  // Record only achievements not already awarded, and note whether anything was
+  // actually written so the follow-up read/build can be skipped otherwise.
+  let recordedNew = false;
   for (const achievement of earned) {
     if (!existingIds.has(achievement.id)) {
       await recordBadgeAward(achievement.id, triggerSessionId, announce);
+      recordedNew = true;
     }
   }
 
-  if (earned.length === 0) return [];
+  // No earned achievements, or all earned were already recorded — nothing new
+  // to announce, so skip the second getBadgeAwards/buildDisplay.
+  if (!recordedNew) return [];
+
   const updatedAwards = await getBadgeAwards();
   const updated = buildDisplay(definitions, updatedAwards, progress);
   const newlyAwardedIds = new Set(

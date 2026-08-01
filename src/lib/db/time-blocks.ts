@@ -15,7 +15,10 @@ export interface TimeBlockInput {
   session_id?: number | null;
 }
 
-function validateRange(start: string, end: string): void {
+/** Throw a friendly error if end is not strictly after start. Shared by block
+ *  insert/update and the calendar handler so logged-session creation can
+ *  validate before inserting an orphan session. */
+export function validateRange(start: string, end: string): void {
   if (new Date(end).getTime() <= new Date(start).getTime()) {
     throw new Error("Invalid time range: end_time must be after start_time");
   }
@@ -48,10 +51,19 @@ export async function updateTimeBlock(
   input: Partial<TimeBlockInput>,
   database?: Database,
 ): Promise<void> {
-  if (input.start_time !== undefined && input.end_time !== undefined) {
-    validateRange(input.start_time, input.end_time);
-  }
   const connection = database ?? (await getDb());
+
+  // Validate the resulting range. When only one bound changes, compare against
+  // the unchanged bound from the current row so a one-sided edit can't produce
+  // an inverted range that only the DB CHECK would catch.
+  if (input.start_time !== undefined || input.end_time !== undefined) {
+    const current = await getTimeBlock(id);
+    if (current) {
+      const start = input.start_time ?? current.start_time;
+      const end = input.end_time ?? current.end_time;
+      validateRange(start, end);
+    }
+  }
   const fields: string[] = [];
   const values: (string | number | null)[] = [];
   let paramIndex = 1;

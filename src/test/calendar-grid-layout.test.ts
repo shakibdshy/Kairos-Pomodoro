@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { computeDayLayout } from "@/components/base/calendar-grid";
+import { computeDayLayout, computeVisibleHourRange } from "@/components/base/calendar-grid";
 import type { WeekSession, TimeBlockWithMeta } from "@/lib/db";
 
 /**
@@ -153,5 +153,63 @@ describe("computeDayLayout — uniform hour grid", () => {
       [0, 1, 2],
       [0, 1, 3],
     ]);
+  });
+});
+
+describe("computeVisibleHourRange — dynamic axis window", () => {
+  // Default window is 6–22; it must expand (in whole-hour steps) to include any
+  // session or block that falls outside it, so a 12:30 AM block no longer
+  // clamps to the 6 AM row (the reported bug) and an 11 PM session isn't cut.
+  it("returns the default 6–22 window when all content fits inside it", () => {
+    const range = computeVisibleHourRange(
+      [makeSession({ started_at: "2026-07-05 09:00:00", duration_sec: 1500 })],
+      [makeBlock({ start_time: "2026-07-05 12:30:00", end_time: "2026-07-05 13:30:00" })],
+      START_HOUR,
+      END_HOUR,
+    );
+    expect(range).toEqual({ startHour: 6, endHour: 22 });
+  });
+
+  it("expands the start hour down to cover a block before 6 AM", () => {
+    // 00:30 block → axis must start at 0 so the card lands on the 00:00 row.
+    const range = computeVisibleHourRange(
+      [],
+      [makeBlock({ start_time: "2026-07-05 00:30:00", end_time: "2026-07-05 01:15:00" })],
+      START_HOUR,
+      END_HOUR,
+    );
+    expect(range).toEqual({ startHour: 0, endHour: 22 });
+  });
+
+  it("expands the end hour up to cover a session after 22:00", () => {
+    // 23:00 session → axis must end at 23 so the card isn't clamped to 22:00.
+    const range = computeVisibleHourRange(
+      [makeSession({ started_at: "2026-07-05 23:00:00", duration_sec: 1500 })],
+      [],
+      START_HOUR,
+      END_HOUR,
+    );
+    expect(range).toEqual({ startHour: 6, endHour: 23 });
+  });
+
+  it("expands both ends when content spans before 6 AM and after 22:00", () => {
+    const range = computeVisibleHourRange(
+      [makeSession({ started_at: "2026-07-05 23:30:00", duration_sec: 900 })],
+      [makeBlock({ start_time: "2026-07-05 02:00:00", end_time: "2026-07-05 02:45:00" })],
+      START_HOUR,
+      END_HOUR,
+    );
+    expect(range).toEqual({ startHour: 2, endHour: 23 });
+  });
+
+  it("ignores out-of-window content whose hour is already covered", () => {
+    // 18:00 is inside 6–22; the window must not change.
+    const range = computeVisibleHourRange(
+      [],
+      [makeBlock({ start_time: "2026-07-05 18:00:00", end_time: "2026-07-05 18:30:00" })],
+      START_HOUR,
+      END_HOUR,
+    );
+    expect(range).toEqual({ startHour: 6, endHour: 22 });
   });
 });

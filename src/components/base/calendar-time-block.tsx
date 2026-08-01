@@ -2,8 +2,7 @@ import { Pencil, Trash2, Play } from "lucide-react";
 import type { TimeBlockWithMeta } from "@/lib/db";
 import { DEFAULT_CATEGORY_COLOR } from "@/lib/constants";
 import { cn } from "@/lib/cn";
-
-const BLOCK_STACK_OFFSET = 6;
+import { BLOCK_STACK_OFFSET, MIN_BLOCK_HEIGHT } from "./calendar-grid";
 
 interface CalendarTimeBlockProps {
   block: TimeBlockWithMeta;
@@ -55,7 +54,7 @@ export function CalendarTimeBlock({
         // so overlapping logs remain readable without drifting into another
         // hour row.
         top: topPx + stackIndex * BLOCK_STACK_OFFSET,
-        height: Math.max(heightPx, 36),
+        height: Math.max(heightPx, MIN_BLOCK_HEIGHT),
         left: `${(columnIndex / columnCount) * 100}%`,
         width: `${100 / columnCount}%`,
         paddingLeft: 4,
@@ -101,8 +100,13 @@ export function CalendarTimeBlock({
           </div>
         </div>
 
-        {/* Hover actions */}
-        <div className="absolute top-1 right-1 flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+        {/* Hover actions. The buttons stop propagation on both click and
+            keydown so Enter/Space stay exclusive to their own action and never
+            bubble up to the card-level onView keyboard handler. */}
+        <div
+          className="absolute top-1 right-1 flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
+          onKeyDown={(e) => e.stopPropagation()}
+        >
           {onStartFocus && !isLogged && (
             <button
               onClick={(e) => {
