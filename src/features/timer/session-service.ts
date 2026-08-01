@@ -7,6 +7,20 @@ import {
 } from "@/lib/db";
 import { reconcileAchievements } from "@/features/achievements/achievement-service";
 import { useAchievementStore } from "@/features/achievements/use-achievement-store";
+import type { AchievementDisplay } from "@/features/achievements/achievement-catalog";
+
+/** Reconcile achievements, surfacing failures as errors instead of silently
+ *  swallowing them. Matches the logging in use-achievement-store.loadPending. */
+async function safeReconcile(
+  triggerSessionId: number | null,
+): Promise<AchievementDisplay[]> {
+  try {
+    return await reconcileAchievements(triggerSessionId, true);
+  } catch (error) {
+    console.error("[Timer] Failed to reconcile achievements:", error);
+    return [];
+  }
+}
 
 export const SessionService = {
   async start(
@@ -25,7 +39,7 @@ export const SessionService = {
     notes?: string,
   ): Promise<void> {
     await dbFinishSession(sessionId, durationSec, mood, notes);
-    const unlocked = await reconcileAchievements(sessionId, true).catch(() => []);
+    const unlocked = await safeReconcile(sessionId);
     useAchievementStore.getState().enqueue(unlocked);
   },
 
@@ -41,7 +55,7 @@ export const SessionService = {
   ): Promise<void> {
     await addSession(activeTaskId, phase, elapsedSec, completed);
     if (completed && phase === "work") {
-      const unlocked = await reconcileAchievements(null, true).catch(() => []);
+      const unlocked = await safeReconcile(null);
       useAchievementStore.getState().enqueue(unlocked);
     }
   },
@@ -56,7 +70,7 @@ export const SessionService = {
     intention?: string | null;
   }): Promise<number> {
     const sessionId = await addLoggedSession(input);
-    const unlocked = await reconcileAchievements(sessionId, true).catch(() => []);
+    const unlocked = await safeReconcile(sessionId);
     useAchievementStore.getState().enqueue(unlocked);
     return sessionId;
   },

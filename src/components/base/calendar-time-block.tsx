@@ -2,11 +2,16 @@ import { Pencil, Trash2, Play } from "lucide-react";
 import type { TimeBlockWithMeta } from "@/lib/db";
 import { DEFAULT_CATEGORY_COLOR } from "@/lib/constants";
 import { cn } from "@/lib/cn";
+import { BLOCK_STACK_OFFSET, MIN_BLOCK_HEIGHT } from "./calendar-grid";
 
 interface CalendarTimeBlockProps {
   block: TimeBlockWithMeta;
   topPx: number;
   heightPx: number;
+  columnIndex?: number;
+  columnCount?: number;
+  stackIndex?: number;
+  onView?: (block: TimeBlockWithMeta) => void;
   onEdit?: (block: TimeBlockWithMeta) => void;
   onDelete?: (block: TimeBlockWithMeta) => void;
   onStartFocus?: (block: TimeBlockWithMeta) => void;
@@ -25,6 +30,10 @@ export function CalendarTimeBlock({
   block,
   topPx,
   heightPx,
+  columnIndex = 0,
+  columnCount = 1,
+  stackIndex = 0,
+  onView,
   onEdit,
   onDelete,
   onStartFocus,
@@ -39,9 +48,31 @@ export function CalendarTimeBlock({
 
   return (
     <div
-      className="absolute left-1 right-1 z-20 group"
-      style={{ top: topPx, height: Math.max(heightPx, 36) }}
-      onClick={(e) => e.stopPropagation()}
+      className="absolute left-0 z-20 group cursor-pointer"
+      style={{
+        // Keep the time-derived top intact; this is only a small visual nudge
+        // so overlapping logs remain readable without drifting into another
+        // hour row.
+        top: topPx + stackIndex * BLOCK_STACK_OFFSET,
+        height: Math.max(heightPx, MIN_BLOCK_HEIGHT),
+        left: `${(columnIndex / columnCount) * 100}%`,
+        width: `${100 / columnCount}%`,
+        paddingLeft: 4,
+        paddingRight: 4,
+      }}
+      onClick={(e) => {
+        e.stopPropagation();
+        onView?.(block);
+      }}
+      onKeyDown={(e) => {
+        if ((e.key === "Enter" || e.key === " ") && onView) {
+          e.preventDefault();
+          onView(block);
+        }
+      }}
+      role={onView ? "button" : undefined}
+      tabIndex={onView ? 0 : undefined}
+      aria-label={onView ? `View details for ${label}` : undefined}
     >
       <div
         className={cn(
@@ -69,8 +100,13 @@ export function CalendarTimeBlock({
           </div>
         </div>
 
-        {/* Hover actions */}
-        <div className="absolute top-1 right-1 flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+        {/* Hover actions. The buttons stop propagation on both click and
+            keydown so Enter/Space stay exclusive to their own action and never
+            bubble up to the card-level onView keyboard handler. */}
+        <div
+          className="absolute top-1 right-1 flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
+          onKeyDown={(e) => e.stopPropagation()}
+        >
           {onStartFocus && !isLogged && (
             <button
               onClick={(e) => {

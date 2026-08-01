@@ -1,4 +1,5 @@
 import { useEffect, useEffectEvent, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import { X } from "lucide-react";
 import { useEscapeClose } from "@/hooks/use-escape-close";
 import { cn } from "@/lib/cn";
@@ -35,10 +36,10 @@ export function ModalOverlay({
 
   if (!open) return null;
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-100 flex items-center justify-center p-4">
       <div
-        className={cn("absolute inset-0 backdrop-blur-sm", backdropClassName)}
+        className={cn("absolute inset-0 backdrop-blur-sm kairos-modal-backdrop-in", backdropClassName)}
         role="button"
         tabIndex={-1}
         onClick={onClose}
@@ -46,7 +47,7 @@ export function ModalOverlay({
       />
       <div
         className={cn(
-          "relative w-full bg-sahara-surface rounded-3xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200",
+          "relative w-full bg-sahara-surface rounded-3xl shadow-2xl overflow-hidden kairos-modal-panel-in",
           maxWidth,
         )}
       >
@@ -60,6 +61,7 @@ export function ModalOverlay({
         )}
         {children}
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

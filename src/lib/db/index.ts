@@ -1,4 +1,4 @@
-export { initDb, withTransaction } from "./schema";
+export { initDb, withSerializedWrite } from "./schema";
 export { getDb } from "./schema";
 export type { Session, Category, CategoryBreakdown, CategoryAnalytics, DayData, WeekSession, WeekSummary, MoodStat, SessionNoteEntry, CompletedTaskEntry, TimeBlock, TimeBlockWithMeta, JournalEntry } from "./types";
 export {
@@ -69,5 +69,6 @@ export {
   getTimeBlock,
   getWeekTimeBlocks,
   markTimeBlockCompleted,
+  validateRange,
 } from "./time-blocks";
 export type { TimeBlockInput } from "./time-blocks";

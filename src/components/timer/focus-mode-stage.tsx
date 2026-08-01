@@ -2,6 +2,7 @@ import {
   animate,
   m,
   useMotionValue,
+  useReducedMotion,
   type AnimationPlaybackControls,
 } from "framer-motion";
 import {
@@ -41,6 +42,7 @@ export function FocusModeStage({
   const y = useMotionValue(0);
   const animationRef = useRef<AnimationPlaybackControls | null>(null);
   const positionTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const reducedMotion = useReducedMotion();
 
   const positionStage = useCallback(() => {
     const boundary = boundaryRef.current;
@@ -61,8 +63,13 @@ export function FocusModeStage({
       : 0;
 
     animationRef.current?.stop();
+    // Reduced-motion users should get the repositioning without the spring.
+    if (reducedMotion) {
+      y.set(targetY);
+      return;
+    }
     animationRef.current = animate(y, targetY, STAGE_TRANSITION);
-  }, [boundaryRef, isFullscreenFocus, y]);
+  }, [boundaryRef, isFullscreenFocus, reducedMotion, y]);
 
   const schedulePositionStage = useCallback(
     (delay: number) => {
@@ -99,7 +106,10 @@ export function FocusModeStage({
         );
       });
 
-      if (heightChanged && !isFullscreenFocus) schedulePositionStage(0);
+      // In fullscreen, targetY is derived from the boundary/stage heights, so
+      // a height change requires repositioning. Outside fullscreen targetY is a
+      // fixed 0, so there is nothing to recompute on resize.
+      if (heightChanged && isFullscreenFocus) schedulePositionStage(0);
     });
     const boundary = boundaryRef.current;
     const stage = stageRef.current;
