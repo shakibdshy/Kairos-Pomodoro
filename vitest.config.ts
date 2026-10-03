@@ -13,6 +13,16 @@ export default defineConfig({
     globals: true,
     environment: "jsdom",
     setupFiles: ["./src/test-setup.ts"],
-    exclude: ["**/node_modules/**", "**/dist/**", "**/e2e/**"],
+    // Note: `exclude` replaces Vitest's defaults, so these are all listed.
+    // ".kilo" holds a stale untracked worktree copy of this repo whose tests
+    // resolve the "@" alias to ./src — i.e. they would run the real source
+    // through a duplicate, outdated test file and double-count every suite.
+    exclude: [
+      "**/node_modules/**",
+      "**/dist/**",
+      "**/e2e/**",
+      "**/.kilo/**",
+      "**/test-results/**",
+    ],
   },
 });

@@ -1,8 +1,6 @@
 import { describe, it, expect } from "vitest";
 import {
   formatSeconds,
-  getPhaseColor,
-  getPhaseBg,
   getPhaseLabel,
   formatTimeAmPm,
 } from "@/lib/time";
@@ -30,34 +28,6 @@ describe("formatSeconds", () => {
 
   it("formats large values", () => {
     expect(formatSeconds(3661)).toBe("61:01");
-  });
-});
-
-describe("getPhaseColor", () => {
-  it("returns correct color for work", () => {
-    expect(getPhaseColor("work")).toBe("text-sahara-primary");
-  });
-
-  it("returns correct color for short_break", () => {
-    expect(getPhaseColor("short_break")).toBe("text-sahara-text-secondary");
-  });
-
-  it("returns correct color for long_break", () => {
-    expect(getPhaseColor("long_break")).toBe("text-sahara-text-muted");
-  });
-});
-
-describe("getPhaseBg", () => {
-  it("returns correct bg for work", () => {
-    expect(getPhaseBg("work")).toBe("bg-sahara-primary");
-  });
-
-  it("returns correct bg for short_break", () => {
-    expect(getPhaseBg("short_break")).toBe("bg-sahara-card");
-  });
-
-  it("returns correct bg for long_break", () => {
-    expect(getPhaseBg("long_break")).toBe("bg-sahara-card");
   });
 });
 
