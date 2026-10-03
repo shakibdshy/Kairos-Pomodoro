@@ -14,6 +14,29 @@ const columnDefaults = new Map<string, Map<string, unknown>>();
   const settings = getTable("settings");
   autoInc.set("settings", 1);
   settings.set(1, { id: 1, key: "onboarding_complete", value: "true" });
+
+  // Seed presets directly: the app's own seed uses literal VALUES tuples, which
+  // this mock's INSERT parser cannot read, so it would insert empty rows.
+  const presets = getTable("presets");
+  autoInc.set("presets", 1);
+  presets.set(1, {
+    id: 1,
+    name: "DSA",
+    work_duration: 7200,
+    short_break_duration: 1200,
+    long_break_duration: 3600,
+    pomos_before_long_break: 4,
+    created_at: "2026-01-01 00:00:00",
+  });
+  presets.set(2, {
+    id: 2,
+    name: "Classic Pomodoro",
+    work_duration: 1500,
+    short_break_duration: 300,
+    long_break_duration: 900,
+    pomos_before_long_break: 4,
+    created_at: "2026-01-01 00:00:00",
+  });
 })();
 
 function getTable(name: string): Map<number, Row> {
@@ -40,13 +63,21 @@ function parseWhereId(sql: string, params: unknown[]): number | null {
   return m ? Number(params[parseInt(m[1]) - 1]) : null;
 }
 
-function applyWhereFilters(rows: Row[], sql: string, up: string, params: unknown[]): Row[] {
+function applyWhereFilters(
+  rows: Row[],
+  sql: string,
+  up: string,
+  params: unknown[],
+): Row[] {
   if (!up.includes("WHERE")) return rows;
 
   let result = rows;
-  if (up.includes("ARCHIVED = 0")) result = result.filter((r) => r.archived === 0);
-  if (up.includes("COMPLETED = 1")) result = result.filter((r) => r.completed === 1);
-  if (up.includes("COMPLETED = 0")) result = result.filter((r) => r.completed === 0);
+  if (up.includes("ARCHIVED = 0"))
+    result = result.filter((r) => r.archived === 0);
+  if (up.includes("COMPLETED = 1"))
+    result = result.filter((r) => r.completed === 1);
+  if (up.includes("COMPLETED = 0"))
+    result = result.filter((r) => r.completed === 0);
 
   // DATE(started_at) range/today filters used by getWeekSessions / getTodaySessions.
   // Extract the date portion (YYYY-MM-DD) from the row's started_at and compare
@@ -109,11 +140,7 @@ function parseCreateDefaults(sql: string): Map<string, unknown> {
       if (val === "0") defaults.set(colName, 0);
       else if (val === "1") defaults.set(colName, 1);
       else if (/^\d+$/.test(val)) defaults.set(colName, Number(val));
-      else if (
-        val.startsWith("'") &&
-        val.endsWith("'") &&
-        val !== "'now'"
-      ) {
+      else if (val.startsWith("'") && val.endsWith("'") && val !== "'now'") {
         defaults.set(colName, val.slice(1, -1));
       }
     }
@@ -256,7 +283,8 @@ export class Database {
     }
 
     if (up.includes("COUNT(*)")) {
-      const countCol = (sql.match(/COUNT\(\*\)\s+AS\s+(\w+)/i) || [])[1] ?? "count";
+      const countCol =
+        (sql.match(/COUNT\(\*\)\s+AS\s+(\w+)/i) || [])[1] ?? "count";
       let rows = allRows(name);
 
       rows = applyWhereFilters(rows, sql, up, params);

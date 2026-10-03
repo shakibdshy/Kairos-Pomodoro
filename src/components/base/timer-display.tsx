@@ -8,6 +8,7 @@ import {
   parseTimeInput,
   formatEditableValueFromSeconds,
   formatEditingDisplay,
+  TIME_INPUT_PATTERN,
 } from "@/lib/timer-utils";
 import type { TimerPhase } from "@/features/timer/timer-types";
 
@@ -153,7 +154,7 @@ export function TimerDisplay({
     totalSeconds > 0
       ? Math.min(100, ((totalSeconds - secondsRemaining) / totalSeconds) * 100)
       : 100;
-      
+
   const [rawInput, setRawInput] = useState(() =>
     formatEditableValueFromSeconds(secondsRemaining),
   );
@@ -270,7 +271,11 @@ export function TimerDisplay({
           progress={progress}
           style={style}
           strokeWidth={style === "zigzag" ? "5" : "3"}
-          className={cn(isComplete ? "stroke-sahara-ring-complete" : "stroke-sahara-primary")}
+          className={cn(
+            isComplete
+              ? "stroke-sahara-ring-complete"
+              : "stroke-sahara-primary",
+          )}
           showDot={true}
           isRunning={isRunning}
         />
@@ -284,7 +289,7 @@ export function TimerDisplay({
             <input
               type="text"
               inputMode="numeric"
-              pattern="[0-9:]{0,2}(:[0-9]{0,2})?"
+              pattern={TIME_INPUT_PATTERN}
               aria-label="Set timer duration"
               value={displayedInputValue}
               onChange={(event) => {
@@ -327,7 +332,9 @@ export function TimerDisplay({
                 }
               }}
               className={cn(
-                "w-[5.5ch] rounded-2xl border border-transparent bg-transparent px-3 md:px-4 text-center font-serif leading-none tracking-tight text-sahara-primary outline-none transition-all [font-variant-numeric:tabular-nums]",
+                // Sized for the longest value MAX_INPUT_SECONDS can format
+                // ("999:59", 6 chars) so long sessions are never clipped.
+                "w-[8.5ch] rounded-2xl border border-transparent bg-transparent px-3 md:px-4 text-center font-serif leading-none tracking-tight text-sahara-primary outline-none transition-all [font-variant-numeric:tabular-nums]",
                 "text-[76px] md:text-[120px]",
                 "hover:border-sahara-primary/20 hover:bg-sahara-primary/5",
                 "focus:border-sahara-primary/30 focus:bg-sahara-primary/8 focus:shadow-[0_0_0_1px_rgba(194,101,42,0.12)]",

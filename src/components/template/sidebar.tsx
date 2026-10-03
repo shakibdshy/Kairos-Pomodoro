@@ -56,7 +56,10 @@ export function Sidebar({
         width: { duration: 0.42, ease: [0.22, 1, 0.36, 1] },
       }}
       className={cn(
-        "hidden md:flex shrink-0 overflow-hidden border-r border-sahara-border/30 flex-col py-8 bg-sahara-bg/50 backdrop-blur-sm relative z-10",
+        // z-40 puts the panel (and the collapse handle nested in it) above
+        // in-page content layers (cards z-10/20, calendar z-30) but below
+        // floating chrome and modals (z-50+).
+        "hidden md:flex shrink-0 border-r border-sahara-border/30 flex-col py-8 bg-sahara-bg/50 backdrop-blur-sm relative z-40",
       )}
     >
       <Button
@@ -65,7 +68,12 @@ export function Sidebar({
         intent="default"
         shape="rounded-full"
         onClick={onToggleCollapse}
-        className="absolute -right-3.5 top-20 z-50 size-7 bg-sahara-surface shadow-sm hover:text-sahara-primary hover:border-sahara-primary/40 hover:shadow-md"
+        aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+        title={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+        // Deliberately straddles the panel edge. The panel does not clip — the
+        // inner wrapper below does — so the whole handle stays visible,
+        // hit-testable, and keeps its shadow.
+        className="absolute -right-3.5 top-20 z-10 size-7 bg-sahara-surface shadow-sm hover:text-sahara-primary hover:border-sahara-primary/40 hover:shadow-md"
       >
         {isCollapsed ? (
           <PanelLeftOpen className="size-3.5" />
@@ -74,148 +82,152 @@ export function Sidebar({
         )}
       </Button>
 
-      <div
-        className={cn(
-          "mb-12 transition-all duration-300",
-          isCollapsed ? "px-4 flex justify-center" : "px-8",
-        )}
-      >
-        {isCollapsed ? (
-          <div className="size-10 rounded-full border-2 border-sahara-primary flex items-center justify-center font-serif text-xl font-bold text-sahara-primary shadow-sm bg-sahara-surface">
-            K
-          </div>
-        ) : (
-          <>
-            <h1 className="font-serif text-2xl tracking-tight text-sahara-primary">
-              Kairos-Pomodoro
-            </h1>
-            <p className="text-[10px] tracking-[0.2em] font-bold text-sahara-text-muted mt-1 uppercase whitespace-nowrap">
-              Stay Present
-            </p>
-          </>
-        )}
-      </div>
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+        <div
+          className={cn(
+            "mb-12 transition-all duration-300",
+            isCollapsed ? "px-4 flex justify-center" : "px-8",
+          )}
+        >
+          {isCollapsed ? (
+            <div className="size-10 rounded-full border-2 border-sahara-primary flex items-center justify-center font-serif text-xl font-bold text-sahara-primary shadow-sm bg-sahara-surface">
+              K
+            </div>
+          ) : (
+            <>
+              <h1 className="font-serif text-2xl tracking-tight text-sahara-primary">
+                Kairos-Pomodoro
+              </h1>
+              <p className="text-[10px] tracking-[0.2em] font-bold text-sahara-text-muted mt-1 uppercase whitespace-nowrap">
+                Stay Present
+              </p>
+            </>
+          )}
+        </div>
 
-      <nav className="flex-1 px-3 space-y-1">
-        {NAV_ITEMS.map((item) => {
-          const Icon = item.icon;
-          const isActive = location.pathname === item.path;
-          return (
-            <Button
-              key={item.path}
-              variant="nav"
-              active={isActive}
-              onClick={() => navigate(item.path)}
-              title={isCollapsed ? item.label : undefined}
-              className={cn(
-                "overflow-hidden justify-start",
-                isCollapsed ? "justify-center p-3" : "gap-4 px-4 py-3",
-                isActive
-                  ? ""
-                  : "text-sahara-text-secondary hover:bg-sahara-card hover:text-sahara-text",
-              )}
-            >
-              <Icon
+        <nav className="flex-1 px-3 space-y-1">
+          {NAV_ITEMS.map((item) => {
+            const Icon = item.icon;
+            const isActive = location.pathname === item.path;
+            return (
+              <Button
+                key={item.path}
+                variant="nav"
+                active={isActive}
+                onClick={() => navigate(item.path)}
+                title={isCollapsed ? item.label : undefined}
                 className={cn(
-                  "size-5 shrink-0 transition-colors",
+                  "overflow-hidden justify-start",
+                  isCollapsed ? "justify-center p-3" : "gap-4 px-4 py-3",
                   isActive
-                    ? "text-sahara-primary"
-                    : "text-sahara-text-muted group-hover:text-sahara-text-secondary",
+                    ? ""
+                    : "text-sahara-text-secondary hover:bg-sahara-card hover:text-sahara-text",
                 )}
-              />
-              {!isCollapsed && (
-                <span className="text-xs tracking-widest font-bold uppercase whitespace-nowrap">
-                  {item.label}
-                </span>
-              )}
-            </Button>
-          );
-        })}
-      </nav>
+              >
+                <Icon
+                  className={cn(
+                    "size-5 shrink-0 transition-colors",
+                    isActive
+                      ? "text-sahara-primary"
+                      : "text-sahara-text-muted group-hover:text-sahara-text-secondary",
+                  )}
+                />
+                {!isCollapsed && (
+                  <span className="text-xs tracking-widest font-bold uppercase whitespace-nowrap">
+                    {item.label}
+                  </span>
+                )}
+              </Button>
+            );
+          })}
+        </nav>
 
-      <div className="px-3 mb-8">
-        <Button
-          variant="solid"
-          intent="sahara"
-          fullWidth
-          shape="rounded-full"
-          disabled={isRunning}
-          onClick={() => {
-            if (location.pathname !== "/") {
-              navigate("/");
-            }
-            start();
-          }}
-          title={
-            isCollapsed
-              ? isRunning
-                ? "SESSION ACTIVE"
-                : "START SESSION"
-              : undefined
-          }
-          className={cn(
-            "tracking-widest text-[10px] sm:text-xs font-bold shadow-lg shadow-sahara-primary/20 hover:shadow-xl transition-all",
-            isCollapsed ? "h-12" : "py-4 gap-2",
-            isRunning && "opacity-50 cursor-not-allowed shadow-none",
-          )}
-        >
-          <Play
-            className={cn("size-4 fill-current", !isCollapsed && "ml-0.5")}
-          />
-          {!isCollapsed && (
-            <span>{isRunning ? "SESSION ACTIVE" : "START SESSION"}</span>
-          )}
-        </Button>
-      </div>
-
-      <div className="px-3 space-y-1 border-t border-sahara-border/20 pt-6">
-        <Button
-          variant="nav"
-          intent="default"
-          onClick={() => navigate("/onboarding")}
-          title={isCollapsed ? "HELP" : undefined}
-          className={cn(
-            "rounded-none justify-start",
-            isCollapsed ? "justify-center p-3" : "gap-4 px-4 py-3",
-          )}
-        >
-          <HelpCircle
-            className={cn(
-              "size-5 shrink-0",
+        <div className="px-3 mb-8">
+          <Button
+            variant="solid"
+            intent="sahara"
+            fullWidth
+            shape="rounded-full"
+            disabled={isRunning}
+            onClick={() => {
+              if (location.pathname !== "/") {
+                navigate("/");
+              }
+              start();
+            }}
+            title={
               isCollapsed
-                ? "text-sahara-text-muted group-hover:text-sahara-text-secondary"
-                : "",
-            )}
-          />
-          {!isCollapsed && (
-            <span className="text-xs tracking-widest font-bold">HELP</span>
-          )}
-        </Button>
-        <Button
-          variant="nav"
-          active={location.pathname === "/settings"}
-          onClick={() => navigate("/settings")}
-          title={isCollapsed ? "SETTINGS" : undefined}
-          className={cn(
-            "justify-start",
-            isCollapsed ? "justify-center p-3" : "gap-4 px-4 py-3",
-            location.pathname === "/settings"
-              ? ""
-              : "text-sahara-text-muted hover:text-sahara-text-secondary",
-          )}
-        >
-          <Settings
+                ? isRunning
+                  ? "SESSION ACTIVE"
+                  : "START SESSION"
+                : undefined
+            }
             className={cn(
-              "size-5 shrink-0",
-              location.pathname === "/settings"
-                ? "text-sahara-primary"
-                : "text-sahara-text-muted group-hover:text-sahara-text-secondary",
+              "tracking-widest text-[10px] sm:text-xs font-bold shadow-lg shadow-sahara-primary/20 hover:shadow-xl transition-all",
+              isCollapsed ? "h-12" : "py-4 gap-2",
+              isRunning && "opacity-50 cursor-not-allowed shadow-none",
             )}
-          />
-          {!isCollapsed && (
-            <span className="text-xs tracking-widest font-bold">SETTINGS</span>
-          )}
-        </Button>
+          >
+            <Play
+              className={cn("size-4 fill-current", !isCollapsed && "ml-0.5")}
+            />
+            {!isCollapsed && (
+              <span>{isRunning ? "SESSION ACTIVE" : "START SESSION"}</span>
+            )}
+          </Button>
+        </div>
+
+        <div className="px-3 space-y-1 border-t border-sahara-border/20 pt-6">
+          <Button
+            variant="nav"
+            intent="default"
+            onClick={() => navigate("/onboarding")}
+            title={isCollapsed ? "HELP" : undefined}
+            className={cn(
+              "rounded-none justify-start",
+              isCollapsed ? "justify-center p-3" : "gap-4 px-4 py-3",
+            )}
+          >
+            <HelpCircle
+              className={cn(
+                "size-5 shrink-0",
+                isCollapsed
+                  ? "text-sahara-text-muted group-hover:text-sahara-text-secondary"
+                  : "",
+              )}
+            />
+            {!isCollapsed && (
+              <span className="text-xs tracking-widest font-bold">HELP</span>
+            )}
+          </Button>
+          <Button
+            variant="nav"
+            active={location.pathname === "/settings"}
+            onClick={() => navigate("/settings")}
+            title={isCollapsed ? "SETTINGS" : undefined}
+            className={cn(
+              "justify-start",
+              isCollapsed ? "justify-center p-3" : "gap-4 px-4 py-3",
+              location.pathname === "/settings"
+                ? ""
+                : "text-sahara-text-muted hover:text-sahara-text-secondary",
+            )}
+          >
+            <Settings
+              className={cn(
+                "size-5 shrink-0",
+                location.pathname === "/settings"
+                  ? "text-sahara-primary"
+                  : "text-sahara-text-muted group-hover:text-sahara-text-secondary",
+              )}
+            />
+            {!isCollapsed && (
+              <span className="text-xs tracking-widest font-bold">
+                SETTINGS
+              </span>
+            )}
+          </Button>
+        </div>
       </div>
     </m.aside>
   );
