@@ -54,8 +54,13 @@ test.describe("Timer", () => {
   }) => {
     await page.getByRole("button", { name: "START FOCUS" }).click();
 
-    await expect(page.getByRole("button", { name: "Focus" })).toBeDisabled();
-    await expect(page.getByRole("button", { name: "Break" })).toBeDisabled();
+    // Scoped by attribute, not by role: START FOCUS enters fullscreen focus,
+    // which marks this whole region aria-hidden + inert, so a role query cannot
+    // see it even though the buttons really are disabled.
+    const phaseSelector = page.locator('[aria-label="Timer phase"] button');
+
+    await expect(phaseSelector.nth(0)).toBeDisabled();
+    await expect(phaseSelector.nth(1)).toBeDisabled();
   });
 
   test("reset button returns timer to idle", async ({ page }) => {
@@ -113,9 +118,20 @@ test.describe("Presets over 99 minutes", () => {
   test("accepts a manually entered 120 minute duration", async ({ page }) => {
     const field = durationField(page);
     await field.click();
-    await field.fill("120:00");
-    await field.blur();
+    // On focus the field swaps the display form ("25:00") for the raw value
+    // ("25"), which is what the caret and backspace operate on.
+    await expect(field).toHaveValue("25");
 
+    // Clear by backspace rather than select-all: the field moves the caret to
+    // the end on focus inside a requestAnimationFrame, which lands after a
+    // select-all and clobbers it, leaving typing to append ("25" + "1" -> 251).
+    for (let i = 0; i < 6; i++) await field.press("Backspace");
+    await expect(field).toHaveValue("");
+
+    await field.pressSequentially("120:00", { delay: 20 });
+    await expect(field).toHaveValue("120:00");
+
+    await field.blur();
     await expect(field).toHaveValue("120:00");
   });
 });

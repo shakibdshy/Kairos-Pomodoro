@@ -108,7 +108,11 @@ export function TimerControls() {
         >
           {/* Top Controls */}
           <div className="flex items-center gap-3">
-            <div className="flex bg-sahara-card p-1 rounded-full border border-sahara-border/20">
+            <div
+              className="flex bg-sahara-card p-1 rounded-full border border-sahara-border/20"
+              role="group"
+              aria-label="Timer phase"
+            >
               <Button
                 variant="ghost"
                 size="sm"
