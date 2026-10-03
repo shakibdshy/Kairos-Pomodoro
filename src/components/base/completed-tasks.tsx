@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { CheckCircle2, ClipboardList } from "lucide-react";
 import { getCompletedTasksForPeriod, type CompletedTaskEntry } from "@/lib/db";
 import { formatTotalTime } from "@/lib/session-utils";
@@ -10,17 +10,17 @@ interface CompletedTasksProps {
 
 export function CompletedTasks({ startDate, endDate }: CompletedTasksProps) {
   const [tasks, setTasks] = useState<CompletedTaskEntry[]>([]);
-  const loadingRef = useRef(true);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    loadingRef.current = true;
+    setLoading(true);
     getCompletedTasksForPeriod(startDate, endDate)
       .then(setTasks)
       .catch(() => setTasks([]))
-      .finally(() => { loadingRef.current = false; });
+      .finally(() => setLoading(false));
   }, [startDate, endDate]);
 
-  if (loadingRef.current) {
+  if (loading) {
     return (
       <div className="bg-sahara-surface border border-sahara-border/20 rounded-xl md:rounded-2xl p-3.5 md:p-5">
         <p className="text-xs text-sahara-text-muted">Loading…</p>
@@ -30,10 +30,6 @@ export function CompletedTasks({ startDate, endDate }: CompletedTasksProps) {
 
   return (
     <div className="bg-sahara-surface border border-sahara-border/20 rounded-xl md:rounded-2xl p-3.5 md:p-5">
-      {/* <h3 className="text-xs md:text-sm font-bold text-sahara-text-muted uppercase tracking-wider mb-4 md:mb-5">
-        Tasks Worked On
-      </h3> */}
-
       {tasks.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-8 gap-2">
           <ClipboardList className="size-8 text-sahara-text-muted/40" />

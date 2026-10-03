@@ -115,6 +115,18 @@ export function TimeBlockForm({
       startD.setHours(defaultHour ?? 9, 0, 0, 0);
       const endD = new Date(startD);
       endD.setMinutes(endD.getMinutes() + 25);
+
+      // A logged focus session cannot end in the future, and getTimeRangeError
+      // enforces that. Opening the form near midnight (or on a future hour)
+      // would otherwise pre-fill a range the form itself rejects, leaving the
+      // user with an error they must clear by retyping both fields. Fall back
+      // to the 25 minutes ending now, which is always valid.
+      const now = Date.now();
+      if (endD.getTime() > now) {
+        endD.setTime(now);
+        startD.setTime(now - 25 * 60 * 1000);
+      }
+
       setTitle("");
       setStart(toLocalInput(startD));
       setEnd(toLocalInput(endD));
@@ -158,9 +170,7 @@ export function TimeBlockForm({
       await onSubmit(input);
       onClose();
     } catch (submitError) {
-      const message = String(
-        (submitError as Error)?.message ?? submitError,
-      );
+      const message = String((submitError as Error)?.message ?? submitError);
       console.error("[TimeBlockForm] Failed to save focus time:", submitError);
       setError(
         /database is locked|SQLITE_BUSY|code:\s*5/i.test(message)

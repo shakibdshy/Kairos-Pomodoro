@@ -16,9 +16,7 @@ export function getPhaseDuration(
   ];
 }
 
-export function getPhaseDurationKey(
-  phase: TimerPhase,
-): keyof TimerDurations {
+export function getPhaseDurationKey(phase: TimerPhase): keyof TimerDurations {
   return phase === "work" ? "work" : phase === "short_break" ? "short" : "long";
 }
 
@@ -31,13 +29,27 @@ export function determineBreakPhase(
   return longDelta <= shortDelta ? "long_break" : "short_break";
 }
 
+/**
+ * Cadence for the long break. Guarded because the value is read from persisted
+ * settings, which may be absent or corrupt — a non-positive cadence would make
+ * the modulo below NaN and silently disable long breaks entirely.
+ */
+export function resolveLongBreakCadence(value: unknown): number {
+  return typeof value === "number" && value >= 1
+    ? Math.floor(value)
+    : POMOS_BEFORE_LONG_BREAK;
+}
+
 export function getNextPhase(
   currentPhase: TimerPhase,
   pomosCompleted: number,
   durations: TimerDurations,
+  /** Cadence for the long break; falls back to the default when unset. */
+  pomosBeforeLongBreak: number = POMOS_BEFORE_LONG_BREAK,
 ): { phase: TimerPhase; duration: number } {
   if (currentPhase === "work") {
-    if (pomosCompleted % POMOS_BEFORE_LONG_BREAK === 0) {
+    const cadence = resolveLongBreakCadence(pomosBeforeLongBreak);
+    if (pomosCompleted % cadence === 0) {
       return { phase: "long_break", duration: durations.long };
     }
     return { phase: "short_break", duration: durations.short };

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { FileText } from "lucide-react";
 import { getSessionNotes, type SessionNoteEntry } from "@/lib/db";
 import { formatDuration } from "@/lib/session-utils";
@@ -32,17 +32,17 @@ interface SessionNotesProps {
 
 export function SessionNotes({ startDate, endDate }: SessionNotesProps) {
   const [notes, setNotes] = useState<SessionNoteEntry[]>([]);
-  const loadingRef = useRef(true);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    loadingRef.current = true;
+    setLoading(true);
     getSessionNotes(startDate, endDate)
       .then(setNotes)
       .catch(() => setNotes([]))
-      .finally(() => { loadingRef.current = false; });
+      .finally(() => setLoading(false));
   }, [startDate, endDate]);
 
-  if (loadingRef.current) {
+  if (loading) {
     return (
       <div className="bg-sahara-surface border border-sahara-border/20 rounded-xl md:rounded-2xl p-3.5 md:p-5">
         <p className="text-[15px] text-sahara-text-muted">Loading…</p>
@@ -52,10 +52,6 @@ export function SessionNotes({ startDate, endDate }: SessionNotesProps) {
 
   return (
     <div className="bg-sahara-surface border border-sahara-border/20 rounded-xl md:rounded-2xl p-3.5 md:p-5">
-      {/* <h3 className="text-xs md:text-sm font-bold text-sahara-text-muted uppercase tracking-wider mb-4 md:mb-5">
-        Session Notes
-      </h3> */}
-
       {notes.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-8 gap-2">
           <FileText className="size-8 text-sahara-text-muted/40" />
@@ -76,13 +72,17 @@ export function SessionNotes({ startDate, endDate }: SessionNotesProps) {
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
                   {entry.mood && (
-                    <span className="text-2xl">{MOOD_EMOJI[entry.mood] ?? "❓"}</span>
+                    <span className="text-2xl">
+                      {MOOD_EMOJI[entry.mood] ?? "❓"}
+                    </span>
                   )}
                   {entry.category_name ? (
                     <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full border border-sahara-border/20 bg-sahara-surface">
                       <span
                         className="size-2 rounded-full"
-                        style={{ backgroundColor: entry.category_color ?? "#94a3b8" }}
+                        style={{
+                          backgroundColor: entry.category_color ?? "#94a3b8",
+                        }}
                       />
                       <span
                         className="text-sm font-bold"

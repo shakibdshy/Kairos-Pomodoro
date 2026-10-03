@@ -34,7 +34,9 @@ export function useHotkeys() {
       if (cmd && e.key.toLowerCase() === "f") {
         e.preventDefault();
         if (status === "focus_complete") {
-          finishSession().catch(() => {});
+          finishSession().catch((err) => {
+            console.error("[Hotkeys] Failed to finish session:", err);
+          });
         }
         return;
       }

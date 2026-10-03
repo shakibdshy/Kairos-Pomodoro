@@ -38,7 +38,7 @@ interface TimerStore {
   overtimeSeconds: number;
   durations: TimerDurations;
 
-  start: (duration?: number) => void;
+  start: (duration?: number) => Promise<void>;
   pause: () => void;
   resume: () => void;
   skip: () => void;
@@ -139,11 +139,30 @@ export const useTimerStore = create<TimerStore>((set, get) => {
 
     skip: () => {
       const state = get();
-      const { phase, secondsRemaining, totalSeconds, activeTaskId, completedPomos, overtimeSeconds } = state;
+      const {
+        phase,
+        secondsRemaining,
+        totalSeconds,
+        activeTaskId,
+        completedPomos,
+        overtimeSeconds,
+      } = state;
 
       const completed = secondsRemaining <= 0 || overtimeSeconds > 0;
-      const elapsed = Math.max(0, totalSeconds - secondsRemaining + overtimeSeconds);
-      SessionService.recordSkip(activeTaskId, phase, elapsed, completed);
+      const elapsed = Math.max(
+        0,
+        totalSeconds - secondsRemaining + overtimeSeconds,
+      );
+      // Fire-and-forget by design (skip must not block on the DB write), but a
+      // failed write must not surface as an unhandled rejection.
+      void SessionService.recordSkip(
+        activeTaskId,
+        phase,
+        elapsed,
+        completed,
+      ).catch((err) => {
+        console.error("[Timer] Failed to record skipped session:", err);
+      });
 
       if (completed) {
         recordPomoCompletion(phase, activeTaskId);
@@ -152,8 +171,14 @@ export const useTimerStore = create<TimerStore>((set, get) => {
 
       engine.terminate();
 
-      const newPomos = phase === "work" && completed ? completedPomos + 1 : completedPomos;
-      const next = getNextPhase(phase, newPomos, state.durations);
+      const newPomos =
+        phase === "work" && completed ? completedPomos + 1 : completedPomos;
+      const next = getNextPhase(
+        phase,
+        newPomos,
+        state.durations,
+        useSettingsStore.getState().settings.pomosBeforeLongBreak,
+      );
 
       set({
         phase: next.phase,
@@ -165,20 +190,31 @@ export const useTimerStore = create<TimerStore>((set, get) => {
       });
 
       if (phase === "work" && completed) {
-        get().start(next.duration);
+        void get().start(next.duration);
       }
     },
 
     reset: () => {
       engine.terminate();
       const duration = getPhaseDuration(get().phase, get().durations);
-      set({ status: "idle", secondsRemaining: duration, totalSeconds: duration, overtimeSeconds: 0 });
+      set({
+        status: "idle",
+        secondsRemaining: duration,
+        totalSeconds: duration,
+        overtimeSeconds: 0,
+      });
     },
 
     setPhase: (phase: TimerPhase) => {
       engine.terminate();
       const duration = getPhaseDuration(phase, get().durations);
-      set({ phase, status: "idle", secondsRemaining: duration, totalSeconds: duration, overtimeSeconds: 0 });
+      set({
+        phase,
+        status: "idle",
+        secondsRemaining: duration,
+        totalSeconds: duration,
+        overtimeSeconds: 0,
+      });
     },
 
     setActiveTask: async (taskId: number | null) => {
@@ -194,7 +230,11 @@ export const useTimerStore = create<TimerStore>((set, get) => {
             set({ selectedCategory: null });
           }
         } catch (err) {
-          console.error("[TimerStore] Failed to load category for task:", taskId, err);
+          console.error(
+            "[TimerStore] Failed to load category for task:",
+            taskId,
+            err,
+          );
         }
       } else {
         set({ selectedCategory: null });
@@ -218,7 +258,11 @@ export const useTimerStore = create<TimerStore>((set, get) => {
       const nextDuration = Math.max(1, Math.floor(seconds));
       const key = getPhaseDurationKey(phase);
       const nextDurations = { ...durations, [key]: nextDuration };
-      set({ durations: nextDurations, secondsRemaining: nextDuration, totalSeconds: nextDuration });
+      set({
+        durations: nextDurations,
+        secondsRemaining: nextDuration,
+        totalSeconds: nextDuration,
+      });
     },
 
     adjustDuration: (minutes: number) => {
@@ -230,7 +274,11 @@ export const useTimerStore = create<TimerStore>((set, get) => {
         const currentDuration = durations[key];
         const newDuration = Math.max(60, currentDuration + deltaSec);
         const newDurations = { ...durations, [key]: newDuration };
-        set({ durations: newDurations, secondsRemaining: newDuration, totalSeconds: newDuration });
+        set({
+          durations: newDurations,
+          secondsRemaining: newDuration,
+          totalSeconds: newDuration,
+        });
       } else {
         set((s) => {
           const newTotal = Math.max(60, s.totalSeconds + deltaSec);
@@ -294,17 +342,34 @@ export const useTimerStore = create<TimerStore>((set, get) => {
 
     confirmStartNextPhase: async (mood?: string, notes?: string) => {
       const state = get();
-      const { currentSessionId, activeTaskId, phase, totalSeconds, overtimeSeconds } = state;
+      const {
+        currentSessionId,
+        activeTaskId,
+        phase,
+        totalSeconds,
+        overtimeSeconds,
+      } = state;
       engine.terminate();
 
       if (currentSessionId) {
         const actualDuration = totalSeconds + overtimeSeconds;
-        await SessionService.finish(currentSessionId, actualDuration, mood, notes);
+        await SessionService.finish(
+          currentSessionId,
+          actualDuration,
+          mood,
+          notes,
+        );
         recordPomoCompletion(phase, activeTaskId);
       }
 
-      const newPomos = phase === "work" ? state.completedPomos + 1 : state.completedPomos;
-      const next = getNextPhase(state.phase, newPomos, state.durations);
+      const newPomos =
+        phase === "work" ? state.completedPomos + 1 : state.completedPomos;
+      const next = getNextPhase(
+        state.phase,
+        newPomos,
+        state.durations,
+        useSettingsStore.getState().settings.pomosBeforeLongBreak,
+      );
 
       set({
         phase: next.phase,
@@ -316,7 +381,7 @@ export const useTimerStore = create<TimerStore>((set, get) => {
         overtimeSeconds: 0,
       });
 
-      get().start(next.duration);
+      void get().start(next.duration);
     },
 
     addFiveMinutes: () => {
@@ -325,7 +390,7 @@ export const useTimerStore = create<TimerStore>((set, get) => {
 
       if (overtimeSeconds > 0 || state.secondsRemaining <= 0) {
         engine.terminate();
-        get().start(5 * 60);
+        void get().start(5 * 60);
       } else {
         const addedSec = 5 * 60;
         engine.addTime(addedSec);
@@ -338,7 +403,13 @@ export const useTimerStore = create<TimerStore>((set, get) => {
 
     endWithoutBreak: async () => {
       const state = get();
-      const { currentSessionId, activeTaskId, phase, totalSeconds, overtimeSeconds } = state;
+      const {
+        currentSessionId,
+        activeTaskId,
+        phase,
+        totalSeconds,
+        overtimeSeconds,
+      } = state;
       engine.terminate();
 
       if (currentSessionId) {

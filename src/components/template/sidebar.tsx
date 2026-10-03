@@ -13,6 +13,7 @@ import {
   BookOpen,
 } from "lucide-react";
 import { cn } from "@/lib/cn";
+import { runDetached } from "@/lib/run-detached";
 import { useTimerStore } from "@/features/timer/use-timer-store";
 import { m } from "framer-motion";
 
@@ -153,7 +154,7 @@ export function Sidebar({
               if (location.pathname !== "/") {
                 navigate("/");
               }
-              start();
+              runDetached("Start session", start);
             }}
             title={
               isCollapsed
