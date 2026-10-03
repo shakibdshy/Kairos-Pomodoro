@@ -23,30 +23,14 @@
 
 <h1 align="center">Download</h1>
 
-### Homebrew (macOS Apple Silicon)
-
-```bash
-brew tap shakibdshy/kairos-pomodoro https://github.com/shakibdshy/Kairos-Pomodoro
-brew install --cask kairos-pomodoro
-```
-
-To update later, run:
-
-```bash
-brew upgrade --cask kairos-pomodoro
-```
-
-The cask is maintained in this repository and supports Apple Silicon Macs, matching
-the macOS build published in each stable GitHub release.
-
 <p align="center">
-  <a href="https://github.com/shakibdshy/Kairos-Pomodoro/releases/latest">
+  <a href="https://github.com/shakibdshy/Kairos-Pomodoro/releases/download/v1.3.0/Kairos-Pomodoro_1.3.0_aarch64.dmg">
     <img alt="Download for macOS" src="https://img.shields.io/badge/macOS-Apple%20Silicon-000?style=for-the-badge&logo=apple&logoColor=white">
   </a>
-  <a href="https://github.com/shakibdshy/Kairos-Pomodoro/releases/latest">
+  <a href="https://github.com/shakibdshy/Kairos-Pomodoro/releases/download/v1.3.0/Kairos-Pomodoro_1.3.0_x64-setup.exe">
     <img alt="Download for Windows" src="https://img.shields.io/badge/Windows-x64%20Setup-0078D6?style=for-the-badge&logo=windows&logoColor=white">
   </a>
-  <a href="https://github.com/shakibdshy/Kairos-Pomodoro/releases/latest">
+  <a href="https://github.com/shakibdshy/Kairos-Pomodoro/releases/download/v1.3.0/Kairos-Pomodoro_1.3.0_amd64.AppImage">
     <img alt="Download for Linux" src="https://img.shields.io/badge/Linux-AppImage-FCC624?style=for-the-badge&logo=linux&logoColor=black">
   </a>
 </p>
@@ -58,7 +42,7 @@ the macOS build published in each stable GitHub release.
 </p>
 
 <p align="center">
-  <sup><strong>v1.5.0</strong> &nbsp;·&nbsp; MIT Licensed &nbsp;·&nbsp; <a href="#getting-started">Build from source →</a></sup>
+  <sup><strong>v1.3.0</strong> &nbsp;·&nbsp; MIT Licensed &nbsp;·&nbsp; <a href="#getting-started">Build from source →</a></sup>
 </p>
 
 ## 🆕 What's New in v1.3 — Engagement + Lightweight Insights
@@ -73,8 +57,6 @@ the macOS build published in each stable GitHub release.
 - **All-time stats** — total focus, sessions, longest session, and total breaks on the Analytics page
 
 ## 🍎 macOS Installation Guide
-
-> Prefer Homebrew? Run `brew tap shakibdshy/kairos-pomodoro https://github.com/shakibdshy/Kairos-Pomodoro && brew install --cask kairos-pomodoro`.
 
 > **Important:** Kairos-Pomodoro is not signed with an Apple Developer certificate (it's free & open source). macOS will show a security warning on first launch. Follow these steps to open the app:
 
