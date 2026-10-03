@@ -7,6 +7,7 @@ import {
   DEFAULT_LONG_BREAK_SEC,
 } from "@/lib/constants";
 import type { TimerPreset } from "@/lib/db";
+import { MAX_DURATION_SECONDS } from "@/lib/duration-limits";
 
 const mockWorker = {
   postMessage: vi.fn(),
@@ -120,6 +121,18 @@ describe("usePresetsStore", () => {
       const state = useTimerStore.getState();
       expect(state.durations.work).toBe(7200);
       expect(state.secondsRemaining).toBe(400);
+    });
+
+    it("clamps a preset that exceeds the duration policy", () => {
+      usePresetsStore
+        .getState()
+        .applyPreset(
+          makePreset({ work_duration: 99_999, short_break_duration: 9_999 }),
+        );
+
+      const state = useTimerStore.getState();
+      expect(state.durations.work).toBe(MAX_DURATION_SECONDS.work);
+      expect(state.durations.short).toBe(MAX_DURATION_SECONDS.shortBreak);
     });
   });
 });

@@ -3,42 +3,23 @@ import { Button } from "@/components/ui/button";
 import { useSettingsStore } from "@/features/settings/use-settings-store";
 import { useTimerStore } from "@/features/timer/use-timer-store";
 import { Save } from "lucide-react";
-
-const DURATION_CONFIGS = [
-  {
-    key: "workMin" as const,
-    label: "Focus Duration",
-    desc: "Recommended length for deep work sessions.",
-    max: 120,
-    settingsKey: "workDuration" as const,
-  },
-  {
-    key: "shortBreakMin" as const,
-    label: "Short Break",
-    desc: "Quick pause to refresh your mind.",
-    max: 30,
-    settingsKey: "shortBreakDuration" as const,
-  },
-  {
-    key: "longBreakMin" as const,
-    label: "Long Break",
-    desc: "Extended rest after 4 focus sessions.",
-    max: 60,
-    settingsKey: "longBreakDuration" as const,
-  },
-];
-
-interface FocusState {
-  workMin: number;
-  shortBreakMin: number;
-  longBreakMin: number;
-}
+import { clampDurationMinutes } from "@/lib/duration-limits";
+import {
+  DURATION_CONFIGS,
+  durationFormFromSettings,
+  settingsFromDurationForm,
+  type DurationField,
+  type DurationFormState,
+} from "@/features/settings/duration-config";
 
 type FocusAction =
-  | { type: "SYNC"; payload: FocusState }
-  | { type: "SET_FIELD"; field: keyof FocusState; value: number };
+  | { type: "SYNC"; payload: DurationFormState }
+  | { type: "SET_FIELD"; field: DurationField; value: number };
 
-function focusReducer(_state: FocusState, action: FocusAction): FocusState {
+function focusReducer(
+  _state: DurationFormState,
+  action: FocusAction,
+): DurationFormState {
   switch (action.type) {
     case "SYNC":
       return action.payload;
@@ -54,31 +35,29 @@ export function SettingsFocusSection() {
 
   const setDurations = useTimerStore((s) => s.setDurations);
 
-  const [state, dispatch] = useReducer(focusReducer, {
-    workMin: Math.round(settings.workDuration / 60),
-    shortBreakMin: Math.round(settings.shortBreakDuration / 60),
-    longBreakMin: Math.round(settings.longBreakDuration / 60),
-  });
+  const [state, dispatch] = useReducer(
+    focusReducer,
+    durationFormFromSettings(settings),
+  );
 
-  if (loaded && state.workMin !== Math.round(settings.workDuration / 60)) {
-    dispatch({
-      type: "SYNC",
-      payload: {
-        workMin: Math.round(settings.workDuration / 60),
-        shortBreakMin: Math.round(settings.shortBreakDuration / 60),
-        longBreakMin: Math.round(settings.longBreakDuration / 60),
-      },
-    });
+  const syncedFrom = durationFormFromSettings(settings);
+  if (loaded && state.workMin !== syncedFrom.workMin) {
+    dispatch({ type: "SYNC", payload: syncedFrom });
   }
 
   const handleSave = async () => {
     if (!loaded) return;
-    await Promise.all([
-      updateSetting("workDuration", state.workMin * 60),
-      updateSetting("shortBreakDuration", state.shortBreakMin * 60),
-      updateSetting("longBreakDuration", state.longBreakMin * 60),
-    ]);
-    setDurations(state.workMin * 60, state.shortBreakMin * 60, state.longBreakMin * 60);
+    const next = settingsFromDurationForm(state);
+    await Promise.all(
+      DURATION_CONFIGS.map((c) =>
+        updateSetting(c.settingsKey, next[c.settingsKey]),
+      ),
+    );
+    setDurations(
+      next.workDuration,
+      next.shortBreakDuration,
+      next.longBreakDuration,
+    );
   };
 
   return (
@@ -102,28 +81,33 @@ export function SettingsFocusSection() {
       </div>
 
       <div className="space-y-6 md:space-y-8">
-        {DURATION_CONFIGS.map(({ key, label, desc, max }) => (
+        {DURATION_CONFIGS.map(({ field, label, desc, maxMinutes, kind }) => (
           <div
-            key={key}
+            key={field}
             className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-4 group"
           >
             <div>
               <h4 className="font-semibold text-sahara-text-secondary text-sm">
                 {label}
               </h4>
-              <p className="text-xs text-sahara-text-muted mt-0.5">{desc}</p>
+              <p className="text-xs text-sahara-text-muted mt-0.5">
+                {desc} Up to {maxMinutes} min.
+              </p>
             </div>
             <div className="flex items-center gap-2 sm:gap-4 self-end sm:self-center">
               <input
                 type="number"
                 min={1}
-                max={max}
-                value={state[key]}
+                max={maxMinutes}
+                value={state[field]}
                 onChange={(e) =>
                   dispatch({
                     type: "SET_FIELD",
-                    field: key,
-                    value: Math.min(max, Math.max(1, parseInt(e.target.value, 10) || 1)),
+                    field,
+                    value: clampDurationMinutes(
+                      kind,
+                      parseInt(e.target.value, 10) || 1,
+                    ),
                   })
                 }
                 className="w-18 bg-sahara-card border border-sahara-border/20 rounded-xl px-3 md:px-4 py-2 text-center text-sm font-bold text-sahara-primary outline-none focus:border-sahara-primary/40 transition-colors"

@@ -1,6 +1,13 @@
 import { create } from "zustand";
-import { getPresets, addPreset, updatePreset, deletePreset, type TimerPreset } from "@/lib/db";
+import {
+  getPresets,
+  addPreset,
+  updatePreset,
+  deletePreset,
+  type TimerPreset,
+} from "@/lib/db";
 import { useTimerStore } from "@/features/timer/use-timer-store";
+import { clampDurationSeconds } from "@/lib/duration-limits";
 
 interface PresetsStore {
   presets: TimerPreset[];
@@ -65,9 +72,9 @@ export const usePresetsStore = create<PresetsStore>((set, get) => ({
   applyPreset: (preset: TimerPreset) => {
     const timer = useTimerStore.getState();
     timer.setDurations(
-      preset.work_duration,
-      preset.short_break_duration,
-      preset.long_break_duration,
+      clampDurationSeconds("work", preset.work_duration),
+      clampDurationSeconds("shortBreak", preset.short_break_duration),
+      clampDurationSeconds("longBreak", preset.long_break_duration),
     );
   },
 

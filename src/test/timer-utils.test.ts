@@ -6,6 +6,10 @@ import {
   parseTimeInput,
   sanitizeTimeInput,
 } from "@/lib/timer-utils";
+import {
+  MAX_DURATION_MINUTES,
+  MAX_DURATION_SECONDS,
+} from "@/lib/duration-limits";
 
 describe("formatEditableValueFromSeconds", () => {
   it("formats seconds below a minute as bare minutes", () => {
@@ -37,8 +41,21 @@ describe("formatEditableValueFromSeconds", () => {
     const longest = formatEditingDisplay(
       formatEditableValueFromSeconds(MAX_INPUT_SECONDS),
     );
-    expect(longest).toBe("999:59");
+    expect(longest).toBe(`${MAX_DURATION_MINUTES.work}:00`);
     expect(longest).toHaveLength(6);
+  });
+
+  it("accepts a duration at the policy ceiling for the longest phase", () => {
+    expect(parseTimeInput(`${MAX_DURATION_MINUTES.work}:00`)).toBe(
+      MAX_DURATION_SECONDS.work,
+    );
+  });
+
+  it("refuses to represent a duration beyond the policy ceiling", () => {
+    const overCeiling = MAX_INPUT_SECONDS + 60;
+    expect(parseTimeInput(formatEditableValueFromSeconds(overCeiling))).toBe(
+      MAX_INPUT_SECONDS,
+    );
   });
 });
 
