@@ -115,3 +115,52 @@ jobs:
           echo "::notice::Updater manifest present"
           echo "=== latest.json ==="
           cat latest.json
+
+  # This runs in the same workflow as the release because releases created
+  # with GITHUB_TOKEN do not trigger a separate `release` workflow. It waits
+  # for all platform artifacts, then updates the cask served by this tap.
+  update-homebrew-cask:
+    name: Update Homebrew cask
+    needs: publish-tauri
+    if: ${{ !contains(github.ref_name, '-') }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout the default branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          persist-credentials: true
+
+      - name: Update checksum and version
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          version="${RELEASE_TAG#v}"
+          package_version="$(node -p \"require('./package.json').version\")"
+          test "$version" = "$package_version"
+
+          asset="Kairos-Pomodoro_${version}_aarch64.dmg"
+          url="https://github.com/${REPOSITORY}/releases/download/${RELEASE_TAG}/${asset}"
+          curl --fail --location --retry 3 --output "$RUNNER_TEMP/$asset" "$url"
+          checksum="$(sha256sum "$RUNNER_TEMP/$asset" | awk '{print $1}')"
+
+          node scripts/update-homebrew-cask.js "$version" "$checksum"
+          tap_name="${REPOSITORY%/*}/kairos-pomodoro"
+          brew tap "$tap_name" "$GITHUB_WORKSPACE"
+          brew style --cask Casks/kairos-pomodoro.rb
+          brew audit --cask --strict "$tap_name/kairos-pomodoro"
+
+      - name: Commit updated cask
+        run: |
+          if git diff --quiet -- Casks/kairos-pomodoro.rb; then
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add Casks/kairos-pomodoro.rb
+          git commit -m "chore(homebrew): update cask for ${{ github.ref_name }}"
+          git push
