@@ -18,7 +18,7 @@ const columnDefaults = new Map<string, Map<string, unknown>>();
   // Seed presets directly: the app's own seed uses literal VALUES tuples, which
   // this mock's INSERT parser cannot read, so it would insert empty rows.
   const presets = getTable("presets");
-  autoInc.set("presets", 1);
+  autoInc.set("presets", 2);
   presets.set(1, {
     id: 1,
     name: "DSA",

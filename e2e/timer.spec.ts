@@ -135,3 +135,53 @@ test.describe("Presets over 99 minutes", () => {
     await expect(field).toHaveValue("120:00");
   });
 });
+
+test.describe("Long duration field layout", () => {
+  const VIEWPORTS = [
+    { name: "desktop", width: 1280, height: 720 },
+    { name: "mobile", width: 390, height: 844 },
+  ];
+
+  for (const vp of VIEWPORTS) {
+    test(`fits the longest duration inside the timer ring on ${vp.name}`, async ({
+      page,
+    }) => {
+      await page.setViewportSize({ width: vp.width, height: vp.height });
+      await page.goto("/#/");
+      const field = page.getByRole("textbox", { name: "Set timer duration" });
+      await field.waitFor({ timeout: 15_000 });
+      const backdrop = page.locator("[data-achievement-backdrop]");
+      if (await backdrop.count()) {
+        await page.keyboard.press("Escape");
+        await backdrop.waitFor({ state: "detached" });
+      }
+
+      await field.click();
+      for (let i = 0; i < 6; i++) await field.press("Backspace");
+      await field.pressSequentially("180:00", { delay: 20 });
+      await expect(field).toHaveValue("180:00");
+      await field.blur();
+
+      const measured = await field.evaluate((el) => {
+        // Both a desktop and a mobile ring are always in the DOM, one hidden by
+        // a breakpoint class, so pick whichever one is actually laid out.
+        const rings = [
+          ...(el.closest("[data-timer-display]")?.querySelectorAll("svg") ??
+            []),
+        ]
+          .map((s) => s.getBoundingClientRect())
+          .filter((r) => r.width > 0);
+        return {
+          fieldWidth: el.getBoundingClientRect().width,
+          ringWidth: rings[0]?.width ?? 0,
+          // Truncation shows up as content wider than the visible box.
+          clipped: el.scrollWidth > el.clientWidth + 1,
+        };
+      });
+
+      // The whole point of the fix: wide enough to read, narrow enough to fit.
+      expect(measured.clipped).toBe(false);
+      expect(measured.fieldWidth).toBeLessThanOrEqual(measured.ringWidth);
+    });
+  }
+});

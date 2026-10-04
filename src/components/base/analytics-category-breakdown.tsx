@@ -15,11 +15,25 @@ export function AnalyticsCategoryBreakdown({
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Changing the range replaces this effect while the previous request may
+    // still be in flight. Without this guard the stale response can overwrite
+    // the current range's data, and its `finally` can clear `loading` while the
+    // newer request is still running.
+    let obsolete = false;
     setLoading(true);
     getCategoryBreakdown(startDate, endDate)
-      .then(setBreakdowns)
-      .catch(() => setBreakdowns([]))
-      .finally(() => setLoading(false));
+      .then((rows) => {
+        if (!obsolete) setBreakdowns(rows);
+      })
+      .catch(() => {
+        if (!obsolete) setBreakdowns([]);
+      })
+      .finally(() => {
+        if (!obsolete) setLoading(false);
+      });
+    return () => {
+      obsolete = true;
+    };
   }, [startDate, endDate]);
 
   if (loading) {

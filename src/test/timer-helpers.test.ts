@@ -16,7 +16,7 @@ describe("resolveLongBreakCadence", () => {
     expect(resolveLongBreakCadence(2.7)).toBe(2);
   });
 
-  it.each([0, -1, Number.NaN, null, undefined, "4", {}])(
+  it.each([0, -1, Number.NaN, Infinity, -Infinity, null, undefined, "4", {}])(
     "falls back to the default for %p",
     (value) => {
       expect(resolveLongBreakCadence(value)).toBe(POMOS_BEFORE_LONG_BREAK);
@@ -49,11 +49,22 @@ describe("getNextPhase long break cadence", () => {
   });
 
   it("falls back to the default cadence when the setting is unusable", () => {
-    expect(getNextPhase("work", 0, DURATIONS, 0).phase).toBe("long_break");
+    expect(getNextPhase("work", 4, DURATIONS, 0).phase).toBe("long_break");
     expect(
       getNextPhase("work", POMOS_BEFORE_LONG_BREAK, DURATIONS, Number.NaN)
         .phase,
     ).toBe("long_break");
+    // A non-finite cadence must not quietly disable long breaks.
+    expect(
+      getNextPhase("work", POMOS_BEFORE_LONG_BREAK, DURATIONS, Infinity).phase,
+    ).toBe("long_break");
+  });
+
+  it("gives a short break, not a long one, at zero completions", () => {
+    // Skipping an unfinished first work phase passes zero completions through.
+    expect(getNextPhase("work", 0, DURATIONS).phase).toBe("short_break");
+    expect(getNextPhase("work", 0, DURATIONS, 2).phase).toBe("short_break");
+    expect(getNextPhase("work", 0, DURATIONS).duration).toBe(DURATIONS.short);
   });
 
   it("returns the matching duration for the chosen break", () => {

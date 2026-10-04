@@ -10,16 +10,22 @@ export async function waitForApp(page: Page) {
  * An achievement announcement mounts a modal backdrop that swallows pointer
  * events until it is dismissed, which blocks every click in the suite. It
  * arrives asynchronously, so wait briefly for it before giving up.
+ *
+ * Only the *optional* wait is swallowed. If a backdrop does attach and Escape
+ * fails to remove it, that must fail setup loudly — proceeding would hand every
+ * test a page whose clicks silently go nowhere.
  */
 async function dismissAchievementDialog(page: Page) {
   const backdrop = page.locator("[data-achievement-backdrop]");
-  try {
-    await backdrop.waitFor({ state: "attached", timeout: 3_000 });
-    await page.keyboard.press("Escape");
-    await backdrop.waitFor({ state: "detached", timeout: 3_000 });
-  } catch {
-    // No announcement this run.
-  }
+  const attached = await backdrop
+    .waitFor({ state: "attached", timeout: 3_000 })
+    .then(() => true)
+    .catch(() => false);
+
+  if (!attached) return;
+
+  await page.keyboard.press("Escape");
+  await backdrop.waitFor({ state: "detached", timeout: 3_000 });
 }
 
 export const test = base.extend<{ page: Page }>({

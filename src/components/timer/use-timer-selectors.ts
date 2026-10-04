@@ -4,6 +4,7 @@ import { useSettingsStore } from "@/features/settings/use-settings-store";
 import { useUIStore } from "@/features/ui/use-ui-store";
 import { formatTimeAmPm } from "@/lib/time";
 import type { TimerPhase } from "@/features/timer/timer-types";
+import { resolveLongBreakCadence } from "@/features/timer/timer-helpers";
 
 export function useTimerSelectors() {
   const timerStyle = useSettingsStore((s) => s.settings.timerStyle);
@@ -28,7 +29,8 @@ export function useTimerSelectors() {
   const durationMinutes = Math.round(totalSeconds / 60);
 
   const detectedBreakPhase: TimerPhase =
-    completedPomos > 0 && completedPomos % pomosBeforeLongBreak === 0
+    completedPomos > 0 &&
+    completedPomos % resolveLongBreakCadence(pomosBeforeLongBreak) === 0
       ? "long_break"
       : "short_break";
 

@@ -39,6 +39,7 @@ type PresetUI =
       name: string;
       work: number;
       break: number;
+      long: number;
     }
   | { type: "saving-new"; name: string };
 
@@ -49,6 +50,7 @@ type UIAction =
   | { type: "SET_EDIT_NAME"; name: string }
   | { type: "SET_EDIT_WORK"; work: number }
   | { type: "SET_EDIT_BREAK"; break_: number }
+  | { type: "SET_EDIT_LONG"; long: number }
   | { type: "END_EDIT" }
   | { type: "START_SAVE" }
   | { type: "SET_NEW_NAME"; name: string }
@@ -67,11 +69,14 @@ function uiReducer(state: PresetUI, action: UIAction): PresetUI {
         name: action.preset.name,
         work: action.preset.work_duration,
         break: action.preset.short_break_duration,
+        long: action.preset.long_break_duration,
       };
     case "SET_EDIT_NAME":
       return state.type === "editing" ? { ...state, name: action.name } : state;
     case "SET_EDIT_WORK":
       return state.type === "editing" ? { ...state, work: action.work } : state;
+    case "SET_EDIT_LONG":
+      return state.type === "editing" ? { ...state, long: action.long } : state;
     case "SET_EDIT_BREAK":
       return state.type === "editing"
         ? { ...state, break: action.break_ }
@@ -114,9 +119,7 @@ export function PresetSelector() {
 
   const handleSaveEdit = async () => {
     if (ui.type !== "editing" || !ui.name.trim()) return;
-    useTimerStore
-      .getState()
-      .setDurations(ui.work, ui.break, ui.preset.long_break_duration);
+    useTimerStore.getState().setDurations(ui.work, ui.break, ui.long);
     await editPreset(ui.preset.id, ui.name.trim());
     dispatch({ type: "END_EDIT" });
   };
@@ -299,7 +302,7 @@ export function PresetSelector() {
                 className="w-full bg-sahara-surface border border-sahara-border/20 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-sahara-primary/50 transition-all shadow-inner"
               />
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
                 <DurationControl
                   label="Focus"
                   value={ui.work}
@@ -314,6 +317,13 @@ export function PresetSelector() {
                     dispatch({ type: "SET_EDIT_BREAK", break_: v })
                   }
                   kind="shortBreak"
+                  step={60}
+                />
+                <DurationControl
+                  label="Long Break"
+                  value={ui.long}
+                  onChange={(v) => dispatch({ type: "SET_EDIT_LONG", long: v })}
+                  kind="longBreak"
                   step={60}
                 />
               </div>
@@ -353,7 +363,7 @@ export function PresetSelector() {
                 className="w-full bg-sahara-surface border border-sahara-border/20 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-sahara-primary/50 transition-all shadow-inner"
               />
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
                 <DurationControl
                   label="Focus"
                   value={currentDurations.work}
@@ -382,6 +392,21 @@ export function PresetSelector() {
                       )
                   }
                   kind="shortBreak"
+                  step={60}
+                />
+                <DurationControl
+                  label="Long Break"
+                  value={currentDurations.long}
+                  onChange={(v) =>
+                    useTimerStore
+                      .getState()
+                      .setDurations(
+                        currentDurations.work,
+                        currentDurations.short,
+                        v,
+                      )
+                  }
+                  kind="longBreak"
                   step={60}
                 />
               </div>

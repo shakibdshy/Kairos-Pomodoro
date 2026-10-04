@@ -13,11 +13,25 @@ export function CompletedTasks({ startDate, endDate }: CompletedTasksProps) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Changing the range replaces this effect while the previous request may
+    // still be in flight. Without this guard the stale response can overwrite
+    // the current range's data, and its `finally` can clear `loading` while the
+    // newer request is still running.
+    let obsolete = false;
     setLoading(true);
     getCompletedTasksForPeriod(startDate, endDate)
-      .then(setTasks)
-      .catch(() => setTasks([]))
-      .finally(() => setLoading(false));
+      .then((rows) => {
+        if (!obsolete) setTasks(rows);
+      })
+      .catch(() => {
+        if (!obsolete) setTasks([]);
+      })
+      .finally(() => {
+        if (!obsolete) setLoading(false);
+      });
+    return () => {
+      obsolete = true;
+    };
   }, [startDate, endDate]);
 
   if (loading) {

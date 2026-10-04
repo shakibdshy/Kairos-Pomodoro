@@ -332,9 +332,11 @@ export function TimerDisplay({
                 }
               }}
               className={cn(
-                // Sized for the longest value MAX_INPUT_SECONDS can format
-                // ("999:59", 6 chars) so long sessions are never clipped.
-                "w-[8.5ch] rounded-2xl border border-transparent bg-transparent px-3 md:px-4 text-center font-serif leading-none tracking-tight text-sahara-primary outline-none transition-all [font-variant-numeric:tabular-nums]",
+                // Wide enough for the longest value MAX_INPUT_SECONDS formats
+                // ("180:00", 6 chars) — 7ch is the measured width of six
+                // tabular digits plus padding at both font sizes — but capped
+                // to the ring so it can never overflow and overlap the page.
+                "w-[6.5ch] max-w-full rounded-2xl border border-transparent bg-transparent px-3 md:px-4 text-center font-serif leading-none tracking-tight text-sahara-primary outline-none transition-all [font-variant-numeric:tabular-nums]",
                 "text-[76px] md:text-[120px]",
                 "hover:border-sahara-primary/20 hover:bg-sahara-primary/5",
                 "focus:border-sahara-primary/30 focus:bg-sahara-primary/8 focus:shadow-[0_0_0_1px_rgba(194,101,42,0.12)]",

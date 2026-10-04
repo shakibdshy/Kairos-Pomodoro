@@ -40,8 +40,17 @@ export function SettingsFocusSection() {
     durationFormFromSettings(settings),
   );
 
+  // Re-sync whenever ANY loaded duration differs. Comparing only the work
+  // field (as this originally did) left the break inputs showing their
+  // initial values when only a break changed, and Save then wrote those stale
+  // values back over the real settings.
   const syncedFrom = durationFormFromSettings(settings);
-  if (loaded && state.workMin !== syncedFrom.workMin) {
+  const isStale =
+    state.workMin !== syncedFrom.workMin ||
+    state.shortBreakMin !== syncedFrom.shortBreakMin ||
+    state.longBreakMin !== syncedFrom.longBreakMin;
+
+  if (loaded && isStale) {
     dispatch({ type: "SYNC", payload: syncedFrom });
   }
 

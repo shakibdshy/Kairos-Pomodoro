@@ -2,15 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { getDb } from "@/lib/db";
 import { isTauri } from "@/lib/tauri";
-
-/** Tables wiped by "Clear All Data", named for the failure message. */
-const WIPED_TABLES = [
-  "sessions",
-  "tasks",
-  "categories",
-  "settings",
-  "_schema_meta",
-] as const;
+import { WIPED_TABLES } from "@/lib/data-wipe";
 
 type ClearState =
   | { status: "idle" }

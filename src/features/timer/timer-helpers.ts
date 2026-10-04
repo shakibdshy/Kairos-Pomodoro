@@ -35,7 +35,7 @@ export function determineBreakPhase(
  * the modulo below NaN and silently disable long breaks entirely.
  */
 export function resolveLongBreakCadence(value: unknown): number {
-  return typeof value === "number" && value >= 1
+  return typeof value === "number" && Number.isFinite(value) && value >= 1
     ? Math.floor(value)
     : POMOS_BEFORE_LONG_BREAK;
 }
@@ -49,7 +49,9 @@ export function getNextPhase(
 ): { phase: TimerPhase; duration: number } {
   if (currentPhase === "work") {
     const cadence = resolveLongBreakCadence(pomosBeforeLongBreak);
-    if (pomosCompleted % cadence === 0) {
+    // Zero completions means no focus session has finished — skipping an
+    // unfinished first session must not jump straight to a long break.
+    if (pomosCompleted > 0 && pomosCompleted % cadence === 0) {
       return { phase: "long_break", duration: durations.long };
     }
     return { phase: "short_break", duration: durations.short };
