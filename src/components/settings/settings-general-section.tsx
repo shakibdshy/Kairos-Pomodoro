@@ -2,8 +2,21 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/cn";
-import { Moon, Sun, Monitor, Circle, Activity, RefreshCw, CheckCircle2, AlertCircle, Download } from "lucide-react";
-import type { ThemeMode, ThemePreset } from "@/features/settings/settings-types";
+import {
+  Moon,
+  Sun,
+  Monitor,
+  Circle,
+  Activity,
+  RefreshCw,
+  CheckCircle2,
+  AlertCircle,
+  Download,
+} from "lucide-react";
+import type {
+  ThemeMode,
+  ThemePreset,
+} from "@/features/settings/settings-types";
 import { useUpdate } from "@/components/providers/update-provider";
 
 const THEME_OPTIONS: { id: ThemeMode; label: string; icon: typeof Sun }[] = [
@@ -12,7 +25,11 @@ const THEME_OPTIONS: { id: ThemeMode; label: string; icon: typeof Sun }[] = [
   { id: "system", label: "System", icon: Monitor },
 ];
 
-const TIMER_STYLES: { id: "solid" | "zigzag"; label: string; icon: typeof Activity }[] = [
+const TIMER_STYLES: {
+  id: "solid" | "zigzag";
+  label: string;
+  icon: typeof Activity;
+}[] = [
   { id: "solid", label: "Solid", icon: Circle },
   { id: "zigzag", label: "Zigzag", icon: Activity },
 ];
@@ -86,8 +103,8 @@ interface SettingsGeneralProps {
   onThemePresetChange: (preset: ThemePreset) => void;
   timerStyle: "solid" | "zigzag";
   onTimerStyleChange: (style: "solid" | "zigzag") => void;
-  settings: Record<string, boolean>;
-  onToggle: (key: string, value: boolean) => void;
+  settings: Record<ToggleItem["key"], boolean>;
+  onToggle: (key: ToggleItem["key"], value: boolean) => void;
 }
 
 export function SettingsGeneralSection({
@@ -116,8 +133,7 @@ export function SettingsGeneralSection({
 
     syncResolvedTheme();
     mediaQuery.addEventListener("change", syncResolvedTheme);
-    return () =>
-      mediaQuery.removeEventListener("change", syncResolvedTheme);
+    return () => mediaQuery.removeEventListener("change", syncResolvedTheme);
   }, [currentTheme]);
 
   return (
@@ -257,7 +273,13 @@ function UpdatesSectionInner({
 }: {
   update: NonNullable<ReturnType<typeof useUpdate>>;
 }) {
-  const { status, currentVersion, installError, installedPendingRestart, checkForUpdate } = update;
+  const {
+    status,
+    currentVersion,
+    installError,
+    installedPendingRestart,
+    checkForUpdate,
+  } = update;
   const checking = status.kind === "checking";
 
   const statusText =
@@ -295,7 +317,8 @@ function UpdatesSectionInner({
         Updates
       </h3>
       <p className="text-xs text-sahara-text-muted mb-4">
-        Kairos checks for updates automatically on launch and every 24 hours. You can also check manually.
+        Kairos checks for updates automatically on launch and every 24 hours.
+        You can also check manually.
       </p>
 
       {currentVersion && (
@@ -310,7 +333,11 @@ function UpdatesSectionInner({
       <div className="flex items-center justify-between gap-3 py-2">
         <div className="flex items-center gap-2.5 flex-1 min-w-0">
           <StatusIcon
-            className={cn("size-4 shrink-0", statusTone, checking && "animate-spin")}
+            className={cn(
+              "size-4 shrink-0",
+              statusTone,
+              checking && "animate-spin",
+            )}
           />
           <span
             className="text-xs text-sahara-text-secondary truncate"

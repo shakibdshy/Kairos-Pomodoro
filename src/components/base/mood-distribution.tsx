@@ -1,8 +1,11 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { getMoodDistribution, type MoodStat } from "@/lib/db";
 import { cn } from "@/lib/cn";
 
-const MOOD_META: Record<string, { emoji: string; label: string; color: string }> = {
+const MOOD_META: Record<
+  string,
+  { emoji: string; label: string; color: string }
+> = {
   distracted: { emoji: "😔", label: "Distracted", color: "#f87171" },
   neutral: { emoji: "😊", label: "Neutral", color: "#facc15" },
   focused: { emoji: "🤩", label: "Focused", color: "#4ade80" },
@@ -13,19 +16,36 @@ interface MoodDistributionProps {
   endDate?: string;
 }
 
-export function MoodDistribution({ startDate, endDate }: MoodDistributionProps) {
+export function MoodDistribution({
+  startDate,
+  endDate,
+}: MoodDistributionProps) {
   const [moods, setMoods] = useState<MoodStat[]>([]);
-  const loadingRef = useRef(true);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    loadingRef.current = true;
+    // Changing the range replaces this effect while the previous request may
+    // still be in flight. Without this guard the stale response can overwrite
+    // the current range's data, and its `finally` can clear `loading` while the
+    // newer request is still running.
+    let obsolete = false;
+    setLoading(true);
     getMoodDistribution(startDate, endDate)
-      .then(setMoods)
-      .catch(() => setMoods([]))
-      .finally(() => { loadingRef.current = false; });
+      .then((rows) => {
+        if (!obsolete) setMoods(rows);
+      })
+      .catch(() => {
+        if (!obsolete) setMoods([]);
+      })
+      .finally(() => {
+        if (!obsolete) setLoading(false);
+      });
+    return () => {
+      obsolete = true;
+    };
   }, [startDate, endDate]);
 
-  if (loadingRef.current) {
+  if (loading) {
     return (
       <div className="bg-sahara-surface border border-sahara-border/20 rounded-xl md:rounded-2xl p-3.5 md:p-5">
         <p className="text-[15px] text-sahara-text-muted">Loading…</p>
@@ -38,10 +58,6 @@ export function MoodDistribution({ startDate, endDate }: MoodDistributionProps) 
 
   return (
     <div className="bg-sahara-surface border border-sahara-border/20 rounded-xl md:rounded-2xl p-3.5 md:p-5">
-      {/* <h3 className="text-xs md:text-sm font-bold text-sahara-text-muted uppercase tracking-wider mb-4 md:mb-5">
-        Mood Distribution
-      </h3> */}
-
       {moods.length === 0 ? (
         <p className="text-[15px] text-sahara-text-muted text-center py-6">
           No mood data yet
@@ -54,7 +70,8 @@ export function MoodDistribution({ startDate, endDate }: MoodDistributionProps) 
               label: m.mood,
               color: "#94a3b8",
             };
-            const percentage = totalMoods > 0 ? Math.round((m.count / totalMoods) * 100) : 0;
+            const percentage =
+              totalMoods > 0 ? Math.round((m.count / totalMoods) * 100) : 0;
             const barWidth = Math.round((m.count / maxCount) * 100);
 
             return (
@@ -68,7 +85,8 @@ export function MoodDistribution({ startDate, endDate }: MoodDistributionProps) 
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
                     <span className="text-sm font-bold text-sahara-text-secondary tabular-nums">
-                      {m.count}{m.count === 1 ? " session" : " sessions"}
+                      {m.count}
+                      {m.count === 1 ? " session" : " sessions"}
                     </span>
                     <span className="text-xs font-bold text-sahara-text-muted tabular-nums bg-sahara-bg/50 px-1.5 py-0.5 rounded">
                       {percentage}%

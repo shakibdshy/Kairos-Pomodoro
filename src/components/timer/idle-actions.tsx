@@ -1,4 +1,5 @@
 import { useTimerStore } from "@/features/timer/use-timer-store";
+import { runDetached } from "@/lib/run-detached";
 import { useUIStore } from "@/features/ui/use-ui-store";
 import { Button } from "@/components/ui/button";
 import { Play, RotateCcw, Maximize2, Minimize2 } from "lucide-react";
@@ -33,7 +34,7 @@ export function IdleActions({
         size="lg"
         shape="rounded-full"
         onClick={() => {
-          start();
+          runDetached("Start focus", start);
           setFullscreenFocus(true);
         }}
         className="gap-1.5 md:gap-2 text-xs md:text-xs px-6 md:px-8 py-3 md:py-3.5"

@@ -2,16 +2,11 @@ import { useSettingsStore } from "@/features/settings/use-settings-store";
 import { useNotificationStore } from "@/features/notifications/use-notification-store";
 import { isTauri } from "@/lib/tauri";
 
-type NotificationType =
-  | "session-complete"
-  | "break-over"
-  | "focus-start"
-  | "focus-complete";
+type NotificationType = "session-complete" | "break-over" | "focus-complete";
 
 const NOTIFICATION_TITLES: Record<NotificationType, string> = {
   "session-complete": "Focus Session Complete!",
   "break-over": "Break is Over",
-  "focus-start": "Time to Focus",
   "focus-complete": "Focus time's up!",
 };
 

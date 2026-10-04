@@ -6,11 +6,41 @@ import { Settings2, Check, Trash2, Plus, Clock, Pencil } from "lucide-react";
 import { cn } from "@/lib/cn";
 import type { TimerPreset } from "@/lib/db";
 import { ModalOverlay } from "@/components/ui/modal-overlay";
+import {
+  MAX_DURATION_MINUTES,
+  MAX_DURATION_SECONDS,
+  MIN_DURATION_SECONDS,
+  clampDurationSeconds,
+  exceedsMaxDuration,
+  type DurationKind,
+} from "@/lib/duration-limits";
+
+/** The durations of a preset that break the policy, for explaining the block. */
+function overLimitDurations(preset: TimerPreset): string[] {
+  const labels: string[] = [];
+  if (exceedsMaxDuration("work", preset.work_duration)) {
+    labels.push(`${preset.work_duration / 60}m focus`);
+  }
+  if (exceedsMaxDuration("shortBreak", preset.short_break_duration)) {
+    labels.push(`${preset.short_break_duration / 60}m break`);
+  }
+  if (exceedsMaxDuration("longBreak", preset.long_break_duration)) {
+    labels.push(`${preset.long_break_duration / 60}m long break`);
+  }
+  return labels;
+}
 
 type PresetUI =
   | { type: "closed" }
   | { type: "browsing" }
-  | { type: "editing"; preset: TimerPreset; name: string; work: number; break: number }
+  | {
+      type: "editing";
+      preset: TimerPreset;
+      name: string;
+      work: number;
+      break: number;
+      long: number;
+    }
   | { type: "saving-new"; name: string };
 
 type UIAction =
@@ -20,6 +50,7 @@ type UIAction =
   | { type: "SET_EDIT_NAME"; name: string }
   | { type: "SET_EDIT_WORK"; work: number }
   | { type: "SET_EDIT_BREAK"; break_: number }
+  | { type: "SET_EDIT_LONG"; long: number }
   | { type: "END_EDIT" }
   | { type: "START_SAVE" }
   | { type: "SET_NEW_NAME"; name: string }
@@ -38,19 +69,26 @@ function uiReducer(state: PresetUI, action: UIAction): PresetUI {
         name: action.preset.name,
         work: action.preset.work_duration,
         break: action.preset.short_break_duration,
+        long: action.preset.long_break_duration,
       };
     case "SET_EDIT_NAME":
       return state.type === "editing" ? { ...state, name: action.name } : state;
     case "SET_EDIT_WORK":
       return state.type === "editing" ? { ...state, work: action.work } : state;
+    case "SET_EDIT_LONG":
+      return state.type === "editing" ? { ...state, long: action.long } : state;
     case "SET_EDIT_BREAK":
-      return state.type === "editing" ? { ...state, break: action.break_ } : state;
+      return state.type === "editing"
+        ? { ...state, break: action.break_ }
+        : state;
     case "END_EDIT":
       return { type: "browsing" };
     case "START_SAVE":
       return { type: "saving-new", name: "" };
     case "SET_NEW_NAME":
-      return state.type === "saving-new" ? { ...state, name: action.name } : state;
+      return state.type === "saving-new"
+        ? { ...state, name: action.name }
+        : state;
     case "END_SAVE":
       return { type: "browsing" };
   }
@@ -81,9 +119,7 @@ export function PresetSelector() {
 
   const handleSaveEdit = async () => {
     if (ui.type !== "editing" || !ui.name.trim()) return;
-    useTimerStore
-      .getState()
-      .setDurations(ui.work, ui.break, ui.preset.long_break_duration);
+    useTimerStore.getState().setDurations(ui.work, ui.break, ui.long);
     await editPreset(ui.preset.id, ui.name.trim());
     dispatch({ type: "END_EDIT" });
   };
@@ -137,26 +173,38 @@ export function PresetSelector() {
         <div className="p-4 max-h-[60vh] overflow-y-auto space-y-2">
           {presets.map((preset) => {
             const active = isCurrentPreset(preset);
+            const blocked = overLimitDurations(preset);
+            const selectable = blocked.length === 0;
             return (
               <div
                 key={preset.id}
                 role="button"
-                tabIndex={0}
+                tabIndex={selectable ? 0 : -1}
+                aria-disabled={!selectable}
+                title={
+                  selectable
+                    ? undefined
+                    : `Over the ${MAX_DURATION_MINUTES.work}m focus limit — edit this preset to bring it within range`
+                }
                 className={cn(
-                  "group flex items-center justify-between p-3.5 rounded-2xl border transition-all cursor-pointer",
+                  "group flex items-center justify-between p-3.5 rounded-2xl border transition-all",
+                  selectable
+                    ? "cursor-pointer"
+                    : "cursor-not-allowed opacity-60",
                   active
                     ? "bg-sahara-primary/5 border-sahara-primary/30 shadow-sm"
-                    : "bg-sahara-card/50 border-sahara-border/10 hover:border-sahara-primary/20",
+                    : "bg-sahara-card/50 border-sahara-border/10",
+                  selectable && "hover:border-sahara-primary/20",
                 )}
                 onClick={() => {
-                  if (timerStatus !== "idle") return;
+                  if (!selectable || timerStatus !== "idle") return;
                   applyPreset(preset);
                   dispatch({ type: "CLOSE" });
                 }}
                 onKeyDown={(e) => {
                   if (e.key === "Enter" || e.key === " ") {
                     e.preventDefault();
-                    if (timerStatus !== "idle") return;
+                    if (!selectable || timerStatus !== "idle") return;
                     applyPreset(preset);
                     dispatch({ type: "CLOSE" });
                   }
@@ -187,6 +235,12 @@ export function PresetSelector() {
                       <span className="size-1 rounded-full bg-sahara-border" />
                       <span>{preset.short_break_duration / 60}m Break</span>
                     </div>
+                    {blocked.length > 0 && (
+                      <p className="mt-1 text-[10px] font-semibold text-red-500">
+                        Over limit: {blocked.join(", ")}. Edit to bring within
+                        range.
+                      </p>
+                    )}
                   </div>
                 </div>
 
@@ -241,22 +295,35 @@ export function PresetSelector() {
               <input
                 type="text"
                 value={ui.name}
-                onChange={(e) => dispatch({ type: "SET_EDIT_NAME", name: e.target.value })}
+                onChange={(e) =>
+                  dispatch({ type: "SET_EDIT_NAME", name: e.target.value })
+                }
                 placeholder="Preset name"
                 className="w-full bg-sahara-surface border border-sahara-border/20 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-sahara-primary/50 transition-all shadow-inner"
               />
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
                 <DurationControl
                   label="Focus"
                   value={ui.work}
                   onChange={(v) => dispatch({ type: "SET_EDIT_WORK", work: v })}
+                  kind="work"
                   step={300}
                 />
                 <DurationControl
                   label="Break"
                   value={ui.break}
-                  onChange={(v) => dispatch({ type: "SET_EDIT_BREAK", break_: v })}
+                  onChange={(v) =>
+                    dispatch({ type: "SET_EDIT_BREAK", break_: v })
+                  }
+                  kind="shortBreak"
+                  step={60}
+                />
+                <DurationControl
+                  label="Long Break"
+                  value={ui.long}
+                  onChange={(v) => dispatch({ type: "SET_EDIT_LONG", long: v })}
+                  kind="longBreak"
                   step={60}
                 />
               </div>
@@ -289,20 +356,27 @@ export function PresetSelector() {
               <input
                 type="text"
                 value={ui.name}
-                onChange={(e) => dispatch({ type: "SET_NEW_NAME", name: e.target.value })}
+                onChange={(e) =>
+                  dispatch({ type: "SET_NEW_NAME", name: e.target.value })
+                }
                 placeholder="Name (e.g. Deep Work)"
                 className="w-full bg-sahara-surface border border-sahara-border/20 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-sahara-primary/50 transition-all shadow-inner"
               />
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
                 <DurationControl
                   label="Focus"
                   value={currentDurations.work}
                   onChange={(v) =>
                     useTimerStore
                       .getState()
-                      .setDurations(v, currentDurations.short, currentDurations.long)
+                      .setDurations(
+                        v,
+                        currentDurations.short,
+                        currentDurations.long,
+                      )
                   }
+                  kind="work"
                   step={300}
                 />
                 <DurationControl
@@ -311,8 +385,28 @@ export function PresetSelector() {
                   onChange={(v) =>
                     useTimerStore
                       .getState()
-                      .setDurations(currentDurations.work, v, currentDurations.long)
+                      .setDurations(
+                        currentDurations.work,
+                        v,
+                        currentDurations.long,
+                      )
                   }
+                  kind="shortBreak"
+                  step={60}
+                />
+                <DurationControl
+                  label="Long Break"
+                  value={currentDurations.long}
+                  onChange={(v) =>
+                    useTimerStore
+                      .getState()
+                      .setDurations(
+                        currentDurations.work,
+                        currentDurations.short,
+                        v,
+                      )
+                  }
+                  kind="longBreak"
                   step={60}
                 />
               </div>
@@ -354,16 +448,27 @@ function DurationControl({
   value,
   onChange,
   step,
+  kind,
 }: {
   label: string;
   value: number;
   onChange: (value: number) => void;
   step: number;
+  kind: DurationKind;
 }) {
+  const atCeiling = value >= MAX_DURATION_SECONDS[kind];
+  const atFloor = value <= MIN_DURATION_SECONDS;
+
+  const nudge = (delta: number) =>
+    onChange(clampDurationSeconds(kind, value + delta));
+
   return (
     <div className="bg-sahara-surface/50 border border-sahara-border/10 rounded-xl p-3">
       <p className="text-[9px] font-bold text-sahara-text-muted uppercase mb-1">
         {label}
+        <span className="ml-1 normal-case tracking-normal">
+          max {MAX_DURATION_MINUTES[kind]}m
+        </span>
       </p>
       <div className="flex items-center justify-between">
         <span className="text-sm font-bold text-sahara-text">
@@ -371,14 +476,18 @@ function DurationControl({
         </span>
         <div className="flex gap-1">
           <button
-            onClick={() => onChange(Math.max(60, value - step))}
-            className="size-5 flex items-center justify-center rounded bg-sahara-card cursor-pointer hover:bg-sahara-border/20 text-sahara-text-muted transition-colors"
+            aria-label={`Decrease ${label.toLowerCase()} duration`}
+            disabled={atFloor}
+            onClick={() => nudge(-step)}
+            className="size-5 flex items-center justify-center rounded bg-sahara-card text-sahara-text-muted transition-colors enabled:cursor-pointer enabled:hover:bg-sahara-border/20 disabled:opacity-40 disabled:cursor-not-allowed"
           >
             -
           </button>
           <button
-            onClick={() => onChange(value + step)}
-            className="size-5 flex items-center justify-center rounded bg-sahara-card cursor-pointer hover:bg-sahara-border/20 text-sahara-text-muted transition-colors"
+            aria-label={`Increase ${label.toLowerCase()} duration`}
+            disabled={atCeiling}
+            onClick={() => nudge(step)}
+            className="size-5 flex items-center justify-center rounded bg-sahara-card text-sahara-text-muted transition-colors enabled:cursor-pointer enabled:hover:bg-sahara-border/20 disabled:opacity-40 disabled:cursor-not-allowed"
           >
             +
           </button>

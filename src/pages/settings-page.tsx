@@ -1,7 +1,14 @@
 import { useState } from "react";
 import { useSettingsStore } from "@/features/settings/use-settings-store";
 import { useNotificationStore } from "@/features/notifications/use-notification-store";
-import { Monitor, Zap, Bell, Keyboard, Shield, DatabaseBackup } from "lucide-react";
+import {
+  Monitor,
+  Zap,
+  Bell,
+  Keyboard,
+  Shield,
+  DatabaseBackup,
+} from "lucide-react";
 
 import { MainLayout } from "@/components/template/main-layout";
 import { SettingsSidebar } from "@/components/settings/settings-sidebar";
@@ -74,9 +81,7 @@ export function SettingsPage() {
                   settings={{
                     autoStartBreaks: settings.autoStartBreaks,
                   }}
-                  onToggle={(k: string, v: boolean) =>
-                    updateSetting(k as any, v)
-                  }
+                  onToggle={(key, value) => updateSetting(key, value)}
                 />
               )}
 

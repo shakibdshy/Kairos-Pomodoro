@@ -1,3 +1,4 @@
+import { runDetached } from "@/lib/run-detached";
 import {
   Play,
   Pause,
@@ -142,7 +143,7 @@ export function TimerMiniPlayer() {
 
             {status === "focus_complete" ? (
               <button
-                onClick={() => finishSession()}
+                onClick={() => runDetached("Finish session", finishSession)}
                 className="size-10 md:w-11 md:h-11 rounded-full bg-emerald-500 flex items-center justify-center text-white hover:brightness-110 transition-all shadow-lg shadow-emerald-500/20"
               >
                 <Square className="size-4 md:w-5 md:h-5" fill="currentColor" />

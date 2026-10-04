@@ -378,6 +378,7 @@ Important implementation details discovered from the current codebase:
 - the app uses local Zustand stores rather than a remote API
 - analytics export buttons are present in the UI but currently disabled
 - the privacy screen says all data is local, which matches the current implementation
+- session-duration limits live in `src/lib/duration-limits.ts` and nowhere else; the settings inputs, preset editor, and timer duration field all read their ceiling from it. Raise a limit there, not at an individual input.
 
 ## Known Gaps And Caveats
 

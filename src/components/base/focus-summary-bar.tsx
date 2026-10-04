@@ -1,4 +1,4 @@
-import { Clock, Target, Flame, Timer } from "lucide-react";
+import { Clock, Target, Flame, Timer, type LucideIcon } from "lucide-react";
 import type { Session } from "@/lib/session-utils";
 import { formatTotalTime } from "@/lib/session-utils";
 import { cn } from "@/lib/cn";
@@ -25,7 +25,7 @@ function StatBox({
 }: {
   label: string;
   value: React.ReactNode;
-  icon: any;
+  icon: LucideIcon;
   styleKey: keyof typeof ICON_STYLES;
   extra?: React.ReactNode;
   iconColor?: string;
@@ -74,44 +74,50 @@ export function FocusSummaryBar({
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
-      <StatBox 
-        label="Focus Time" 
-        value={formatTotalTime(totalFocusSec)} 
-        icon={Clock} 
-        styleKey="clock" 
-      />
-      
-      <StatBox 
-        label="Sessions" 
-        value={sessionCount} 
-        icon={Target} 
-        styleKey="target" 
+      <StatBox
+        label="Focus Time"
+        value={formatTotalTime(totalFocusSec)}
+        icon={Clock}
+        styleKey="clock"
       />
 
-      <StatBox 
-        label="Top Focus" 
+      <StatBox
+        label="Sessions"
+        value={sessionCount}
+        icon={Target}
+        styleKey="target"
+      />
+
+      <StatBox
+        label="Top Focus"
         styleKey="flame"
         icon={Flame}
         iconColor={topCategory?.color}
         value={topCategory ? topCategory.name : "—"}
-        extra={topCategory && (
-          <div className="flex items-center gap-1">
-             <span
+        extra={
+          topCategory && (
+            <div className="flex items-center gap-1">
+              <span
                 className="size-1.5 rounded-full"
                 style={{ backgroundColor: topCategory.color }}
               />
               <span className="text-[9px] font-bold text-sahara-text-muted tabular-nums uppercase">
                 {topCategory.count} Recorded
               </span>
-          </div>
-        )}
+            </div>
+          )
+        }
       />
 
-      <StatBox 
-        label="Avg Focus" 
-        value={sessionCount > 0 ? formatTotalTime(Math.round(totalFocusSec / sessionCount)) : "0m"} 
-        icon={Timer} 
-        styleKey="timer" 
+      <StatBox
+        label="Avg Focus"
+        value={
+          sessionCount > 0
+            ? formatTotalTime(Math.round(totalFocusSec / sessionCount))
+            : "0m"
+        }
+        icon={Timer}
+        styleKey="timer"
       />
     </div>
   );
