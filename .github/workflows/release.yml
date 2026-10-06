@@ -144,7 +144,6 @@ jobs:
         run: |
           brew_prefix="$(/home/linuxbrew/.linuxbrew/bin/brew --prefix)"
           echo "$brew_prefix/bin" >> "$GITHUB_PATH"
-          echo "HOMEBREW_PREFIX=$brew_prefix" >> "$GITHUB_ENV"
 
       - name: Update checksum and version
         env:
@@ -162,10 +161,6 @@ jobs:
           checksum="$(sha256sum "$RUNNER_TEMP/$asset" | awk '{print $1}')"
 
           node scripts/update-homebrew-cask.js "$version" "$checksum"
-          tap_name="${REPOSITORY%/*}/kairos-pomodoro"
-          brew tap "$tap_name" "$GITHUB_WORKSPACE"
-          brew style --cask Casks/kairos-pomodoro.rb
-          brew audit --cask --strict "$tap_name/kairos-pomodoro"
 
       - name: Commit updated cask
         run: |
@@ -177,4 +172,22 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add Casks/kairos-pomodoro.rb
           git commit -m "chore(homebrew): update cask for ${{ github.ref_name }}"
+          # GITHUB_TOKEN is not a bypass actor on the `Main` ruleset, so this
+          # push is rejected — it stays as the loud failure until a publish
+          # path (admin PAT or bot PR) replaces it.
           git push
+
+      # Style/audit run AFTER the commit and against a tap, for two reasons:
+      # a bare `brew style --cask <path>` is rejected ("casks must be in a
+      # tap"), and `brew tap` of the workspace clones committed state — so
+      # auditing before the commit would validate the previous release's
+      # cask, not the one about to ship.
+      - name: Style and audit the updated cask
+        env:
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          tap_name="${REPOSITORY%/*}/kairos-pomodoro"
+          brew tap "$tap_name" "$GITHUB_WORKSPACE"
+          brew style --cask "$tap_name/kairos-pomodoro"
+          brew audit --cask --strict "$tap_name/kairos-pomodoro"
