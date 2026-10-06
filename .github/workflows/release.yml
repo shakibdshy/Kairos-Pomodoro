@@ -139,7 +139,7 @@ jobs:
         run: |
           set -euo pipefail
           version="${RELEASE_TAG#v}"
-          package_version="$(node -p \"require('./package.json').version\")"
+          package_version="$(node -p "require('./package.json').version")"
           test "$version" = "$package_version"
 
           asset="Kairos-Pomodoro_${version}_aarch64.dmg"
