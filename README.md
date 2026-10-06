@@ -64,7 +64,7 @@ the macOS build published in each stable GitHub release.
 </p>
 
 <p align="center">
-  <sup><strong>v1.5.0</strong> &nbsp;·&nbsp; MIT Licensed &nbsp;·&nbsp; <a href="#getting-started">Build from source →</a></sup>
+  <sup><strong>v1.6.0</strong> &nbsp;·&nbsp; MIT Licensed &nbsp;·&nbsp; <a href="#getting-started">Build from source →</a></sup>
 </p>
 
 ## 🆕 What's New in v1.3 — Engagement + Lightweight Insights
