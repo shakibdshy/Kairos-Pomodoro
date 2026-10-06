@@ -39,6 +39,12 @@ brew upgrade --cask kairos-pomodoro
 The cask is maintained in this repository and supports Apple Silicon Macs, matching
 the macOS build published in each stable GitHub release.
 
+> **Note:** the app is not signed with an Apple Developer certificate, so macOS blocks
+> the first launch — including apps installed with Homebrew. Approve it once via
+> **System Settings → Privacy & Security → Open Anyway** (see the
+> [macOS Installation Guide](#-macos-installation-guide)). After a `brew upgrade` you
+> may need to approve the new version once more.
+
 <p align="center">
   <a href="https://github.com/shakibdshy/Kairos-Pomodoro/releases/latest">
     <img alt="Download for macOS" src="https://img.shields.io/badge/macOS-Apple%20Silicon-000?style=for-the-badge&logo=apple&logoColor=white">
@@ -98,26 +104,33 @@ When you try to open Kairos-Pomodoro for the first time, you may see this warnin
 
 ### Step 3: Allow the App
 
-There are two ways to bypass this security check:
+There are three ways to get past this check:
 
-#### Method A: Right-Click → Open (Easiest)
+#### Method A: System Settings → Open Anyway (works on all macOS versions)
 
-Instead of double-clicking, **right-click** on Kairos-Pomodoro in your Applications folder and select **"Open"**. You'll see this dialog — click **"Open Anyway"**:
-
-<p align="center">
-  <img src="./public/doc/open-anyway.png" alt="Method A: Right-click Open Anyway" width="460" />
-</p>
-
-#### Method B: System Settings (If Method A doesn't work)
-
-1. Open **System Settings → Privacy & Security**
-2. Scroll down to the **Security** section
-3. You'll see a message about Kairos-Pomodoro being blocked
-4. Click **"Open Anyway"**
+1. Try to open Kairos-Pomodoro once and dismiss the warning with **Done**
+2. Open **System Settings → Privacy & Security**
+3. Scroll down to the **Security** section
+4. You'll see a message about Kairos-Pomodoro being blocked
+5. Click **"Open Anyway"**
 
 <p align="center">
-  <img src="./public/doc/privary-and-security.png" alt="Method B: System Settings Open Anyway" width="560" />
+  <img src="./public/doc/privary-and-security.png" alt="Method A: System Settings Open Anyway" width="560" />
 </p>
+
+#### Method B: Right-Click → Open (macOS 14 or earlier)
+
+Instead of double-clicking, **right-click** on Kairos-Pomodoro in your Applications folder and select **"Open"**. You'll see this dialog — click **"Open Anyway"**. Recent macOS versions (Sequoia and later) removed this shortcut — use Method A instead.
+
+<p align="center">
+  <img src="./public/doc/open-anyway.png" alt="Method B: Right-click Open Anyway" width="460" />
+</p>
+
+#### Method C: Terminal (one command)
+
+```bash
+xattr -cr /Applications/Kairos-Pomodoro.app
+```
 
 ### Step 4: Done!
 
