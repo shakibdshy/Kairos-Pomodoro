@@ -11,9 +11,12 @@ env:
 # tauri-action creates the GitHub release and uploads assets, which requires
 # write access to repo contents. The default GITHUB_TOKEN is read-only in repos
 # with restricted default permissions — without this, release creation fails
-# with "Resource not accessible by integration".
+# with "Resource not accessible by integration". pull-requests: write lets the
+# cask job open its bump PR (it cannot push to main directly — the `Main`
+# ruleset requires pull requests and only the admin role bypasses it).
 permissions:
   contents: write
+  pull-requests: write
 
 # Prevent concurrent release builds from racing on the same tag and clobbering
 # each other's release assets / latest.json manifest.
@@ -163,8 +166,10 @@ jobs:
           node scripts/update-homebrew-cask.js "$version" "$checksum"
 
       - name: Commit updated cask
+        id: commit
         run: |
           if git diff --quiet -- Casks/kairos-pomodoro.rb; then
+            echo "committed=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
 
@@ -172,10 +177,7 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add Casks/kairos-pomodoro.rb
           git commit -m "chore(homebrew): update cask for ${{ github.ref_name }}"
-          # GITHUB_TOKEN is not a bypass actor on the `Main` ruleset, so this
-          # push is rejected — it stays as the loud failure until a publish
-          # path (admin PAT or bot PR) replaces it.
-          git push
+          echo "committed=true" >> "$GITHUB_OUTPUT"
 
       # Style/audit run AFTER the commit and against a tap, for two reasons:
       # a bare `brew style --cask <path>` is rejected ("casks must be in a
@@ -183,6 +185,7 @@ jobs:
       # auditing before the commit would validate the previous release's
       # cask, not the one about to ship.
       - name: Style and audit the updated cask
+        if: steps.commit.outputs.committed == 'true'
         env:
           REPOSITORY: ${{ github.repository }}
         run: |
@@ -191,3 +194,26 @@ jobs:
           brew tap "$tap_name" "$GITHUB_WORKSPACE"
           brew style --cask "$tap_name/kairos-pomodoro"
           brew audit --cask --strict "$tap_name/kairos-pomodoro"
+
+      # GITHUB_TOKEN cannot push to main (the `Main` ruleset requires pull
+      # requests and only the admin role bypasses it), so the validated bump
+      # lands as a PR for a one-click admin merge.
+      - name: Open a PR with the cask bump
+        if: steps.commit.outputs.committed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ github.ref_name }}
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          branch="cask-bump/${RELEASE_TAG}"
+          git push --force origin "HEAD:${branch}"
+          if gh pr view "$branch" --repo "$REPOSITORY" --json state >/dev/null 2>&1; then
+            echo "A PR from $branch already exists — leaving it in place."
+            exit 0
+          fi
+          gh pr create \
+            --repo "$REPOSITORY" \
+            --head "$branch" \
+            --title "chore(homebrew): update cask for ${RELEASE_TAG}" \
+            --body "Automated version/sha256 bump for ${RELEASE_TAG}, already validated in the release run by \`brew style\` and \`brew audit --cask --strict\`. Merge to publish the cask."
