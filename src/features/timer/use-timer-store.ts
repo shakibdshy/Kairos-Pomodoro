@@ -303,7 +303,7 @@ export const useTimerStore = create<TimerStore>((set, get) => {
           const newRemaining = Math.max(0, s.secondsRemaining + deltaSec);
           return { totalSeconds: newTotal, secondsRemaining: newRemaining };
         });
-        if (status === "running") {
+        if (status === "running" || status === "paused") {
           engine.addTime(deltaSec);
         }
       }

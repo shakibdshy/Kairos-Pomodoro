@@ -177,6 +177,7 @@ export function TimerControls() {
           size="icon"
           intent="default"
           shape="rounded-full"
+          aria-label="Remove five minutes"
           onClick={() => adjustDuration(-5)}
           className="border-sahara-border/30 text-sahara-text-secondary hover:border-sahara-primary/40 hover:text-sahara-primary shrink-0"
         >
@@ -198,6 +199,7 @@ export function TimerControls() {
           size="icon"
           intent="default"
           shape="rounded-full"
+          aria-label="Add five minutes"
           onClick={() => adjustDuration(5)}
           className="border-sahara-border/30 text-sahara-text-secondary hover:border-sahara-primary/40 hover:text-sahara-primary shrink-0"
         >

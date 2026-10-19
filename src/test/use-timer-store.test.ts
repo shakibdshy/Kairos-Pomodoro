@@ -187,6 +187,41 @@ describe("useTimerStore", () => {
       expect(state.totalSeconds).toBe(DEFAULT_WORK_SEC + 300);
       expect(state.secondsRemaining).toBe(DEFAULT_WORK_SEC + 300);
     });
+
+    it("posts the adjustment to the worker while paused and stays paused", async () => {
+      await useTimerStore.getState().start(600);
+      useTimerStore.setState({ secondsRemaining: 480 });
+      useTimerStore.getState().pause();
+      mockWorker.postMessage.mockClear();
+
+      useTimerStore.getState().adjustDuration(5);
+
+      expect(mockWorker.postMessage).toHaveBeenCalledWith({
+        command: "add_time",
+        seconds: 300,
+      });
+      const state = useTimerStore.getState();
+      expect(state.status).toBe("paused");
+      expect(state.totalSeconds).toBe(900);
+      expect(state.secondsRemaining).toBe(780);
+    });
+
+    it("subtracts time while paused without resuming the countdown", async () => {
+      await useTimerStore.getState().start(600);
+      useTimerStore.setState({ secondsRemaining: 480 });
+      useTimerStore.getState().pause();
+      mockWorker.postMessage.mockClear();
+
+      useTimerStore.getState().adjustDuration(-5);
+
+      expect(mockWorker.postMessage).toHaveBeenCalledWith({
+        command: "add_time",
+        seconds: -300,
+      });
+      const state = useTimerStore.getState();
+      expect(state.status).toBe("paused");
+      expect(state.secondsRemaining).toBe(180);
+    });
   });
 
   describe("setActiveTask", () => {

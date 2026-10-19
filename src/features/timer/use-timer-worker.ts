@@ -66,12 +66,16 @@ const workerCode = `
     }
 
     if (e.data.command === "add_time") {
-      targetEndTime += e.data.seconds * 1000;
-      remaining = computeRemaining();
-      if (!interval) {
-        startCountdown();
+      if (interval) {
+        targetEndTime += e.data.seconds * 1000;
+        remaining = computeRemaining();
+        self.postMessage({ type: "tick", remaining });
+      } else {
+        // Paused: carry the adjustment so Resume honors it, but keep the
+        // countdown frozen — the wall-clock deadline is stale while paused,
+        // so it must not be consulted.
+        remaining = Math.max(0, remaining + e.data.seconds);
       }
-      self.postMessage({ type: "tick", remaining });
     }
   };
 `;
