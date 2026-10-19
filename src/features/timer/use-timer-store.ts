@@ -59,6 +59,19 @@ interface TimerStore {
 
 const engine = new TimerEngine();
 
+/** Focused time: planned duration minus what remains, plus overtime. The
+ *  countdown freezes during pause, so paused time is excluded by construction. */
+function focusedSeconds(timer: {
+  totalSeconds: number;
+  secondsRemaining: number;
+  overtimeSeconds: number;
+}): number {
+  return Math.max(
+    0,
+    timer.totalSeconds - timer.secondsRemaining + timer.overtimeSeconds,
+  );
+}
+
 export const useTimerStore = create<TimerStore>((set, get) => {
   function onTimerDone() {
     const state = get();
@@ -142,17 +155,13 @@ export const useTimerStore = create<TimerStore>((set, get) => {
       const {
         phase,
         secondsRemaining,
-        totalSeconds,
         activeTaskId,
         completedPomos,
         overtimeSeconds,
       } = state;
 
       const completed = secondsRemaining <= 0 || overtimeSeconds > 0;
-      const elapsed = Math.max(
-        0,
-        totalSeconds - secondsRemaining + overtimeSeconds,
-      );
+      const elapsed = focusedSeconds(state);
       // Fire-and-forget by design (skip must not block on the DB write), but a
       // failed write must not surface as an unhandled rejection.
       void SessionService.recordSkip(
@@ -297,7 +306,12 @@ export const useTimerStore = create<TimerStore>((set, get) => {
       engine.terminate();
 
       if (currentSessionId) {
-        await SessionService.finish(currentSessionId, undefined, mood, notes);
+        await SessionService.finish(
+          currentSessionId,
+          focusedSeconds(state),
+          mood,
+          notes,
+        );
         notifySessionComplete();
         recordPomoCompletion(phase, activeTaskId);
       }
@@ -346,16 +360,13 @@ export const useTimerStore = create<TimerStore>((set, get) => {
         currentSessionId,
         activeTaskId,
         phase,
-        totalSeconds,
-        overtimeSeconds,
       } = state;
       engine.terminate();
 
       if (currentSessionId) {
-        const actualDuration = totalSeconds + overtimeSeconds;
         await SessionService.finish(
           currentSessionId,
-          actualDuration,
+          focusedSeconds(state),
           mood,
           notes,
         );
@@ -403,18 +414,14 @@ export const useTimerStore = create<TimerStore>((set, get) => {
 
     endWithoutBreak: async () => {
       const state = get();
-      const {
-        currentSessionId,
-        activeTaskId,
-        phase,
-        totalSeconds,
-        overtimeSeconds,
-      } = state;
+      const { currentSessionId, activeTaskId, phase } = state;
       engine.terminate();
 
       if (currentSessionId) {
-        const actualDuration = totalSeconds + overtimeSeconds;
-        await SessionService.finish(currentSessionId, actualDuration);
+        await SessionService.finish(
+          currentSessionId,
+          focusedSeconds(state),
+        );
         recordPomoCompletion(phase, activeTaskId);
       }
 

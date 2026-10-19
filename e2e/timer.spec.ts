@@ -49,6 +49,44 @@ test.describe("Timer", () => {
     ).toBeVisible();
   });
 
+  test("finish after pause records focused time, not wall-clock time", async ({
+    page,
+  }) => {
+    // 10-second session: focus ~2s, then paused ~3s. The recorded duration
+    // must fall short of the wall-clock span by the paused gap — that is the
+    // whole invariant, and it holds no matter how much jitter stretches the
+    // running portion.
+    const field = page.getByRole("textbox", { name: "Set timer duration" });
+    await field.click();
+    for (let i = 0; i < 6; i++) await field.press("Backspace");
+    await field.pressSequentially("00:10", { delay: 20 });
+    await field.blur();
+    await expect(field).toHaveValue("00:10");
+
+    const startedAt = Date.now();
+    await page.getByRole("button", { name: "START FOCUS" }).click();
+    await expect(page.getByRole("button", { name: "PAUSE" })).toBeVisible();
+
+    await page.waitForTimeout(2_000);
+    await page.getByRole("button", { name: "PAUSE" }).click();
+    await page.waitForTimeout(3_000);
+
+    await page.getByRole("button", { name: "Finish" }).click();
+    await page.getByRole("button", { name: "Submit Session" }).click();
+    await expect(
+      page.getByRole("button", { name: "START FOCUS" }),
+    ).toBeVisible();
+    const wallClockSec = Math.round((Date.now() - startedAt) / 1000);
+
+    const sessions = await page.evaluate(() => window.__dbMock.sessions());
+    expect(sessions).toHaveLength(1);
+    expect(sessions[0].phase).toBe("work");
+    const focused = sessions[0].duration_sec as number;
+    expect(focused).toBeGreaterThanOrEqual(1);
+    // The ~3s paused gap must be excluded (1s slack covers tick rounding).
+    expect(wallClockSec - focused).toBeGreaterThanOrEqual(2);
+  });
+
   test("phase selector buttons are disabled while running", async ({
     page,
   }) => {

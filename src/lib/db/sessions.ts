@@ -107,41 +107,28 @@ export async function startSession(
   return result.lastInsertId as number;
 }
 
+/** Focus duration is always computed by the caller (focused time: planned
+ *  duration − remaining + overtime); the DB never derives it from wall clock,
+ *  which would count paused time. */
 export async function finishSession(
   sessionId: number,
-  durationSec?: number,
+  durationSec: number,
   mood?: string,
   notes?: string,
 ): Promise<void> {
   const database = await getDb();
-
-  if (durationSec !== undefined) {
-    await database.execute(
-      `
-      UPDATE sessions
-      SET ended_at = datetime('now', 'localtime'),
-          duration_sec = $2,
-          completed = 1,
-          mood = $3,
-          notes = $4
-      WHERE id = $1
-    `,
-      [sessionId, durationSec, mood ?? null, notes ?? null],
-    );
-  } else {
-    await database.execute(
-      `
-      UPDATE sessions
-      SET ended_at = datetime('now', 'localtime'),
-          duration_sec = MAX(0, CAST(strftime('%s', 'now', 'localtime') - strftime('%s', started_at) AS INTEGER)),
-          completed = 1,
-          mood = $2,
-          notes = $3
-      WHERE id = $1
-    `,
-      [sessionId, mood ?? null, notes ?? null],
-    );
-  }
+  await database.execute(
+    `
+    UPDATE sessions
+    SET ended_at = datetime('now', 'localtime'),
+        duration_sec = $2,
+        completed = 1,
+        mood = $3,
+        notes = $4
+    WHERE id = $1
+  `,
+    [sessionId, durationSec, mood ?? null, notes ?? null],
+  );
 }
 
 export async function abandonSession(sessionId: number): Promise<void> {
