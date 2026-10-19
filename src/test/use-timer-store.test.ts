@@ -222,6 +222,19 @@ describe("useTimerStore", () => {
       expect(state.status).toBe("paused");
       expect(state.secondsRemaining).toBe(180);
     });
+
+    it("does not invent focused time when an adjustment removes more than remains", async () => {
+      await useTimerStore.getState().start(180);
+      // 2s focused, then paused.
+      useTimerStore.setState({ secondsRemaining: 178 });
+      useTimerStore.getState().pause();
+
+      useTimerStore.getState().adjustDuration(-5);
+      await useTimerStore.getState().finishSession();
+
+      const { finishSession: dbFinish } = await import("@/lib/db");
+      expect(dbFinish).toHaveBeenCalledWith(1, 2, undefined, undefined);
+    });
   });
 
   describe("setActiveTask", () => {
