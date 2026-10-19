@@ -1,4 +1,6 @@
-const workerCode = `
+// Exported for unit tests: the script runs inside a Web Worker, so the tests
+// evaluate it against a sandboxed `self` instead of instantiating a Worker.
+export const timerWorkerCode = `
   let interval = null;
   let remaining = 0;
   let overtime = 0;
@@ -80,7 +82,7 @@ const workerCode = `
   };
 `;
 
-const blob = new Blob([workerCode], { type: "application/javascript" });
+const blob = new Blob([timerWorkerCode], { type: "application/javascript" });
 
 export function createTimerWorker(): Worker {
   const url = URL.createObjectURL(blob);

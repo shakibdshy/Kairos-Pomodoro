@@ -4,7 +4,7 @@ import { useSettingsStore } from "@/features/settings/use-settings-store";
 import { useUIStore } from "@/features/ui/use-ui-store";
 import { formatFocusedDuration, formatTimeAmPm } from "@/lib/time";
 import type { TimerPhase } from "@/features/timer/timer-types";
-import { resolveLongBreakCadence } from "@/features/timer/timer-helpers";
+import { resolveLongBreakCadence, focusedSeconds } from "@/features/timer/timer-helpers";
 
 export function useTimerSelectors() {
   const timerStyle = useSettingsStore((s) => s.settings.timerStyle);
@@ -44,13 +44,20 @@ export function useTimerSelectors() {
   }, [secondsRemaining, totalSeconds, isFocusComplete]);
 
   // Finish-summary values: focused time anchored to the session's real start,
-  // so a session paused for hours still shows its true focus window.
-  const focusedSec = Math.max(
-    0,
-    totalSeconds - secondsRemaining + overtimeSeconds,
-  );
-  const focusStart = new Date(startedAt ?? startTime.getTime());
-  const focusEnd = new Date(focusStart.getTime() + focusedSec * 1000);
+  // so a session paused for hours still shows its true focus window. Without a
+  // live start there is no honest window to show — never back-compute one.
+  const focusedSec = focusedSeconds({
+    totalSeconds,
+    secondsRemaining,
+    overtimeSeconds,
+  });
+  const focusWindowLabel = startedAt
+    ? (() => {
+        const focusStart = new Date(startedAt);
+        const focusEnd = new Date(focusStart.getTime() + focusedSec * 1000);
+        return `${formatTimeAmPm(focusStart)} → ${formatTimeAmPm(focusEnd)}`;
+      })()
+    : "";
 
   return {
     timerStyle,
@@ -70,7 +77,7 @@ export function useTimerSelectors() {
     isWorkPhase,
     durationMinutes,
     focusedDurationLabel: formatFocusedDuration(focusedSec),
-    focusWindowLabel: `${formatTimeAmPm(focusStart)} → ${formatTimeAmPm(focusEnd)}`,
+    focusWindowLabel,
     detectedBreakPhase,
     startTime,
     endTime,

@@ -14,6 +14,7 @@ import {
   getPhaseDurationKey,
   determineBreakPhase,
   getNextPhase,
+  focusedSeconds,
   type TimerDurations,
 } from "@/features/timer/timer-helpers";
 import { recordPomoCompletion } from "@/features/timer/pomo-tracker";
@@ -61,19 +62,6 @@ interface TimerStore {
 }
 
 const engine = new TimerEngine();
-
-/** Focused time: planned duration minus what remains, plus overtime. The
- *  countdown freezes during pause, so paused time is excluded by construction. */
-function focusedSeconds(timer: {
-  totalSeconds: number;
-  secondsRemaining: number;
-  overtimeSeconds: number;
-}): number {
-  return Math.max(
-    0,
-    timer.totalSeconds - timer.secondsRemaining + timer.overtimeSeconds,
-  );
-}
 
 export const useTimerStore = create<TimerStore>((set, get) => {
   function onTimerDone() {
@@ -444,6 +432,7 @@ export const useTimerStore = create<TimerStore>((set, get) => {
         secondsRemaining: duration,
         totalSeconds: duration,
         currentSessionId: null,
+        startedAt: null,
         completedPomos: get().completedPomos + (phase === "work" ? 1 : 0),
         overtimeSeconds: 0,
       });
