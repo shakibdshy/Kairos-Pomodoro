@@ -34,13 +34,14 @@ export function TimerControls() {
     customIntention,
     isFocusComplete,
     isWorkPhase,
-    durationMinutes,
     detectedBreakPhase,
     isFocus,
     isBreak,
     isFullscreenFocus,
     startTimeAmPm,
     endTimeAmPm,
+    focusedDurationLabel,
+    focusWindowLabel,
   } = useTimerSelectors();
 
   const setPhase = useTimerStore((s) => s.setPhase);
@@ -241,7 +242,8 @@ export function TimerControls() {
         onClose={() => setShowFinishModal(false)}
         onSubmit={handleFinishWithReflection}
         category={selectedCategory}
-        durationMinutes={durationMinutes}
+        focusedDurationLabel={focusedDurationLabel}
+        focusWindowLabel={focusWindowLabel}
       />
     </m.div>
   );

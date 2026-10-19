@@ -72,6 +72,8 @@ test.describe("Timer", () => {
     await page.waitForTimeout(3_000);
 
     await page.getByRole("button", { name: "Finish" }).click();
+    // The summary must show the focused number, not the planned duration.
+    await expect(page.getByText(/^[1-4]s$/, { exact: true })).toBeVisible();
     await page.getByRole("button", { name: "Submit Session" }).click();
     await expect(
       page.getByRole("button", { name: "START FOCUS" }),

@@ -32,6 +32,9 @@ interface TimerStore {
   completedPomos: number;
   activeTaskId: number | null;
   currentSessionId: number | null;
+  /** Wall-clock moment the live session started; null while idle. Anchors the
+   *  finish summary's focus window to the session's real start. */
+  startedAt: number | null;
   selectedCategory: Category | null;
   /** Free-text intention for the upcoming session (overrides category name when set). */
   customIntention: string | null;
@@ -102,6 +105,7 @@ export const useTimerStore = create<TimerStore>((set, get) => {
     completedPomos: 0,
     activeTaskId: null,
     currentSessionId: null,
+    startedAt: null,
     selectedCategory: null,
     customIntention: null,
     overtimeSeconds: 0,
@@ -136,6 +140,7 @@ export const useTimerStore = create<TimerStore>((set, get) => {
         secondsRemaining: secs,
         totalSeconds: secs,
         currentSessionId: sessionId,
+        startedAt: Date.now(),
         overtimeSeconds: 0,
       });
     },
@@ -195,6 +200,8 @@ export const useTimerStore = create<TimerStore>((set, get) => {
         secondsRemaining: next.duration,
         totalSeconds: next.duration,
         completedPomos: newPomos,
+        currentSessionId: null,
+        startedAt: null,
         overtimeSeconds: 0,
       });
 
@@ -210,6 +217,7 @@ export const useTimerStore = create<TimerStore>((set, get) => {
         status: "idle",
         secondsRemaining: duration,
         totalSeconds: duration,
+        startedAt: null,
         overtimeSeconds: 0,
       });
     },
@@ -222,6 +230,7 @@ export const useTimerStore = create<TimerStore>((set, get) => {
         status: "idle",
         secondsRemaining: duration,
         totalSeconds: duration,
+        startedAt: null,
         overtimeSeconds: 0,
       });
     },
@@ -323,6 +332,7 @@ export const useTimerStore = create<TimerStore>((set, get) => {
         secondsRemaining: duration,
         totalSeconds: duration,
         currentSessionId: null,
+        startedAt: null,
         completedPomos: get().completedPomos + (phase === "work" ? 1 : 0),
         overtimeSeconds: 0,
       });
@@ -342,6 +352,7 @@ export const useTimerStore = create<TimerStore>((set, get) => {
         secondsRemaining: duration,
         totalSeconds: duration,
         currentSessionId: null,
+        startedAt: null,
         overtimeSeconds: 0,
       });
     },
@@ -389,6 +400,7 @@ export const useTimerStore = create<TimerStore>((set, get) => {
         totalSeconds: next.duration,
         completedPomos: newPomos,
         currentSessionId: null,
+        startedAt: null,
         overtimeSeconds: 0,
       });
 
