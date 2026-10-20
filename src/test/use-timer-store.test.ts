@@ -235,6 +235,23 @@ describe("useTimerStore", () => {
       const { finishSession: dbFinish } = await import("@/lib/db");
       expect(dbFinish).toHaveBeenCalledWith(1, 2, undefined, undefined);
     });
+
+    it("records zero focused time when nothing was focused and the adjustment removes everything", async () => {
+      await useTimerStore.getState().start(300);
+      // Paused before the first tick: nothing focused yet.
+      useTimerStore.getState().pause();
+
+      useTimerStore.getState().adjustDuration(-5);
+
+      const state = useTimerStore.getState();
+      expect(state.totalSeconds).toBe(0);
+      expect(state.secondsRemaining).toBe(0);
+
+      await useTimerStore.getState().finishSession();
+
+      const { finishSession: dbFinish } = await import("@/lib/db");
+      expect(dbFinish).toHaveBeenCalledWith(1, 0, undefined, undefined);
+    });
   });
 
   describe("setActiveTask", () => {

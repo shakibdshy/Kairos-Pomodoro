@@ -289,15 +289,15 @@ export const useTimerStore = create<TimerStore>((set, get) => {
         set((s) => {
           // Adjustments must never invent focused time: clamp the remaining
           // first, then rebuild the total as focused-so-far plus that
-          // remaining. Focused-so-far deliberately excludes overtime —
-          // focusedSeconds() adds it back at finish, and baking it into the
-          // total would double-count it. (A 60s floor here would inflate
-          // short paused sessions; 1s only guards the progress ring's
-          // division by total.)
+          // remaining, with no floor — a session that has focused nothing and
+          // has nothing left records 0, not 1. Focused-so-far deliberately
+          // excludes overtime — focusedSeconds() adds it back at finish, and
+          // baking it into the total would double-count it. Progress rings
+          // guard a zero total themselves.
           const focused = s.totalSeconds - s.secondsRemaining;
           const newRemaining = Math.max(0, s.secondsRemaining + deltaSec);
           return {
-            totalSeconds: Math.max(1, focused + newRemaining),
+            totalSeconds: focused + newRemaining,
             secondsRemaining: newRemaining,
           };
         });

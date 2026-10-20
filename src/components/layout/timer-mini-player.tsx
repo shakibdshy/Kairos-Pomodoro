@@ -43,7 +43,7 @@ export function TimerMiniPlayer() {
   if (isTimerPage || !isActive) return null;
 
   const progress =
-    status === "focus_complete"
+    status === "focus_complete" || totalSeconds <= 0
       ? 100
       : Math.max(
           0,
