@@ -310,3 +310,17 @@ export class Database {
 }
 
 export default Database;
+
+// Read-back hook for Playwright specs: assert on persisted rows without
+// reaching through the UI. This module is only loaded under E2E=true.
+declare global {
+  interface Window {
+    __dbMock: { sessions: () => Array<Record<string, unknown>> };
+  }
+}
+
+if (typeof window !== "undefined") {
+  window.__dbMock = {
+    sessions: () => allRows("sessions").map((row) => ({ ...row })),
+  };
+}

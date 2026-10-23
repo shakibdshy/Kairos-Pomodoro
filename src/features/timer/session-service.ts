@@ -34,7 +34,7 @@ export const SessionService = {
 
   async finish(
     sessionId: number,
-    durationSec?: number,
+    durationSec: number,
     mood?: string,
     notes?: string,
   ): Promise<void> {

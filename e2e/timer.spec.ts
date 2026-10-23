@@ -49,6 +49,141 @@ test.describe("Timer", () => {
     ).toBeVisible();
   });
 
+  test("finish after pause records focused time, not wall-clock time", async ({
+    page,
+  }) => {
+    // 10-second session: focus ~2s, then paused ~3s. The recorded duration
+    // must fall short of the wall-clock span by the paused gap — that is the
+    // whole invariant, and it holds no matter how much jitter stretches the
+    // running portion.
+    const field = page.getByRole("textbox", { name: "Set timer duration" });
+    await field.click();
+    for (let i = 0; i < 6; i++) await field.press("Backspace");
+    await field.pressSequentially("00:10", { delay: 20 });
+    await field.blur();
+    await expect(field).toHaveValue("00:10");
+
+    const startedAt = Date.now();
+    await page.getByRole("button", { name: "START FOCUS" }).click();
+    await expect(page.getByRole("button", { name: "PAUSE" })).toBeVisible();
+
+    await page.waitForTimeout(2_000);
+    await page.getByRole("button", { name: "PAUSE" }).click();
+    await page.waitForTimeout(3_000);
+
+    await page.getByRole("button", { name: "Finish" }).click();
+    // The summary must show the focused number, not the planned duration.
+    await expect(page.getByText(/^[1-4]s$/, { exact: true })).toBeVisible();
+    await page.getByRole("button", { name: "Submit Session" }).click();
+    await expect(
+      page.getByRole("button", { name: "START FOCUS" }),
+    ).toBeVisible();
+    const wallClockSec = Math.round((Date.now() - startedAt) / 1000);
+
+    const sessions = await page.evaluate(() => window.__dbMock.sessions());
+    expect(sessions).toHaveLength(1);
+    expect(sessions[0].phase).toBe("work");
+    const focused = sessions[0].duration_sec as number;
+    expect(focused).toBeGreaterThanOrEqual(1);
+    // The ~3s paused gap must be excluded (1s slack covers tick rounding).
+    expect(wallClockSec - focused).toBeGreaterThanOrEqual(2);
+  });
+
+  test("adjusting while paused stays frozen, honors the change on resume, and persists focused time", async ({
+    page,
+  }) => {
+    // 10s session: focus ~2s, pause, +5min → ~5:08 remaining. The countdown
+    // must stay frozen while paused (an adjustment must not restart it), tick
+    // from the adjusted value after resume, and the persisted focused time
+    // must cover only real focus — not the adjustment that never ran.
+    const field = page.getByRole("textbox", { name: "Set timer duration" });
+    await field.click();
+    for (let i = 0; i < 6; i++) await field.press("Backspace");
+    await field.pressSequentially("00:10", { delay: 20 });
+    await field.blur();
+    await expect(field).toHaveValue("00:10");
+
+    await page.getByRole("button", { name: "START FOCUS" }).click();
+    await expect(page.getByRole("button", { name: "PAUSE" })).toBeVisible();
+
+    await page.waitForTimeout(2_000);
+    await page.getByRole("button", { name: "PAUSE" }).click();
+    await expect(page.getByRole("button", { name: "RESUME" })).toBeVisible();
+
+    await page.getByRole("button", { name: "Add five minutes" }).click();
+    const adjusted = page.getByText(/^05:0[789]$/);
+    await expect(adjusted).toBeVisible();
+    const frozenText = (await adjusted.textContent()) as string;
+
+    // Still paused: the countdown must not have restarted after adjusting.
+    await page.waitForTimeout(2_000);
+    await expect(page.getByText(frozenText, { exact: true })).toBeVisible();
+
+    // Resume: the countdown continues from the adjusted value (~05:06), not
+    // from the worker's stale pre-adjustment value (which would be ~00:06).
+    await page.getByRole("button", { name: "RESUME" }).click();
+    await page.waitForTimeout(2_000);
+    await expect(page.getByText(/^05:0[456]$/)).toBeVisible();
+    await expect(page.getByText("00:06")).toBeHidden();
+
+    await page.getByRole("button", { name: "Finish" }).click();
+    await page.getByRole("button", { name: "Submit Session" }).click();
+    await expect(
+      page.getByRole("button", { name: "START FOCUS" }),
+    ).toBeVisible();
+
+    const sessions = await page.evaluate(() => window.__dbMock.sessions());
+    const focused = sessions[0].duration_sec as number;
+    // Real focus: ~2s before the pause plus ~2-3s after resume. A stale worker
+    // would have recorded ~304s here by counting the paused +5min as focus.
+    expect(focused).toBeLessThanOrEqual(6);
+    expect(focused).toBeGreaterThanOrEqual(1);
+  });
+
+  test("removing minutes while paused persists the focused time on finish", async ({
+    page,
+  }) => {
+    // 6-minute session: focus ~2s, pause, −5min → ~00:58 remaining and the
+    // planned duration shrinks to 1 minute. Focused time must stay the ~2s
+    // actually focused — shrinking the plan must not inflate it.
+    const field = page.getByRole("textbox", { name: "Set timer duration" });
+    await field.click();
+    for (let i = 0; i < 6; i++) await field.press("Backspace");
+    await field.pressSequentially("06:00", { delay: 20 });
+    await field.blur();
+    await expect(field).toHaveValue("06:00");
+
+    await page.getByRole("button", { name: "START FOCUS" }).click();
+    await expect(page.getByRole("button", { name: "PAUSE" })).toBeVisible();
+
+    await page.waitForTimeout(2_000);
+    await page.getByRole("button", { name: "PAUSE" }).click();
+    await expect(page.getByRole("button", { name: "RESUME" })).toBeVisible();
+
+    await page.getByRole("button", { name: "Remove five minutes" }).click();
+    const adjusted = page.getByText(/^00:5[789]$/);
+    await expect(adjusted).toBeVisible();
+    const frozenText = (await adjusted.textContent()) as string;
+
+    await page.waitForTimeout(2_000);
+    await expect(page.getByText(frozenText, { exact: true })).toBeVisible();
+
+    await page.getByRole("button", { name: "RESUME" }).click();
+    await page.waitForTimeout(2_000);
+    await expect(page.getByText(/^00:5[456]$/)).toBeVisible();
+
+    await page.getByRole("button", { name: "Finish" }).click();
+    await page.getByRole("button", { name: "Submit Session" }).click();
+    await expect(
+      page.getByRole("button", { name: "START FOCUS" }),
+    ).toBeVisible();
+
+    const sessions = await page.evaluate(() => window.__dbMock.sessions());
+    const focused = sessions[0].duration_sec as number;
+    expect(focused).toBeLessThanOrEqual(6);
+    expect(focused).toBeGreaterThanOrEqual(1);
+  });
+
   test("phase selector buttons are disabled while running", async ({
     page,
   }) => {

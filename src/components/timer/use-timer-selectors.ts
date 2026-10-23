@@ -2,9 +2,9 @@ import { useMemo } from "react";
 import { useTimerStore } from "@/features/timer/use-timer-store";
 import { useSettingsStore } from "@/features/settings/use-settings-store";
 import { useUIStore } from "@/features/ui/use-ui-store";
-import { formatTimeAmPm } from "@/lib/time";
+import { formatFocusedDuration, formatTimeAmPm } from "@/lib/time";
 import type { TimerPhase } from "@/features/timer/timer-types";
-import { resolveLongBreakCadence } from "@/features/timer/timer-helpers";
+import { resolveLongBreakCadence, focusedSeconds } from "@/features/timer/timer-helpers";
 
 export function useTimerSelectors() {
   const timerStyle = useSettingsStore((s) => s.settings.timerStyle);
@@ -18,6 +18,7 @@ export function useTimerSelectors() {
   const overtimeSeconds = useTimerStore((s) => s.overtimeSeconds);
   const durations = useTimerStore((s) => s.durations);
   const completedPomos = useTimerStore((s) => s.completedPomos);
+  const startedAt = useTimerStore((s) => s.startedAt);
   const selectedCategory = useTimerStore((s) => s.selectedCategory);
   const customIntention = useTimerStore((s) => s.customIntention);
   const isFullscreenFocus = useUIStore((s) => s.isFullscreenFocus);
@@ -42,6 +43,22 @@ export function useTimerSelectors() {
     return [end, start];
   }, [secondsRemaining, totalSeconds, isFocusComplete]);
 
+  // Finish-summary values: focused time anchored to the session's real start,
+  // so a session paused for hours still shows its true focus window. Without a
+  // live start there is no honest window to show — never back-compute one.
+  const focusedSec = focusedSeconds({
+    totalSeconds,
+    secondsRemaining,
+    overtimeSeconds,
+  });
+  const focusWindowLabel = startedAt
+    ? (() => {
+        const focusStart = new Date(startedAt);
+        const focusEnd = new Date(focusStart.getTime() + focusedSec * 1000);
+        return `${formatTimeAmPm(focusStart)} → ${formatTimeAmPm(focusEnd)}`;
+      })()
+    : "";
+
   return {
     timerStyle,
     phase,
@@ -59,6 +76,8 @@ export function useTimerSelectors() {
     isFocusComplete,
     isWorkPhase,
     durationMinutes,
+    focusedDurationLabel: formatFocusedDuration(focusedSec),
+    focusWindowLabel,
     detectedBreakPhase,
     startTime,
     endTime,

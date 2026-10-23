@@ -20,6 +20,21 @@ export function getPhaseDurationKey(phase: TimerPhase): keyof TimerDurations {
   return phase === "work" ? "work" : phase === "short_break" ? "short" : "long";
 }
 
+/** Focused time: planned duration minus what remains, plus overtime. The
+ *  countdown freezes during pause, so paused time is excluded by construction.
+ *  The one definition of session duration — every exit path and the finish
+ *  summary must derive their numbers through this. */
+export function focusedSeconds(timer: {
+  totalSeconds: number;
+  secondsRemaining: number;
+  overtimeSeconds: number;
+}): number {
+  return Math.max(
+    0,
+    timer.totalSeconds - timer.secondsRemaining + timer.overtimeSeconds,
+  );
+}
+
 export function determineBreakPhase(
   durationSec: number,
   durations: TimerDurations,

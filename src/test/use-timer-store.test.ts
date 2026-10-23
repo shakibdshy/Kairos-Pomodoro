@@ -187,6 +187,71 @@ describe("useTimerStore", () => {
       expect(state.totalSeconds).toBe(DEFAULT_WORK_SEC + 300);
       expect(state.secondsRemaining).toBe(DEFAULT_WORK_SEC + 300);
     });
+
+    it("posts the adjustment to the worker while paused and stays paused", async () => {
+      await useTimerStore.getState().start(600);
+      useTimerStore.setState({ secondsRemaining: 480 });
+      useTimerStore.getState().pause();
+      mockWorker.postMessage.mockClear();
+
+      useTimerStore.getState().adjustDuration(5);
+
+      expect(mockWorker.postMessage).toHaveBeenCalledWith({
+        command: "add_time",
+        seconds: 300,
+      });
+      const state = useTimerStore.getState();
+      expect(state.status).toBe("paused");
+      expect(state.totalSeconds).toBe(900);
+      expect(state.secondsRemaining).toBe(780);
+    });
+
+    it("subtracts time while paused without resuming the countdown", async () => {
+      await useTimerStore.getState().start(600);
+      useTimerStore.setState({ secondsRemaining: 480 });
+      useTimerStore.getState().pause();
+      mockWorker.postMessage.mockClear();
+
+      useTimerStore.getState().adjustDuration(-5);
+
+      expect(mockWorker.postMessage).toHaveBeenCalledWith({
+        command: "add_time",
+        seconds: -300,
+      });
+      const state = useTimerStore.getState();
+      expect(state.status).toBe("paused");
+      expect(state.secondsRemaining).toBe(180);
+    });
+
+    it("does not invent focused time when an adjustment removes more than remains", async () => {
+      await useTimerStore.getState().start(180);
+      // 2s focused, then paused.
+      useTimerStore.setState({ secondsRemaining: 178 });
+      useTimerStore.getState().pause();
+
+      useTimerStore.getState().adjustDuration(-5);
+      await useTimerStore.getState().finishSession();
+
+      const { finishSession: dbFinish } = await import("@/lib/db");
+      expect(dbFinish).toHaveBeenCalledWith(1, 2, undefined, undefined);
+    });
+
+    it("records zero focused time when nothing was focused and the adjustment removes everything", async () => {
+      await useTimerStore.getState().start(300);
+      // Paused before the first tick: nothing focused yet.
+      useTimerStore.getState().pause();
+
+      useTimerStore.getState().adjustDuration(-5);
+
+      const state = useTimerStore.getState();
+      expect(state.totalSeconds).toBe(0);
+      expect(state.secondsRemaining).toBe(0);
+
+      await useTimerStore.getState().finishSession();
+
+      const { finishSession: dbFinish } = await import("@/lib/db");
+      expect(dbFinish).toHaveBeenCalledWith(1, 0, undefined, undefined);
+    });
   });
 
   describe("setActiveTask", () => {
@@ -374,14 +439,37 @@ describe("useTimerStore", () => {
   });
 
   describe("finishSession", () => {
+    it("records focused time, excluding paused time, when finished after a pause", async () => {
+      await useTimerStore.getState().start(600);
+      // Focused 120s, then paused; the countdown stays frozen while paused.
+      useTimerStore.setState({ secondsRemaining: 480 });
+      useTimerStore.getState().pause();
+
+      await useTimerStore.getState().finishSession();
+
+      const { finishSession: dbFinish } = await import("@/lib/db");
+      expect(dbFinish).toHaveBeenCalledWith(1, 120, undefined, undefined);
+    });
+
+    it("counts overtime as focused time when finished in overtime", async () => {
+      await useTimerStore.getState().start(600);
+      useTimerStore.setState({ secondsRemaining: 0, overtimeSeconds: 90 });
+
+      await useTimerStore.getState().finishSession();
+
+      const { finishSession: dbFinish } = await import("@/lib/db");
+      expect(dbFinish).toHaveBeenCalledWith(1, 690, undefined, undefined);
+    });
+
     it("finishes DB session, increments pomos, and resets to work idle", async () => {
       useTimerStore.setState({ activeTaskId: 10 });
       await useTimerStore.getState().start();
+      useTimerStore.setState({ secondsRemaining: DEFAULT_WORK_SEC - 600 });
 
       await useTimerStore.getState().finishSession("great", "Good session");
 
       const { finishSession: dbFinish, incrementTaskPomos } = await import("@/lib/db");
-      expect(dbFinish).toHaveBeenCalledWith(1, undefined, "great", "Good session");
+      expect(dbFinish).toHaveBeenCalledWith(1, 600, "great", "Good session");
       expect(incrementTaskPomos).toHaveBeenCalledWith(10);
 
       const state = useTimerStore.getState();
@@ -437,6 +525,8 @@ describe("useTimerStore", () => {
     it("finishes current session and auto-starts next phase", async () => {
       useTimerStore.setState({ activeTaskId: 5 });
       await useTimerStore.getState().start();
+      // Natural completion: the countdown has run out before the user confirms.
+      useTimerStore.setState({ secondsRemaining: 0 });
 
       await useTimerStore.getState().confirmStartNextPhase("good", "Nice");
 
@@ -467,6 +557,8 @@ describe("useTimerStore", () => {
     it("finishes session and resets to work idle without auto-starting break", async () => {
       useTimerStore.setState({ activeTaskId: 3 });
       await useTimerStore.getState().start();
+      // Natural completion: the countdown has run out.
+      useTimerStore.setState({ secondsRemaining: 0 });
 
       await useTimerStore.getState().endWithoutBreak();
 

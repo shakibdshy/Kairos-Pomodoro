@@ -3,7 +3,6 @@ import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/cn";
 import type { Category } from "@/lib/db";
-import { formatTimeAmPm } from "@/lib/time";
 import type { SessionMood } from "@/features/timer/timer-types";
 export type { SessionMood } from "@/features/timer/timer-types";
 import { ModalOverlay } from "@/components/ui/modal-overlay";
@@ -25,13 +24,10 @@ interface FinishSessionModalProps {
   onClose: () => void;
   onSubmit: (data: { mood: SessionMood; notes: string }) => void;
   category: Category | null;
-  durationMinutes: number;
-}
-
-function formatTimeRange(durationMin: number): string {
-  const now = new Date();
-  const start = new Date(now.getTime() - durationMin * 60000);
-  return `${formatTimeAmPm(start)} ${String.fromCharCode(8594)} ${formatTimeAmPm(now)}`;
+  /** Focused time label (planned − remaining + overtime), not the plan. */
+  focusedDurationLabel: string;
+  /** The true focus window: the session's real start through start + focused time. */
+  focusWindowLabel: string;
 }
 
 export function FinishSessionModal({
@@ -39,7 +35,8 @@ export function FinishSessionModal({
   onClose,
   onSubmit,
   category,
-  durationMinutes,
+  focusedDurationLabel,
+  focusWindowLabel,
 }: FinishSessionModalProps) {
   const [mood, setMood] = useState<SessionMood>("neutral");
   const [notes, setNotes] = useState("");
@@ -163,7 +160,7 @@ export function FinishSessionModal({
               Focus
             </span>
             <span className="text-sm font-medium text-sahara-text tabular-nums">
-              {durationMinutes}min
+              {focusedDurationLabel}
             </span>
             <ArrowRight className="size-3.5 text-sahara-text-muted ml-auto opacity-40" />
           </div>
@@ -173,7 +170,7 @@ export function FinishSessionModal({
         <div className="flex justify-center">
           <div className="inline-flex items-center gap-2.5 px-5 py-2.5 rounded-full border border-sahara-border/30 bg-sahara-bg/30">
             <span className="text-sm font-semibold text-sahara-text tabular-nums tracking-wide">
-              {formatTimeRange(durationMinutes)}
+              {focusWindowLabel}
             </span>
           </div>
         </div>

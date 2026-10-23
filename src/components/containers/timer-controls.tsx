@@ -34,13 +34,14 @@ export function TimerControls() {
     customIntention,
     isFocusComplete,
     isWorkPhase,
-    durationMinutes,
     detectedBreakPhase,
     isFocus,
     isBreak,
     isFullscreenFocus,
     startTimeAmPm,
     endTimeAmPm,
+    focusedDurationLabel,
+    focusWindowLabel,
   } = useTimerSelectors();
 
   const setPhase = useTimerStore((s) => s.setPhase);
@@ -176,6 +177,7 @@ export function TimerControls() {
           size="icon"
           intent="default"
           shape="rounded-full"
+          aria-label="Remove five minutes"
           onClick={() => adjustDuration(-5)}
           className="border-sahara-border/30 text-sahara-text-secondary hover:border-sahara-primary/40 hover:text-sahara-primary shrink-0"
         >
@@ -197,6 +199,7 @@ export function TimerControls() {
           size="icon"
           intent="default"
           shape="rounded-full"
+          aria-label="Add five minutes"
           onClick={() => adjustDuration(5)}
           className="border-sahara-border/30 text-sahara-text-secondary hover:border-sahara-primary/40 hover:text-sahara-primary shrink-0"
         >
@@ -241,7 +244,8 @@ export function TimerControls() {
         onClose={() => setShowFinishModal(false)}
         onSubmit={handleFinishWithReflection}
         category={selectedCategory}
-        durationMinutes={durationMinutes}
+        focusedDurationLabel={focusedDurationLabel}
+        focusWindowLabel={focusWindowLabel}
       />
     </m.div>
   );

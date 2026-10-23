@@ -23,3 +23,10 @@ export function formatTimeAmPm(date: Date): string {
   h = h % 12 || 12;
   return `${h}:${m.toString().padStart(2, "0")}${ampm}`;
 }
+
+/** Human label for focused time: sub-minute stays in seconds so short,
+ *  pause-interrupted sessions don't round down to a lie ("0min"). */
+export function formatFocusedDuration(seconds: number): string {
+  if (seconds < 60) return `${Math.max(0, Math.round(seconds))}s`;
+  return `${Math.round(seconds / 60)}min`;
+}

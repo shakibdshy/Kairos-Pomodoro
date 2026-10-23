@@ -1,4 +1,6 @@
-const workerCode = `
+// Exported for unit tests: the script runs inside a Web Worker, so the tests
+// evaluate it against a sandboxed `self` instead of instantiating a Worker.
+export const timerWorkerCode = `
   let interval = null;
   let remaining = 0;
   let overtime = 0;
@@ -66,17 +68,21 @@ const workerCode = `
     }
 
     if (e.data.command === "add_time") {
-      targetEndTime += e.data.seconds * 1000;
-      remaining = computeRemaining();
-      if (!interval) {
-        startCountdown();
+      if (interval) {
+        targetEndTime += e.data.seconds * 1000;
+        remaining = computeRemaining();
+        self.postMessage({ type: "tick", remaining });
+      } else {
+        // Paused: carry the adjustment so Resume honors it, but keep the
+        // countdown frozen — the wall-clock deadline is stale while paused,
+        // so it must not be consulted.
+        remaining = Math.max(0, remaining + e.data.seconds);
       }
-      self.postMessage({ type: "tick", remaining });
     }
   };
 `;
 
-const blob = new Blob([workerCode], { type: "application/javascript" });
+const blob = new Blob([timerWorkerCode], { type: "application/javascript" });
 
 export function createTimerWorker(): Worker {
   const url = URL.createObjectURL(blob);
