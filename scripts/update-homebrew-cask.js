@@ -14,12 +14,12 @@ if (!/^[a-f0-9]{64}$/.test(sha256 ?? "")) {
 const caskPath = resolve("Casks/kairos-pomodoro.rb");
 const current = readFileSync(caskPath, "utf8");
 
-if (!/^  version ".*"$/m.test(current) || !/^  sha256 arm: ".*"$/m.test(current)) {
+if (!/^  version ".*"$/m.test(current) || !/^  sha256 ".*"$/m.test(current)) {
   throw new Error("Could not find the cask version and checksum fields to update.");
 }
 
 const updated = current
   .replace(/^  version ".*"$/m, `  version "${version}"`)
-  .replace(/^  sha256 arm: ".*"$/m, `  sha256 arm: "${sha256}"`);
+  .replace(/^  sha256 ".*"$/m, `  sha256 "${sha256}"`);
 
 writeFileSync(caskPath, updated);

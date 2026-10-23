@@ -1,6 +1,6 @@
 cask "kairos-pomodoro" do
   version "1.6.0"
-  sha256 arm: "dcc677383008cb59565b2e2167edd44a3d3dc792e6745d4bb11543e81cef6587"
+  sha256 "dcc677383008cb59565b2e2167edd44a3d3dc792e6745d4bb11543e81cef6587"
 
   url "https://github.com/shakibdshy/Kairos-Pomodoro/releases/download/v#{version}/Kairos-Pomodoro_#{version}_aarch64.dmg",
       verified: "github.com/shakibdshy/Kairos-Pomodoro/"
